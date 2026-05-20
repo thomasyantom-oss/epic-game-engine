@@ -1,0 +1,21 @@
+id: forest_entrance
+description:
+  - text: "你来到"
+    color: "#e0e0e0"
+  - text: "幽暗森林"
+    color: "#2d6a4f"
+  - text: "的入口。高大的古树遮天蔽日，只有零星的"
+    color: "#e0e0e0"
+  - text: "光线"
+    color: "#ffd93d"
+  - text: "透过树冠洒下。远处传来不明生物的"
+    color: "#e0e0e0"
+  - text: "低吼"
+    color: "#e94560"
+  - text: "。"
+    color: "#e0e0e0"
+actions:
+  - id: go-square
+    label: "返回村庄"
+    type: move
+    target: village_square

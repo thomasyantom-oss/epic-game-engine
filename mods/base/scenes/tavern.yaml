@@ -1,0 +1,19 @@
+id: tavern
+description:
+  - text: "你推开"
+    color: "#e0e0e0"
+  - text: "酒馆"
+    color: "#ff6b35"
+  - text: "的木门。里面烛光摇曳，几个冒险者围坐在角落的桌旁低声交谈。"
+    color: "#e0e0e0"
+  - text: "\n\n"
+    color: "#e0e0e0"
+  - text: "酒保"
+    color: "#ffd93d"
+  - text: "正在擦拭杯子，抬头看了你一眼。"
+    color: "#e0e0e0"
+actions:
+  - id: go-square
+    label: "离开酒馆"
+    type: move
+    target: village_square

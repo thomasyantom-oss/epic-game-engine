@@ -1,0 +1,31 @@
+id: village_square
+description:
+  - text: "你站在"
+    color: "#e0e0e0"
+  - text: "村庄广场"
+    color: "#4ecdc4"
+  - text: "的中央。周围是低矮的石砌房屋，空气中弥漫着炊烟的气息。"
+    color: "#e0e0e0"
+  - text: "\n\n"
+    color: "#e0e0e0"
+  - text: "北面"
+    color: "#ffd93d"
+  - text: "是一间挂着木牌的"
+    color: "#e0e0e0"
+  - text: "酒馆"
+    color: "#ff6b35"
+  - text: "，南面的小路通往"
+    color: "#e0e0e0"
+  - text: "幽暗森林"
+    color: "#2d6a4f"
+  - text: "。"
+    color: "#e0e0e0"
+actions:
+  - id: go-tavern
+    label: "走进酒馆"
+    type: move
+    target: tavern
+  - id: go-forest
+    label: "前往森林"
+    type: move
+    target: forest_entrance
