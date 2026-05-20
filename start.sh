@@ -1,12 +1,11 @@
 #!/bin/bash
 cd "$(dirname "$0")"
 
-JAVA_HOME=/Library/Java/JavaVirtualMachines/amazon-corretto-21.jdk/Contents/Home
-MVN="/Applications/IntelliJ IDEA.app/Contents/plugins/maven/lib/maven3/bin/mvn"
+export JAVA_HOME=/Library/Java/JavaVirtualMachines/amazon-corretto-21.jdk/Contents/Home
 
 echo "启动后端..."
 cd backend
-JAVA_HOME="$JAVA_HOME" "$MVN" spring-boot:run > /tmp/epic-backend.log 2>&1 &
+mvn spring-boot:run > /tmp/epic-backend.log 2>&1 &
 BACKEND_PID=$!
 cd ..
 
