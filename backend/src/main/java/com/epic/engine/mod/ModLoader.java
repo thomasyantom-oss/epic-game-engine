@@ -1,5 +1,6 @@
 package com.epic.engine.mod;
 
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 import org.yaml.snakeyaml.Yaml;
@@ -19,6 +20,7 @@ public class ModLoader {
 
     private final Path modsPath;
 
+    @Autowired
     public ModLoader(@Value("${epic.mods-path:../mods}") String modsPath) {
         this.modsPath = Path.of(modsPath).toAbsolutePath();
     }
