@@ -1,6 +1,5 @@
 <template>
   <div class="settings-panel" v-if="visible">
-    <h3>显示设置</h3>
     <div class="setting-row">
       <label>字体大小</label>
       <input type="range" min="12" max="24" step="1"
@@ -38,7 +37,7 @@ import { useSettings } from '../composables/useSettings.js'
 defineProps({
     visible: {
         type: Boolean,
-        default: false
+        default: true
     }
 })
 
@@ -51,37 +50,30 @@ function resetDefaults() {
 
 <style scoped>
 .settings-panel {
-    background-color: var(--panel-bg);
-    border: var(--panel-border-width) var(--panel-border-style) var(--panel-border-color);
-    padding: 1.5rem;
-    border-radius: 8px;
-    max-width: 400px;
-}
-
-.settings-panel h3 {
-    margin-bottom: 1rem;
-    color: var(--link-color);
+    font-size: 0.9em;
 }
 
 .setting-row {
     display: flex;
     align-items: center;
-    gap: 1rem;
-    margin-bottom: 0.8rem;
+    gap: 0.8rem;
+    margin-bottom: 0.7rem;
 }
 
 .setting-row label {
-    min-width: 80px;
+    min-width: 70px;
+    font-size: 0.9em;
 }
 
 .reset-btn {
-    margin-top: 1rem;
-    padding: 0.4rem 1rem;
+    margin-top: 0.8rem;
+    padding: 0.3rem 0.8rem;
     background: none;
     border: 1px solid var(--link-color);
     color: var(--link-color);
     border-radius: 4px;
     cursor: pointer;
+    font-size: 0.85em;
 }
 
 .reset-btn:hover {

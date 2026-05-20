@@ -39,11 +39,7 @@ async function handleAction(action) {
 
 <style scoped>
 .scene-panel {
-    background-color: var(--panel-bg);
-    border: var(--panel-border-width) var(--panel-border-style) var(--panel-border-color);
-    padding: 1.5rem;
-    border-radius: 8px;
-    max-width: 800px;
+    height: 100%;
 }
 
 .scene-description {
