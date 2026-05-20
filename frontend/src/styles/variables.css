@@ -1,0 +1,12 @@
+:root {
+    --bg-color: #1a1a2e;
+    --text-color: #e0e0e0;
+    --panel-bg: #16213e;
+    --panel-border-color: #0f3460;
+    --panel-border-width: 1px;
+    --panel-border-style: solid;
+    --link-color: #e94560;
+    --link-hover-color: #ff6b6b;
+    --font-size: 16px;
+    --font-family: "LXGW WenKai", "Noto Serif SC", serif;
+}

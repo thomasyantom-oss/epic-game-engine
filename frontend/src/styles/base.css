@@ -1,0 +1,26 @@
+@import './variables.css';
+
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    background-color: var(--bg-color);
+    color: var(--text-color);
+    font-size: var(--font-size);
+    font-family: var(--font-family);
+    min-height: 100vh;
+}
+
+a, .action-link {
+    color: var(--link-color);
+    cursor: pointer;
+    text-decoration: none;
+}
+
+a:hover, .action-link:hover {
+    color: var(--link-hover-color);
+    text-decoration: underline;
+}
