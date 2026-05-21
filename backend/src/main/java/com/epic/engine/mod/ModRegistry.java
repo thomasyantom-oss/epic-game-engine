@@ -16,6 +16,7 @@ public class ModRegistry {
 
     private final ModLoader modLoader;
     private final Map<String, Map<String, Object>> scenes = new LinkedHashMap<>();
+    private final Map<String, Map<String, Object>> encounters = new LinkedHashMap<>();
 
     public ModRegistry(ModLoader modLoader) {
         this.modLoader = modLoader;
@@ -37,6 +38,10 @@ public class ModRegistry {
         return Collections.unmodifiableSet(scenes.keySet());
     }
 
+    public Optional<Map<String, Object>> getEncounter(String encounterId) {
+        return Optional.ofNullable(encounters.get(encounterId));
+    }
+
     @SuppressWarnings("unchecked")
     private void loadModContent(ModDescriptor mod) throws IOException {
         Path scenesDir = mod.path().resolve("scenes");
@@ -48,6 +53,20 @@ public class ModRegistry {
                         Map<String, Object> sceneData = yaml.load(is);
                         String id = (String) sceneData.get("id");
                         scenes.put(id, sceneData);
+                    }
+                }
+            }
+        }
+
+        Path encountersDir = mod.path().resolve("encounters");
+        if (Files.isDirectory(encountersDir)) {
+            Yaml yaml = new Yaml();
+            try (DirectoryStream<Path> stream = Files.newDirectoryStream(encountersDir, "*.yaml")) {
+                for (Path encounterFile : stream) {
+                    try (InputStream is = Files.newInputStream(encounterFile)) {
+                        Map<String, Object> encounterData = yaml.load(is);
+                        String id = (String) encounterData.get("id");
+                        encounters.put(id, encounterData);
                     }
                 }
             }

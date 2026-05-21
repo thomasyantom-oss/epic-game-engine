@@ -19,3 +19,7 @@ actions:
     label: "返回村庄"
     type: move
     target: village_square
+  - id: fight-goblins
+    label: "迎战哥布林"
+    type: combat
+    target: forest_goblin

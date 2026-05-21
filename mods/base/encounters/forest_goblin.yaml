@@ -1,0 +1,19 @@
+id: forest_goblin
+name: "森林哥布林遭遇战"
+enemies:
+  - id: goblin1
+    name: "哥布林"
+    row: FRONT
+    slot: 0
+    hp: 20
+    attack: 5
+    defense: 2
+    speed: 3
+  - id: goblin2
+    name: "哥布林弓手"
+    row: BACK
+    slot: 0
+    hp: 15
+    attack: 7
+    defense: 1
+    speed: 5
