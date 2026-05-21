@@ -18,7 +18,6 @@
           <CommandPanel
             :current-actor="currentActor"
             :targets="combat.validTargets"
-            :resolving="resolving"
             @command="onCommand"
           />
         </template>
@@ -48,7 +47,7 @@
 </template>
 
 <script setup>
-import { computed, ref } from 'vue'
+import { computed } from 'vue'
 import TabPanel from '../TabPanel.vue'
 import BattleField from './BattleField.vue'
 import CommandPanel from './CommandPanel.vue'
@@ -60,16 +59,13 @@ import { useGameState } from '../../composables/useGameState.js'
 const { combat, getCurrentActor, addCommand, allCommandsIssued, executeRound, loadTargets, exitCombat } = useCombat()
 const { state, initialize } = useGameState()
 
-const resolving = ref(false)
-const currentActor = computed(() => resolving.value ? null : getCurrentActor())
+const currentActor = computed(() => getCurrentActor())
 
 async function onCommand(cmd) {
     addCommand(cmd.actorId, cmd.type, cmd.targetId)
     if (allCommandsIssued()) {
-        resolving.value = true
         await new Promise(r => setTimeout(r, 800))
         await executeRound(state.playerId)
-        resolving.value = false
 
         if (combat.state?.phase === 'VICTORY' || combat.state?.phase === 'DEFEAT') {
             setTimeout(() => {

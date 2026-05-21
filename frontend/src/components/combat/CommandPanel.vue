@@ -1,9 +1,6 @@
 <template>
   <div class="command-panel">
-    <div v-if="resolving" class="resolving">
-      <span style="color: #999">结算中...</span>
-    </div>
-    <div v-else-if="currentActor" class="commands">
+    <div v-if="currentActor" class="commands">
       <div class="actor-name">{{ currentActor.name }} 的行动：</div>
       <div v-if="!choosingTarget" class="command-list">
         <div class="command-item" @click="startAttack">攻击</div>
@@ -28,8 +25,7 @@ import { ref } from 'vue'
 
 const props = defineProps({
     currentActor: { type: Object, default: null },
-    targets: { type: Array, default: () => [] },
-    resolving: { type: Boolean, default: false }
+    targets: { type: Array, default: () => [] }
 })
 
 const emit = defineEmits(['command'])
@@ -88,10 +84,4 @@ function defend() {
     border-color: #555;
 }
 
-.resolving {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    height: 100%;
-}
 </style>
