@@ -101,26 +101,38 @@ spawn:
 
 ### 地形定义（在 Mod 中）
 
+通行性用标签系统，不是简单的 true/false：
+- 地形的 `requires` 列出通行所需能力标签（空 = 任何人都能走）
+- 角色的 `abilities` 列出拥有的能力标签
+- 通行判断：角色 abilities 是否包含地形的全部 requires
+
 ```yaml
 # mods/base/terrains.yaml
 terrains:
   林:
     id: forest
-    passable: true
+    requires: []
     color: "#2d6a4f"
     text-color: "#a0d0b0"
   水:
     id: water
-    passable: false
+    requires: [swim]
     color: "#4a90d9"
     text-color: "#cce4ff"
   山:
     id: mountain
-    passable: false
+    requires: [fly]
     color: "#8b7355"
     text-color: "#d4c4a0"
+  岩:
+    id: lava
+    requires: [fly, fire-resist]
+    color: "#cc3300"
+    text-color: "#ffaa66"
   # ...
 ```
+
+将来角色可通过装备、技能、状态获得能力标签（如穿水靴获得 swim），即可通行对应地形。
 
 ## 后端 API
 
