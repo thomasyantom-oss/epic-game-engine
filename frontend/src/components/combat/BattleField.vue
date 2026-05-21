@@ -3,15 +3,17 @@
     <div class="side player-side">
       <div class="side-label">【我方】</div>
       <div class="formation">
-        <div class="row" v-for="row in ['BACK', 'MID', 'FRONT']" :key="'p-'+row">
-          <span class="row-label">{{ rowLabel(row) }}</span>
-          <span
-            v-for="unit in getUnits('PLAYER', row)"
-            :key="unit.id"
-            class="unit"
-            :class="{ dead: !unit.alive, active: unit.id === currentActorId }"
-            :style="{ color: unitColor(unit) }"
-          >{{ unit.name.charAt(0) }}</span>
+        <div class="col" v-for="row in ['BACK', 'MID', 'FRONT']" :key="'p-'+row">
+          <span class="col-label">{{ rowLabel(row) }}</span>
+          <div class="col-units">
+            <span
+              v-for="unit in getUnits('PLAYER', row)"
+              :key="unit.id"
+              class="unit"
+              :class="{ dead: !unit.alive, active: unit.id === currentActorId }"
+              :style="{ color: unitColor(unit) }"
+            >{{ unit.name.charAt(0) }}</span>
+          </div>
         </div>
       </div>
     </div>
@@ -19,15 +21,17 @@
     <div class="side enemy-side">
       <div class="side-label">【敌方】</div>
       <div class="formation">
-        <div class="row" v-for="row in ['FRONT', 'MID', 'BACK']" :key="'e-'+row">
-          <span class="row-label">{{ rowLabel(row) }}</span>
-          <span
-            v-for="unit in getUnits('ENEMY', row)"
-            :key="unit.id"
-            class="unit"
-            :class="{ dead: !unit.alive, targeted: targetIds.includes(unit.id) }"
-            :style="{ color: unitColor(unit) }"
-          >{{ unit.name.charAt(0) }}</span>
+        <div class="col" v-for="row in ['FRONT', 'MID', 'BACK']" :key="'e-'+row">
+          <span class="col-label">{{ rowLabel(row) }}</span>
+          <div class="col-units">
+            <span
+              v-for="unit in getUnits('ENEMY', row)"
+              :key="unit.id"
+              class="unit"
+              :class="{ dead: !unit.alive, targeted: targetIds.includes(unit.id) }"
+              :style="{ color: unitColor(unit) }"
+            >{{ unit.name.charAt(0) }}</span>
+          </div>
         </div>
       </div>
     </div>
@@ -78,20 +82,27 @@ function unitColor(unit) {
 
 .formation {
     display: flex;
-    flex-direction: column;
-    gap: 0.5rem;
+    flex-direction: row;
+    gap: 0.8rem;
+    justify-content: center;
 }
 
-.row {
+.col {
     display: flex;
+    flex-direction: column;
     align-items: center;
-    gap: 0.5rem;
+    gap: 0.4rem;
 }
 
-.row-label {
+.col-label {
     color: #666;
-    font-size: 0.8em;
-    width: 1.5em;
+    font-size: 0.75em;
+}
+
+.col-units {
+    display: flex;
+    flex-direction: column;
+    gap: 0.3rem;
 }
 
 .unit {
