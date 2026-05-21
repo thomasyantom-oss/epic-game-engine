@@ -1,7 +1,7 @@
 <template>
   <div class="app-container">
-    <div class="game-grid">
-      <!-- 主窗口 (3×2) -->
+    <CombatView v-if="combat.active" />
+    <div v-else class="game-grid">
       <div class="panel-main">
         <TabPanel :tabs="mainTabs" default-tab="scene">
           <template #scene>
@@ -13,7 +13,6 @@
         </TabPanel>
       </div>
 
-      <!-- 功能页面 (1×2) -->
       <div class="panel-func">
         <TabPanel :tabs="funcTabs" default-tab="status">
           <template #status>
@@ -25,7 +24,6 @@
         </TabPanel>
       </div>
 
-      <!-- 日志 (3×1) -->
       <div class="panel-log">
         <TabPanel :tabs="logTabs" default-tab="all">
           <template #all>
@@ -34,7 +32,6 @@
         </TabPanel>
       </div>
 
-      <!-- 额外区域 (1×1) -->
       <div class="panel-extra">
         <TabPanel :tabs="extraTabs" default-tab="placeholder">
           <template #placeholder>
@@ -47,16 +44,19 @@
 </template>
 
 <script setup>
-import { ref, reactive, onMounted } from 'vue'
+import { reactive, onMounted } from 'vue'
 import TabPanel from './components/TabPanel.vue'
 import ScenePanel from './components/ScenePanel.vue'
 import StatusPanel from './components/StatusPanel.vue'
 import SettingsPanel from './components/SettingsPanel.vue'
 import GameLog from './components/GameLog.vue'
+import CombatView from './components/combat/CombatView.vue'
 import { useGameState } from './composables/useGameState.js'
 import { useSettings } from './composables/useSettings.js'
+import { useCombat } from './composables/useCombat.js'
 
 const { state, initialize } = useGameState()
+const { combat } = useCombat()
 useSettings()
 
 const logEntries = reactive([])
@@ -99,25 +99,10 @@ onMounted(() => {
   height: 100%;
 }
 
-.panel-main {
-  grid-column: 1;
-  grid-row: 1;
-}
-
-.panel-func {
-  grid-column: 2;
-  grid-row: 1;
-}
-
-.panel-log {
-  grid-column: 1;
-  grid-row: 2;
-}
-
-.panel-extra {
-  grid-column: 2;
-  grid-row: 2;
-}
+.panel-main { grid-column: 1; grid-row: 1; }
+.panel-func { grid-column: 2; grid-row: 1; }
+.panel-log { grid-column: 1; grid-row: 2; }
+.panel-extra { grid-column: 2; grid-row: 2; }
 
 .placeholder-content {
   color: #666;

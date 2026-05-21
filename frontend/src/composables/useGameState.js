@@ -1,5 +1,5 @@
 import { reactive } from 'vue'
-import { getPlayerState, fetchScene, performAction } from '../api/client.js'
+import { getPlayerState, fetchScene, performAction, getCombatState } from '../api/client.js'
 
 const state = reactive({
     playerId: 'player1',
@@ -27,5 +27,10 @@ export function useGameState() {
         state.currentScene = scene
     }
 
-    return { state, initialize, doAction, refreshScene }
+    async function checkCombat() {
+        const combatState = await getCombatState(state.playerId)
+        return combatState !== null
+    }
+
+    return { state, initialize, doAction, refreshScene, checkCombat }
 }
