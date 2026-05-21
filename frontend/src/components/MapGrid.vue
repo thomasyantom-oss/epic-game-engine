@@ -75,10 +75,7 @@ const gridStyle = computed(() => {
   return {
     display: 'grid',
     gridTemplateColumns: `repeat(${cols}, 1fr)`,
-    gap: '0px',
-    width: '100%',
-    height: '100%',
-    aspectRatio: '1'
+    gap: '0px'
   }
 })
 
@@ -92,9 +89,7 @@ function cellStyle(cell) {
     display: 'flex',
     alignItems: 'center',
     justifyContent: 'center',
-    fontSize: 'clamp(10px, 2vw, 16px)',
-    cursor: 'pointer',
-    aspectRatio: '1'
+    cursor: 'pointer'
   }
 }
 
@@ -142,6 +137,9 @@ onUnmounted(() => {
 .map-cell {
   user-select: none;
   transition: transform 0.1s;
+  width: 2.2rem;
+  height: 2.2rem;
+  font-size: 0.9rem;
 }
 
 .map-cell:hover {
@@ -152,7 +150,7 @@ onUnmounted(() => {
 .player-marker {
   color: #ffd700;
   font-weight: bold;
-  text-shadow: 0 0 6px #ffd700;
+  text-shadow: -1px -1px 0 #000, 1px -1px 0 #000, -1px 1px 0 #000, 1px 1px 0 #000, 0 0 8px #ffd700;
   font-size: 1.2em;
 }
 </style>
