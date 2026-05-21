@@ -40,3 +40,33 @@ export async function getCombatTargets(playerId, combatantId) {
     if (!response.ok) return []
     return response.json()
 }
+
+export async function fetchMap(mapId) {
+    const response = await fetch(`${BASE_URL}/map/${mapId}`)
+    if (!response.ok) return null
+    return response.json()
+}
+
+export async function mapMove(playerId, direction) {
+    const response = await fetch(`${BASE_URL}/map/move`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ playerId, direction })
+    })
+    return response.json()
+}
+
+export async function mapMoveTo(playerId, targetX, targetY) {
+    const response = await fetch(`${BASE_URL}/map/moveTo`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ playerId, targetX, targetY })
+    })
+    return response.json()
+}
+
+export async function getMapPosition(playerId) {
+    const response = await fetch(`${BASE_URL}/map/position/${playerId}`)
+    if (!response.ok) return null
+    return response.json()
+}
