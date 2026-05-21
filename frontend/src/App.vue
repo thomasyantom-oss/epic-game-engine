@@ -3,10 +3,7 @@
     <CombatView v-if="combat.active" />
     <div v-else class="game-grid">
       <div class="panel-main">
-        <TabPanel :tabs="mainTabs" default-tab="scene">
-          <template #scene>
-            <ScenePanel />
-          </template>
+        <TabPanel :tabs="mainTabs" default-tab="map">
           <template #map>
             <div class="placeholder-content">大地图（待实现）</div>
           </template>
@@ -27,15 +24,25 @@
       <div class="panel-log">
         <TabPanel :tabs="logTabs" default-tab="all">
           <template #all>
-            <GameLog :entries="logEntries" />
+            <div class="scene-log" ref="sceneLogEl">
+              <div v-for="(entry, i) in sceneHistory" :key="i">
+                <TextRenderer v-if="entry.type === 'scene'" :segments="entry.segments" />
+                <div v-else-if="entry.type === 'action'" class="action-log">
+                  <span style="color: #999">→ {{ entry.text }}</span>
+                </div>
+              </div>
+            </div>
           </template>
         </TabPanel>
       </div>
 
-      <div class="panel-extra">
-        <TabPanel :tabs="extraTabs" default-tab="placeholder">
-          <template #placeholder>
-            <div class="placeholder-content">待规划</div>
+      <div class="panel-nav">
+        <TabPanel :tabs="navTabs" default-tab="actions">
+          <template #actions>
+            <NavigationPanel
+              :actions="currentActions"
+              @action="handleAction"
+            />
           </template>
         </TabPanel>
       </div>
@@ -44,25 +51,27 @@
 </template>
 
 <script setup>
-import { reactive, onMounted } from 'vue'
+import { ref, computed, onMounted, watch, nextTick } from 'vue'
 import TabPanel from './components/TabPanel.vue'
-import ScenePanel from './components/ScenePanel.vue'
+import TextRenderer from './components/TextRenderer.vue'
 import StatusPanel from './components/StatusPanel.vue'
 import SettingsPanel from './components/SettingsPanel.vue'
-import GameLog from './components/GameLog.vue'
+import NavigationPanel from './components/NavigationPanel.vue'
 import CombatView from './components/combat/CombatView.vue'
 import { useGameState } from './composables/useGameState.js'
 import { useSettings } from './composables/useSettings.js'
+import { usePanelRefresh } from './composables/usePanelRefresh.js'
 import { useCombat } from './composables/useCombat.js'
 
-const { state, initialize } = useGameState()
-const { combat } = useCombat()
+const { state, initialize, doAction } = useGameState()
+const { handleRefresh } = usePanelRefresh()
+const { combat, enterCombat } = useCombat()
 useSettings()
 
-const logEntries = reactive([])
+const sceneHistory = ref([])
+const sceneLogEl = ref(null)
 
 const mainTabs = [
-  { id: 'scene', label: '场景' },
   { id: 'map', label: '地图' }
 ]
 
@@ -72,12 +81,38 @@ const funcTabs = [
 ]
 
 const logTabs = [
-  { id: 'all', label: '全部' }
+  { id: 'all', label: '事件' }
 ]
 
-const extraTabs = [
-  { id: 'placeholder', label: '...' }
+const navTabs = [
+  { id: 'actions', label: '操作' }
 ]
+
+const currentActions = computed(() => {
+    if (!state.currentScene) return []
+    return state.currentScene.actions || []
+})
+
+watch(() => state.currentScene, (scene) => {
+    if (scene && scene.description) {
+        sceneHistory.value.push({ type: 'scene', segments: scene.description })
+        nextTick(() => {
+            if (sceneLogEl.value) sceneLogEl.value.scrollTop = sceneLogEl.value.scrollHeight
+        })
+    }
+})
+
+async function handleAction(action) {
+    sceneHistory.value.push({ type: 'action', text: action.label })
+    const response = await doAction(action.type, action.params)
+    if (response.success && response.refreshPanels) {
+        if (action.type === 'combat') {
+            await enterCombat(state.playerId)
+        } else {
+            await handleRefresh(response.refreshPanels)
+        }
+    }
+}
 
 onMounted(() => {
   initialize()
@@ -102,7 +137,7 @@ onMounted(() => {
 .panel-main { grid-column: 1; grid-row: 1; min-height: 0; }
 .panel-func { grid-column: 2; grid-row: 1; min-height: 0; }
 .panel-log { grid-column: 1; grid-row: 2; min-height: 0; }
-.panel-extra { grid-column: 2; grid-row: 2; min-height: 0; }
+.panel-nav { grid-column: 2; grid-row: 2; min-height: 0; }
 
 .placeholder-content {
   color: #666;
@@ -111,5 +146,15 @@ onMounted(() => {
   align-items: center;
   justify-content: center;
   height: 100%;
+}
+
+.scene-log {
+  height: 100%;
+  overflow-y: auto;
+  line-height: 1.8;
+}
+
+.action-log {
+  margin: 0.3rem 0;
 }
 </style>
