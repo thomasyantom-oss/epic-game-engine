@@ -25,10 +25,8 @@
 <script setup>
 import { computed, ref, onMounted, onUnmounted } from 'vue'
 import { useMap } from '../composables/useMap.js'
-import { useSettings } from '../composables/useSettings.js'
 
 const { mapState, moveDirection, moveToTarget } = useMap()
-const { settings } = useSettings()
 const containerEl = ref(null)
 
 const props = defineProps({
