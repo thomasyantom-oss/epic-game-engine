@@ -99,10 +99,10 @@ onMounted(() => {
   height: 100%;
 }
 
-.panel-main { grid-column: 1; grid-row: 1; }
-.panel-func { grid-column: 2; grid-row: 1; }
-.panel-log { grid-column: 1; grid-row: 2; }
-.panel-extra { grid-column: 2; grid-row: 2; }
+.panel-main { grid-column: 1; grid-row: 1; min-height: 0; }
+.panel-func { grid-column: 2; grid-row: 1; min-height: 0; }
+.panel-log { grid-column: 1; grid-row: 2; min-height: 0; }
+.panel-extra { grid-column: 2; grid-row: 2; min-height: 0; }
 
 .placeholder-content {
   color: #666;

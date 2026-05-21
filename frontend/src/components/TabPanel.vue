@@ -37,6 +37,7 @@ const activeTab = ref(props.defaultTab || props.tabs[0]?.id || '')
   display: flex;
   flex-direction: column;
   height: 100%;
+  min-height: 0;
   background-color: var(--panel-bg);
   border: var(--panel-border-width) var(--panel-border-style) var(--panel-border-color);
   border-radius: 4px;
