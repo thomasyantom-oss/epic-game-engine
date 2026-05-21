@@ -27,6 +27,13 @@
       <label>链接颜色</label>
       <input type="color" v-model="settings.linkColor" />
     </div>
+    <div class="setting-row">
+      <label>地图大小</label>
+      <input type="range" min="8" max="20" step="1"
+             :value="settings.mapSize"
+             @input="settings.mapSize = parseInt($event.target.value)" />
+      <span>{{ settings.mapSize }}×{{ settings.mapSize }}</span>
+    </div>
     <button class="reset-btn" @click="resetDefaults">恢复默认</button>
   </div>
 </template>

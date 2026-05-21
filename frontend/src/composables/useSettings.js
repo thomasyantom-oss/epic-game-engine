@@ -8,7 +8,8 @@ const defaults = {
     textColor: '#e0e0e0',
     panelBg: '#16213e',
     panelBorderColor: '#0f3460',
-    linkColor: '#e94560'
+    linkColor: '#e94560',
+    mapSize: 10
 }
 
 function loadSettings() {

@@ -5,7 +5,7 @@
       <div class="panel-main">
         <TabPanel :tabs="mainTabs" default-tab="map">
           <template #map>
-            <div class="placeholder-content">大地图（待实现）</div>
+            <MapGrid :map-size="settings.mapSize || 10" />
           </template>
         </TabPanel>
       </div>
@@ -57,16 +57,19 @@ import TextRenderer from './components/TextRenderer.vue'
 import StatusPanel from './components/StatusPanel.vue'
 import SettingsPanel from './components/SettingsPanel.vue'
 import NavigationPanel from './components/NavigationPanel.vue'
+import MapGrid from './components/MapGrid.vue'
 import CombatView from './components/combat/CombatView.vue'
 import { useGameState } from './composables/useGameState.js'
 import { useSettings } from './composables/useSettings.js'
 import { usePanelRefresh } from './composables/usePanelRefresh.js'
 import { useCombat } from './composables/useCombat.js'
+import { useMap } from './composables/useMap.js'
 
 const { state, initialize, doAction } = useGameState()
 const { handleRefresh } = usePanelRefresh()
 const { combat, enterCombat } = useCombat()
-useSettings()
+const { settings } = useSettings()
+const { mapState, loadMap, moveDirection, clearPoi } = useMap()
 
 const sceneHistory = ref([])
 const sceneLogEl = ref(null)
@@ -89,8 +92,24 @@ const navTabs = [
 ]
 
 const currentActions = computed(() => {
-    if (!state.currentScene) return []
-    return state.currentScene.actions || []
+    const actions = []
+    // Direction buttons for map movement
+    actions.push(
+        { id: 'move-up', label: '↑ 北', type: 'mapMove', params: { direction: 'UP' } },
+        { id: 'move-down', label: '↓ 南', type: 'mapMove', params: { direction: 'DOWN' } },
+        { id: 'move-left', label: '← 西', type: 'mapMove', params: { direction: 'LEFT' } },
+        { id: 'move-right', label: '→ 东', type: 'mapMove', params: { direction: 'RIGHT' } }
+    )
+    // POI action when standing on a point of interest
+    if (mapState.poi) {
+        actions.push({
+            id: 'poi-' + mapState.poi.id,
+            label: mapState.poi.label,
+            type: 'move',
+            params: { target: mapState.poi.target }
+        })
+    }
+    return actions
 })
 
 watch(() => state.currentScene, (scene) => {
@@ -104,6 +123,13 @@ watch(() => state.currentScene, (scene) => {
 
 async function handleAction(action) {
     sceneHistory.value.push({ type: 'action', text: action.label })
+    if (action.type === 'mapMove') {
+        await moveDirection(action.params.direction)
+        return
+    }
+    if (mapState.poi && action.type === 'move') {
+        clearPoi()
+    }
     const response = await doAction(action.type, action.params)
     if (response.success && response.refreshPanels) {
         if (action.type === 'combat') {
@@ -116,6 +142,7 @@ async function handleAction(action) {
 
 onMounted(() => {
   initialize()
+  loadMap()
 })
 </script>
 
