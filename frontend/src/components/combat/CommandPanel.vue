@@ -1,6 +1,9 @@
 <template>
   <div class="command-panel">
-    <div v-if="currentActor" class="commands">
+    <div v-if="resolving" class="resolving">
+      <span style="color: #999">结算中...</span>
+    </div>
+    <div v-else-if="currentActor" class="commands">
       <div class="actor-name">{{ currentActor.name }} 的行动：</div>
       <div v-if="!choosingTarget" class="command-list">
         <div class="command-item" @click="startAttack">攻击</div>
@@ -17,9 +20,6 @@
         <div class="command-item cancel" @click="choosingTarget = false">取消</div>
       </div>
     </div>
-    <div v-else-if="allDone" class="commands">
-      <div class="command-item execute" @click="$emit('execute')">开始结算</div>
-    </div>
   </div>
 </template>
 
@@ -29,10 +29,10 @@ import { ref } from 'vue'
 const props = defineProps({
     currentActor: { type: Object, default: null },
     targets: { type: Array, default: () => [] },
-    allDone: { type: Boolean, default: false }
+    resolving: { type: Boolean, default: false }
 })
 
-const emit = defineEmits(['command', 'execute'])
+const emit = defineEmits(['command'])
 const choosingTarget = ref(false)
 
 function startAttack() {
@@ -83,15 +83,15 @@ function defend() {
     background-color: rgba(233, 69, 96, 0.1);
 }
 
-.command-item.execute {
-    border-color: var(--link-color);
-    color: var(--link-color);
-    text-align: center;
-    font-weight: bold;
-}
-
 .command-item.cancel {
     color: #999;
     border-color: #555;
+}
+
+.resolving {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    height: 100%;
 }
 </style>

@@ -18,9 +18,8 @@
           <CommandPanel
             :current-actor="currentActor"
             :targets="combat.validTargets"
-            :all-done="allCommandsIssued()"
+            :resolving="resolving"
             @command="onCommand"
-            @execute="onExecute"
           />
         </template>
       </TabPanel>
@@ -49,7 +48,7 @@
 </template>
 
 <script setup>
-import { computed } from 'vue'
+import { computed, ref } from 'vue'
 import TabPanel from '../TabPanel.vue'
 import BattleField from './BattleField.vue'
 import CommandPanel from './CommandPanel.vue'
@@ -61,22 +60,25 @@ import { useGameState } from '../../composables/useGameState.js'
 const { combat, getCurrentActor, addCommand, allCommandsIssued, executeRound, loadTargets, exitCombat } = useCombat()
 const { state, initialize } = useGameState()
 
-const currentActor = computed(() => getCurrentActor())
+const resolving = ref(false)
+const currentActor = computed(() => resolving.value ? null : getCurrentActor())
 
 async function onCommand(cmd) {
     addCommand(cmd.actorId, cmd.type, cmd.targetId)
-    if (!allCommandsIssued()) {
-        await loadTargets(state.playerId)
-    }
-}
+    if (allCommandsIssued()) {
+        resolving.value = true
+        await new Promise(r => setTimeout(r, 800))
+        await executeRound(state.playerId)
+        resolving.value = false
 
-async function onExecute() {
-    await executeRound(state.playerId)
-    if (combat.state?.phase === 'VICTORY' || combat.state?.phase === 'DEFEAT') {
-        setTimeout(() => {
-            exitCombat()
-            initialize()
-        }, 2000)
+        if (combat.state?.phase === 'VICTORY' || combat.state?.phase === 'DEFEAT') {
+            setTimeout(() => {
+                exitCombat()
+                initialize()
+            }, 2000)
+        }
+    } else {
+        await loadTargets(state.playerId)
     }
 }
 </script>
