@@ -44,28 +44,23 @@
       </div>
 
       <div class="command-row">
-        <div class="actor-box">
+        <div class="cmd-col cmd-actor">
           <div class="actor-avatar"></div>
           <div class="actor-name">{{ currentActor?.name || '' }}</div>
         </div>
-        <div class="cmd-section" v-if="step === 'command' && currentActor">
-          <div class="cmd-line">
-            <span class="cmd-item" @click="selectCommand('ATTACK')">攻击</span>
-            <span class="cmd-item" @click="selectCommand('DEFEND')">防御</span>
-            <span class="cmd-item" @click="selectCommand('SKILL')">技能</span>
-          </div>
-          <div class="cmd-line">
-            <span class="cmd-item" @click="selectCommand('ITEM')">道具</span>
-            <span class="cmd-item" @click="selectCommand('FLEE')">逃跑</span>
-          </div>
+        <div class="cmd-col cmd-actions" v-if="currentActor">
+          <span class="cmd-item" :class="{ active: selectedCommand === 'ATTACK' }" @click="selectCommand('ATTACK')">攻击</span>
+          <span class="cmd-item" :class="{ active: selectedCommand === 'DEFEND' }" @click="selectCommand('DEFEND')">防御</span>
+          <span class="cmd-item" :class="{ active: selectedCommand === 'SKILL' }" @click="selectCommand('SKILL')">技能</span>
+          <span class="cmd-item" :class="{ active: selectedCommand === 'ITEM' }" @click="selectCommand('ITEM')">道具</span>
+          <span class="cmd-item" @click="selectCommand('FLEE')">逃跑</span>
         </div>
-        <div class="cmd-section" v-else-if="step === 'target'">
-          <div class="cmd-line">
+        <div class="cmd-col cmd-detail">
+          <template v-if="step === 'target'">
             <span class="target-hint">选择目标</span>
             <span class="cmd-item cancel-item" @click="cancelSelect">取消</span>
-          </div>
+          </template>
         </div>
-        <div class="cmd-section" v-else></div>
       </div>
     </div>
 
@@ -325,24 +320,40 @@ function cancelSelect() {
 
 .command-row {
   border-top: 2px solid var(--panel-border-color);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 0.5rem;
-  padding: 0.5rem;
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  height: 100%;
 }
 
-.actor-box {
+.cmd-col {
   display: flex;
   flex-direction: column;
   align-items: center;
+  justify-content: center;
   gap: 0.2rem;
-  flex-shrink: 0;
+}
+
+.cmd-actor {
+  border-right: 1px solid var(--panel-border-color);
+}
+
+.cmd-actions {
+  border-right: 1px solid var(--panel-border-color);
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.3rem;
+  align-items: center;
+  justify-items: center;
+  padding: 0.3rem;
+}
+
+.cmd-detail {
+  gap: 0.3rem;
 }
 
 .actor-avatar {
-  width: 2.8rem;
-  height: 2.8rem;
+  width: 2.2rem;
+  height: 2.2rem;
   border: 1px solid #4ecdc4;
   border-radius: 4px;
   background: #1a2a3a;
@@ -352,26 +363,16 @@ function cancelSelect() {
   color: #4ecdc4;
 }
 
-.cmd-section {
-  display: flex;
-  flex-direction: column;
-  justify-content: center;
-}
-
-.cmd-line {
-  height: 1.2rem;
-  display: flex;
-  align-items: center;
-  gap: 0.6rem;
-}
-
-
 .cmd-item {
   cursor: pointer;
   transition: color 0.2s;
 }
 
 .cmd-item:hover {
+  color: var(--link-color);
+}
+
+.cmd-item.active {
   color: var(--link-color);
 }
 
