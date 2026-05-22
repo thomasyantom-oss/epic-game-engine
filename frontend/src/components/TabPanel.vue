@@ -16,7 +16,7 @@
 </template>
 
 <script setup>
-import { ref } from 'vue'
+import { ref, watch } from 'vue'
 
 const props = defineProps({
   tabs: {
@@ -30,6 +30,10 @@ const props = defineProps({
 })
 
 const activeTab = ref(props.defaultTab || props.tabs[0]?.id || '')
+
+watch(() => props.defaultTab, (newTab) => {
+  if (newTab) activeTab.value = newTab
+})
 </script>
 
 <style scoped>
