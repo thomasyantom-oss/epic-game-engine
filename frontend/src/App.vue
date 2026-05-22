@@ -47,7 +47,7 @@
               >
                 <TextRenderer :segments="entry.segments" />
               </div>
-              <div class="combat-log-pad"></div>
+              <div :style="{ height: padHeight + 'px' }"></div>
             </div>
           </template>
         </TabPanel>
@@ -95,6 +95,7 @@ const sceneLogEl = ref(null)
 const allCombatLog = ref([])
 const currentRoundStart = ref(0)
 const combatLogEl = ref(null)
+const padHeight = ref(0)
 let currentRoundEl = null
 let roundCounter = 0
 
@@ -195,7 +196,12 @@ watch(() => combat.results, (results) => {
         })
         nextTick(() => {
             if (currentRoundEl && combatLogEl.value) {
-                combatLogEl.value.scrollTop = currentRoundEl.offsetTop
+                const containerH = combatLogEl.value.clientHeight
+                const contentAfterMarker = combatLogEl.value.scrollHeight - currentRoundEl.offsetTop - containerH
+                padHeight.value = contentAfterMarker < 0 ? Math.abs(contentAfterMarker) : 0
+                nextTick(() => {
+                    combatLogEl.value.scrollTop = currentRoundEl.offsetTop
+                })
             }
         })
     }
@@ -286,7 +292,4 @@ onMounted(async () => {
   margin: 0.3rem 0;
 }
 
-.combat-log-pad {
-  height: 100%;
-}
 </style>
