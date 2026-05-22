@@ -27,7 +27,7 @@
       </div>
 
       <div class="panel-log">
-        <TabPanel :tabs="logTabs" default-tab="all">
+        <TabPanel :tabs="logTabs" :default-tab="combat.active ? 'combat-log' : 'all'">
           <template #all>
             <div class="scene-log" ref="sceneLogEl">
               <div v-for="(entry, i) in sceneHistory" :key="i">
@@ -35,6 +35,13 @@
                 <div v-else-if="entry.type === 'action'" class="action-log">
                   <span>{{ entry.text }}</span>
                 </div>
+              </div>
+            </div>
+          </template>
+          <template #combat-log>
+            <div class="scene-log" ref="combatLogEl">
+              <div v-for="(entry, i) in combatLog" :key="i">
+                <TextRenderer :segments="entry.segments" />
               </div>
             </div>
           </template>
@@ -80,6 +87,8 @@ const { mapState, mapLog, loadMap, moveDirection, clearPoi } = useMap()
 
 const sceneHistory = ref([])
 const sceneLogEl = ref(null)
+const combatLog = ref([])
+const combatLogEl = ref(null)
 
 const mainTabs = computed(() => {
   if (combat.active) {
@@ -96,9 +105,15 @@ const funcTabs = [
   { id: 'settings', label: '设置' }
 ]
 
-const logTabs = [
-  { id: 'all', label: '事件' }
-]
+const logTabs = computed(() => {
+  if (combat.active) {
+    return [
+      { id: 'combat-log', label: '战斗' },
+      { id: 'all', label: '事件' }
+    ]
+  }
+  return [{ id: 'all', label: '事件' }]
+})
 
 const navTabs = [
   { id: 'actions', label: '快捷' }
@@ -109,7 +124,9 @@ const currentActions = computed(() => {
 })
 
 watch(() => combat.active, (active) => {
-    if (!active) {
+    if (active) {
+        combatLog.value = []
+    } else {
         sceneHistory.value = []
     }
 })
@@ -134,20 +151,25 @@ watch(() => mapLog.value.length, () => {
 
 watch(() => combat.state?.phase, (phase) => {
     if (phase === 'VICTORY') {
-        sceneHistory.value = [{ type: 'scene', segments: [{ text: '战斗胜利！', color: '#4ecdc4' }] }]
+        combatLog.value.push({ segments: [{ text: '战斗胜利！', color: '#4ecdc4' }] })
     } else if (phase === 'DEFEAT') {
-        sceneHistory.value = [{ type: 'scene', segments: [{ text: '战斗失败...', color: '#e94560' }] }]
+        combatLog.value.push({ segments: [{ text: '战斗失败...', color: '#e94560' }] })
     }
+    nextTick(() => {
+        if (combatLogEl.value) combatLogEl.value.scrollTop = combatLogEl.value.scrollHeight
+    })
 })
 
 watch(() => combat.results, (results) => {
     if (results && results.length > 0) {
-        const entries = results.map(r => {
+        combatLog.value.push({ segments: [{ text: `— 第 ${combat.state?.round || '?'} 回合 —`, color: '#666' }] })
+        results.forEach(r => {
             if (r.action === 'defend') {
-                return { type: 'scene', segments: [
+                combatLog.value.push({ segments: [
                     { text: r.actorName, color: r.actorId?.startsWith('player') || r.actorId === state.playerId ? '#4ecdc4' : '#e94560' },
                     { text: ' 进行防御。', color: '#ffffff' }
-                ]}
+                ]})
+                return
             }
             const actorColor = (r.actorId?.startsWith('player') || r.actorId === state.playerId) ? '#4ecdc4' : '#e94560'
             const targetColor = (r.targetId?.startsWith('player') || r.targetId === state.playerId) ? '#4ecdc4' : '#e94560'
@@ -160,9 +182,11 @@ watch(() => combat.results, (results) => {
                 { text: ' 点伤害', color: '#ffffff' }
             ]
             if (r.targetDefeated) segments.push({ text: '（击败）', color: '#e94560' })
-            return { type: 'scene', segments }
+            combatLog.value.push({ segments })
         })
-        sceneHistory.value = entries
+        nextTick(() => {
+            if (combatLogEl.value) combatLogEl.value.scrollTop = combatLogEl.value.scrollHeight
+        })
     }
 }, { deep: true })
 
