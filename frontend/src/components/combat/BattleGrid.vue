@@ -45,8 +45,10 @@
 
       <div class="command-row">
         <div class="cmd-col cmd-actor">
-          <div class="actor-avatar"></div>
-          <div class="actor-name">{{ currentActor?.name || '' }}</div>
+          <template v-if="currentActor">
+            <div class="actor-avatar"></div>
+            <div class="actor-name">{{ currentActor.name }}</div>
+          </template>
         </div>
         <div class="cmd-col cmd-actions" v-if="currentActor">
           <span class="cmd-item" :class="{ active: selectedCommand === 'ATTACK' }" @click="selectCommand('ATTACK')">攻击</span>
