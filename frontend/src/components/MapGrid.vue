@@ -123,15 +123,15 @@ onUnmounted(() => {
 .map-container {
   width: 100%;
   height: 100%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
   overflow: hidden;
+  padding: 0.5rem;
+  box-sizing: border-box;
 }
 
 .map-grid {
   max-width: 100%;
   max-height: 100%;
+  width: fit-content;
 }
 
 .map-cell {
