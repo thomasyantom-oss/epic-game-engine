@@ -99,7 +99,12 @@ const currentActions = computed(() => {
     return []
 })
 
+let sceneWatchReady = false
 watch(() => state.currentScene, (scene) => {
+    if (!sceneWatchReady) {
+        sceneWatchReady = true
+        return
+    }
     if (scene && scene.description) {
         sceneHistory.value = [{ type: 'scene', segments: scene.description }]
     }
