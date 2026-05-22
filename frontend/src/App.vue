@@ -197,7 +197,9 @@ watch(() => combat.results, (results) => {
         })
         nextTick(() => {
             if (currentRoundMarker.value && combatLogEl.value) {
-                combatLogEl.value.scrollTop = currentRoundMarker.value.offsetTop - combatLogEl.value.offsetTop
+                const containerRect = combatLogEl.value.getBoundingClientRect()
+                const markerRect = currentRoundMarker.value.getBoundingClientRect()
+                combatLogEl.value.scrollTop += markerRect.top - containerRect.top
             }
         })
     }
