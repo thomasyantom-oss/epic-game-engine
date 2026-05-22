@@ -121,12 +121,32 @@ watch(() => state.currentScene, (scene) => {
     }
 })
 
+function getTerrainName(ch) {
+    if (!mapState.mapData) return ch
+    const t = mapState.mapData.terrains.find(t => t.char === ch)
+    if (!t) return ch
+    const names = { forest: '密林', grass: '草地', road: '道路', sand: '沙地', water: '水域', town: '城镇', mountain: '山地' }
+    return names[t.id] || ch
+}
+
 async function handleAction(action) {
-    sceneHistory.value.push({ type: 'action', text: action.label })
     if (action.type === 'mapMove') {
-        await moveDirection(action.params.direction)
+        const result = await moveDirection(action.params.direction)
+        if (result && result.success) {
+            const row = mapState.mapData.terrain[result.newY]
+            const ch = row.charAt(result.newX)
+            const name = getTerrainName(ch)
+            sceneHistory.value.push({ type: 'action', text: `你来到了${name}。` })
+            if (result.poi) {
+                sceneHistory.value.push({ type: 'action', text: `前方可以${result.poi.label}。` })
+            }
+            nextTick(() => {
+                if (sceneLogEl.value) sceneLogEl.value.scrollTop = sceneLogEl.value.scrollHeight
+            })
+        }
         return
     }
+    sceneHistory.value.push({ type: 'action', text: action.label })
     if (mapState.poi && action.type === 'move') {
         clearPoi()
     }
