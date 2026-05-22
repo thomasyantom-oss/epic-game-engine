@@ -47,6 +47,7 @@
               >
                 <TextRenderer :segments="entry.segments" />
               </div>
+              <div class="combat-log-pad"></div>
             </div>
           </template>
         </TabPanel>
@@ -283,5 +284,9 @@ onMounted(async () => {
 
 .action-log {
   margin: 0.3rem 0;
+}
+
+.combat-log-pad {
+  height: 100%;
 }
 </style>
