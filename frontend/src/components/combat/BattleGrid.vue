@@ -196,20 +196,18 @@ function cancelSelect() {
 
 <style scoped>
 .battle-layout {
-  display: flex;
-  flex-direction: column;
+  display: grid;
+  grid-template-rows: 1fr auto;
   height: 100%;
 }
 
 .battle-row {
-  flex: 1;
-  display: flex;
-  align-items: stretch;
+  display: grid;
+  grid-template-columns: 15% 1fr 15%;
   min-height: 0;
 }
 
 .status-col {
-  width: 8rem;
   display: flex;
   flex-direction: column;
   justify-content: center;
@@ -264,12 +262,12 @@ function cancelSelect() {
 }
 
 .grid-area {
-  flex: 1;
-  display: flex;
+  display: grid;
+  grid-template-columns: 1fr auto 1fr;
   align-items: center;
-  justify-content: center;
-  gap: 0;
+  padding: 5%;
   min-width: 0;
+  min-height: 0;
 }
 
 .player-grid, .enemy-grid {
@@ -277,13 +275,14 @@ function cancelSelect() {
   grid-template-columns: repeat(3, 1fr);
   grid-template-rows: repeat(3, 1fr);
   gap: 2px;
-  width: 45%;
-  max-width: 14rem;
   aspect-ratio: 1;
+  height: 80%;
+  max-height: 100%;
 }
 
 .grid-gap {
-  width: 1rem;
+  width: 5%;
+  min-width: 0.5rem;
 }
 
 .terrain-cell {
