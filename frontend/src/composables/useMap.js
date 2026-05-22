@@ -73,6 +73,7 @@ export function useMap() {
     async function moveToTarget(targetX, targetY) {
         if (mapState.moving) return
         cancelPath()
+        mapState.poi = null
 
         const result = await mapMoveTo(state.playerId, targetX, targetY)
         if (!result.success || !result.path || result.path.length <= 1) return result

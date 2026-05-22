@@ -79,7 +79,9 @@ defineExpose({ cancel })
 .command-bar {
   padding: 0.4rem 0.5rem;
   border-top: 1px solid var(--panel-border-color);
-  min-height: 2.5rem;
+  height: 2.5rem;
+  display: flex;
+  align-items: center;
 }
 
 .command-flow {

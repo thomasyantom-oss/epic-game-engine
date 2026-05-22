@@ -13,16 +13,28 @@
     </div>
 
     <div class="battle-field">
-      <div class="terrain-grid">
+      <div class="player-grid">
         <div
-          v-for="(cell, idx) in terrainCells"
-          :key="idx"
+          v-for="(cell, idx) in playerCells"
+          :key="'p'+idx"
           class="terrain-cell"
-          :style="{ backgroundColor: cell.color }"
+          :style="{ backgroundColor: terrainColor }"
         >
-          <span v-if="cell.marker" class="marker" :class="cell.marker.side">
-            {{ cell.marker.side === 'player' ? '▶' : '◀' }}
-            <span class="marker-idx">{{ cell.marker.index }}</span>
+          <span v-if="cell.marker && cell.marker.alive" class="marker player">
+            ▶<span class="marker-idx">{{ cell.marker.index }}</span>
+          </span>
+        </div>
+      </div>
+      <div class="field-gap"></div>
+      <div class="enemy-grid">
+        <div
+          v-for="(cell, idx) in enemyCells"
+          :key="'e'+idx"
+          class="terrain-cell"
+          :style="{ backgroundColor: terrainColor }"
+        >
+          <span v-if="cell.marker && cell.marker.alive" class="marker enemy">
+            ◀<span class="marker-idx">{{ cell.marker.index }}</span>
           </span>
         </div>
       </div>
@@ -61,59 +73,52 @@ const enemyUnits = computed(() =>
   props.combatants.filter(c => c.side === 'ENEMY')
 )
 
-const terrainCells = computed(() => {
-  const cells = []
+const terrainColor = computed(() => {
   const map = mapState.mapData
-  const px = mapState.playerX
-  const py = mapState.playerY
+  if (!map) return '#333'
+  const row = map.terrain[mapState.playerY]
+  if (!row) return '#333'
+  const ch = row.charAt(mapState.playerX)
+  const terrain = map.terrains.find(t => t.char === ch)
+  return terrain ? terrain.color : '#333'
+})
 
-  // 3x6 grid: left 3 cols = player side, right 3 cols = enemy side
+const playerCells = computed(() => {
+  const cells = []
+  const positions = mapUnitsToGrid(playerUnits.value, 'player')
   for (let row = 0; row < 3; row++) {
-    for (let col = 0; col < 6; col++) {
-      // Map terrain from surrounding area
-      const dx = col - 3
-      const dy = row - 1
-      const x = px + dx
-      const y = py + dy
-      let color = '#333'
-      if (map && y >= 0 && y < map.height && x >= 0 && x < map.width) {
-        const ch = map.terrain[y].charAt(x)
-        const terrain = map.terrains.find(t => t.char === ch)
-        if (terrain) color = terrain.color
-      }
-
-      const marker = getMarkerAt(col, row)
-      cells.push({ color, marker })
+    for (let col = 0; col < 3; col++) {
+      const marker = positions.find(p => p.col === col && p.row === row)
+      cells.push({ marker })
     }
   }
   return cells
 })
 
-function getMarkerAt(col, row) {
-  const playerPositions = mapUnitsToGrid(playerUnits.value, 'player')
-  const enemyPositions = mapUnitsToGrid(enemyUnits.value, 'enemy')
-
-  const pMarker = playerPositions.find(p => p.col === col && p.row === row)
-  if (pMarker) return pMarker
-
-  const eMarker = enemyPositions.find(p => p.col === col && p.row === row)
-  if (eMarker) return eMarker
-
-  return null
-}
+const enemyCells = computed(() => {
+  const cells = []
+  const positions = mapUnitsToGrid(enemyUnits.value, 'enemy')
+  for (let row = 0; row < 3; row++) {
+    for (let col = 0; col < 3; col++) {
+      const marker = positions.find(p => p.col === col && p.row === row)
+      cells.push({ marker })
+    }
+  }
+  return cells
+})
 
 function mapUnitsToGrid(units, side) {
   const markers = []
-  // Player: cols 0-2 (back=0, mid=1, front=2), front is rightmost (near enemy)
-  // Enemy: cols 3-5 (front=3, mid=4, back=5), front is leftmost (near player)
+  // Player: col 0=back, 1=mid, 2=front (front nearest enemy)
+  // Enemy: col 0=front (nearest player), 1=mid, 2=back
   const playerColMap = { BACK: 0, MID: 1, FRONT: 2 }
-  const enemyColMap = { FRONT: 3, MID: 4, BACK: 5 }
+  const enemyColMap = { FRONT: 0, MID: 1, BACK: 2 }
 
   units.forEach((unit, idx) => {
     const unitRow = unit.row || 'FRONT'
-    const col = side === 'player' ? (playerColMap[unitRow] ?? 2) : (enemyColMap[unitRow] ?? 3)
+    const col = side === 'player' ? (playerColMap[unitRow] ?? 2) : (enemyColMap[unitRow] ?? 0)
     const row = unit.slot ?? idx % 3
-    markers.push({ col, row, side, index: idx + 1 })
+    markers.push({ col, row, side, index: idx + 1, alive: unit.alive })
   })
   return markers
 }
@@ -141,6 +146,10 @@ function mapUnitsToGrid(units, side) {
   display: flex;
   flex-direction: column;
   gap: 2px;
+}
+
+.unit-status.dead {
+  opacity: 0.4;
 }
 
 .unit-header {
@@ -185,14 +194,18 @@ function mapUnitsToGrid(units, side) {
   display: flex;
   align-items: center;
   justify-content: center;
+  gap: 0;
 }
 
-.terrain-grid {
+.player-grid, .enemy-grid {
   display: grid;
-  grid-template-columns: repeat(6, 1fr);
+  grid-template-columns: repeat(3, 2.5rem);
+  grid-template-rows: repeat(3, 2.5rem);
   gap: 2px;
-  width: 18rem;
-  height: 9rem;
+}
+
+.field-gap {
+  width: 1.5rem;
 }
 
 .terrain-cell {
@@ -204,12 +217,8 @@ function mapUnitsToGrid(units, side) {
 }
 
 .marker {
-  font-size: 1.2rem;
+  font-size: 1.1rem;
   font-weight: bold;
-}
-
-.unit-status.dead {
-  opacity: 0.4;
 }
 
 .marker.player { color: #4ecdc4; }
