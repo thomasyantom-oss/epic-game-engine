@@ -196,8 +196,8 @@ watch(() => combat.results, (results) => {
             currentRoundLog.value.push({ segments })
         })
         nextTick(() => {
-            if (currentRoundMarker.value) {
-                currentRoundMarker.value.scrollIntoView({ block: 'start' })
+            if (currentRoundMarker.value && combatLogEl.value) {
+                combatLogEl.value.scrollTop = currentRoundMarker.value.offsetTop - combatLogEl.value.offsetTop
             }
         })
     }
