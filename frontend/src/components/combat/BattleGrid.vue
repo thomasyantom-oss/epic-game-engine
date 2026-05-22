@@ -45,7 +45,7 @@
 
       <div class="command-row">
         <div class="cmd-col cmd-actor">
-          <template v-if="currentActor">
+          <template v-if="currentActor && phase === 'COMMAND'">
             <div class="actor-avatar"></div>
             <div class="actor-name">{{ currentActor.name }}</div>
           </template>
