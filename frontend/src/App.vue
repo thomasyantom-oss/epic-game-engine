@@ -115,6 +115,24 @@ watch(() => mapLog.value.length, () => {
     }
 })
 
+watch(() => combat.state?.phase, (phase) => {
+    if (phase === 'VICTORY') {
+        sceneHistory.value = [{ type: 'scene', segments: [{ text: '战斗胜利！', color: '#4ecdc4' }] }]
+    } else if (phase === 'DEFEAT') {
+        sceneHistory.value = [{ type: 'scene', segments: [{ text: '战斗失败...', color: '#e94560' }] }]
+    }
+})
+
+watch(() => combat.results, (results) => {
+    if (results && results.length > 0) {
+        const entries = results.map(r => ({
+            type: 'scene',
+            segments: [{ text: r.description || `${r.attackerName} 对 ${r.targetName} 造成 ${r.damage} 点伤害`, color: '#e0e0e0' }]
+        }))
+        sceneHistory.value = entries
+    }
+}, { deep: true })
+
 async function handleAction(action) {
     if (action.type === 'combatCancel') {
         return
