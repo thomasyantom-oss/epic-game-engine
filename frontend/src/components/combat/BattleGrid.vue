@@ -217,8 +217,9 @@ function cancelSelect() {
 
 .center-col {
   display: grid;
-  grid-template-rows: 1fr auto;
+  grid-template-rows: 1fr 25%;
   min-height: 0;
+  overflow: hidden;
 }
 
 .unit-status {
@@ -269,8 +270,7 @@ function cancelSelect() {
 
 .grid-area {
   display: grid;
-  grid-template-columns: 1fr auto 1fr;
-  align-items: center;
+  grid-template-columns: 1fr 5% 1fr;
   padding: 5%;
   min-width: 0;
   min-height: 0;
@@ -281,14 +281,9 @@ function cancelSelect() {
   grid-template-columns: repeat(3, 1fr);
   grid-template-rows: repeat(3, 1fr);
   gap: 2px;
-  aspect-ratio: 1;
-  height: 80%;
-  max-height: 100%;
 }
 
 .grid-gap {
-  width: 5%;
-  min-width: 0.5rem;
 }
 
 .terrain-cell {
@@ -325,6 +320,7 @@ function cancelSelect() {
   border-top: 2px solid var(--panel-border-color);
   display: flex;
   align-items: center;
+  justify-content: center;
   gap: 0.5rem;
   padding: 0.5rem;
 }
