@@ -39,7 +39,7 @@
             </div>
           </template>
           <template #combat-log>
-            <div class="scene-log combat-log" ref="combatLogEl">
+            <div class="scene-log" ref="combatLogEl" style="padding-bottom: 80%;">
               <div v-for="(entry, i) in combatLog" :key="i">
                 <TextRenderer :segments="entry.segments" />
               </div>

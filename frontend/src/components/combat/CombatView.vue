@@ -5,6 +5,7 @@
       :current-actor-id="currentActor?.id || ''"
       :current-actor="currentActor"
       :targets="combat.validTargets"
+      :phase="combat.state?.phase || 'COMMAND'"
       @command="onCommand"
     />
   </div>

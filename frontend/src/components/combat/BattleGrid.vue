@@ -50,7 +50,7 @@
             <div class="actor-name">{{ currentActor.name }}</div>
           </template>
         </div>
-        <div class="cmd-col cmd-actions" v-if="currentActor">
+        <div class="cmd-col cmd-actions" v-if="currentActor && phase === 'COMMAND'">
           <span class="cmd-item" :class="{ active: selectedCommand === 'ATTACK' }" @click="selectCommand('ATTACK')">攻击</span>
           <span class="cmd-item" :class="{ active: selectedCommand === 'DEFEND' }" @click="selectCommand('DEFEND')">防御</span>
           <span class="cmd-item" :class="{ active: selectedCommand === 'SKILL' }" @click="selectCommand('SKILL')">技能</span>
@@ -85,7 +85,8 @@ const props = defineProps({
   combatants: { type: Array, required: true },
   currentActorId: { type: String, default: '' },
   currentActor: { type: Object, default: null },
-  targets: { type: Array, default: () => [] }
+  targets: { type: Array, default: () => [] },
+  phase: { type: String, default: 'COMMAND' }
 })
 
 const emit = defineEmits(['command'])
