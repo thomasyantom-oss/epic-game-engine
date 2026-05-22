@@ -121,18 +121,14 @@ const poiAction = computed(() => {
 }
 
 .poi-btn {
-  padding: 0.4rem 0.6rem;
-  border: 1px solid var(--panel-border-color);
-  border-radius: 4px;
   cursor: pointer;
   font-size: 0.85em;
-  text-align: center;
-  transition: border-color 0.2s, background-color 0.2s;
+  color: #ccc;
+  transition: color 0.2s;
 }
 
 .poi-btn:hover {
-  border-color: var(--link-color);
-  background-color: rgba(233, 69, 96, 0.1);
+  color: var(--link-color);
 }
 
 .monster-list {

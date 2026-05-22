@@ -74,16 +74,15 @@ function resetDefaults() {
 
 .reset-btn {
     margin-top: 0.8rem;
-    padding: 0.3rem 0.8rem;
+    padding: 0;
     background: none;
-    border: 1px solid var(--link-color);
+    border: none;
     color: var(--link-color);
-    border-radius: 4px;
     cursor: pointer;
     font-size: 0.85em;
 }
 
 .reset-btn:hover {
-    background-color: rgba(233, 69, 96, 0.1);
+    opacity: 0.7;
 }
 </style>

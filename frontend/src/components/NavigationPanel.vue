@@ -38,18 +38,15 @@ defineEmits(['action'])
 }
 
 .action-btn {
-    padding: 0.4rem 0.8rem;
-    border: 1px solid var(--panel-border-color);
-    border-radius: 4px;
+    padding: 0.2rem 0;
     cursor: pointer;
-    font-size: 0.9em;
-    text-align: center;
-    transition: border-color 0.2s, background-color 0.2s;
+    font-size: 0.85em;
+    color: #ccc;
+    transition: color 0.2s;
 }
 
 .action-btn:hover {
-    border-color: var(--link-color);
-    background-color: rgba(233, 69, 96, 0.1);
+    color: var(--link-color);
 }
 
 .empty-hint {
