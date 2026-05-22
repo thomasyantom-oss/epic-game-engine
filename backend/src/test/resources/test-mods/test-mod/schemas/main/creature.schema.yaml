@@ -1,0 +1,15 @@
+id: creature
+type: main
+fields:
+  - name: hp
+    type: int
+    required: true
+  - name: maxHp
+    type: int
+    required: true
+  - name: attack
+    type: int
+    default: 5
+  - name: level
+    type: int
+    default: 1

@@ -1,0 +1,10 @@
+id: mutation
+type: sub
+compatible_with: [creature]
+fields:
+  - name: mutation_type
+    type: string
+    required: true
+  - name: stat_multiplier
+    type: double
+    default: 1.5
