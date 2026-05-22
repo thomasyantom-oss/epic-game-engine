@@ -106,7 +106,7 @@ const funcTabs = [
 ]
 
 const logTabs = computed(() => {
-  if (combat.active) {
+  if (combat.active || combatLog.value.length > 0) {
     return [
       { id: 'combat-log', label: '战斗' },
       { id: 'all', label: '事件' }
@@ -151,21 +151,22 @@ watch(() => mapLog.value.length, () => {
 
 watch(() => combat.state?.phase, (phase) => {
     if (phase === 'VICTORY') {
-        combatLog.value.push({ segments: [{ text: '战斗胜利！', color: '#4ecdc4' }] })
+        combatLog.value.unshift({ segments: [{ text: '战斗胜利！', color: '#4ecdc4' }] })
     } else if (phase === 'DEFEAT') {
-        combatLog.value.push({ segments: [{ text: '战斗失败...', color: '#e94560' }] })
+        combatLog.value.unshift({ segments: [{ text: '战斗失败...', color: '#e94560' }] })
     }
     nextTick(() => {
-        if (combatLogEl.value) combatLogEl.value.scrollTop = combatLogEl.value.scrollHeight
+        if (combatLogEl.value) combatLogEl.value.scrollTop = 0
     })
 })
 
 watch(() => combat.results, (results) => {
     if (results && results.length > 0) {
-        combatLog.value.push({ segments: [{ text: `— 第 ${combat.state?.round || '?'} 回合 —`, color: '#666' }] })
+        const roundNum = (combat.state?.round || 1) - 1
+        const entries = []
         results.forEach(r => {
             if (r.action === 'defend') {
-                combatLog.value.push({ segments: [
+                entries.push({ segments: [
                     { text: r.actorName, color: r.actorId?.startsWith('player') || r.actorId === state.playerId ? '#4ecdc4' : '#e94560' },
                     { text: ' 进行防御。', color: '#ffffff' }
                 ]})
@@ -182,11 +183,10 @@ watch(() => combat.results, (results) => {
                 { text: ' 点伤害', color: '#ffffff' }
             ]
             if (r.targetDefeated) segments.push({ text: '（击败）', color: '#e94560' })
-            combatLog.value.push({ segments })
+            entries.push({ segments })
         })
-        nextTick(() => {
-            if (combatLogEl.value) combatLogEl.value.scrollTop = combatLogEl.value.scrollHeight
-        })
+        entries.unshift({ segments: [{ text: `— 第 ${roundNum} 回合 —`, color: '#666' }] })
+        combatLog.value.unshift(...entries)
     }
 }, { deep: true })
 
