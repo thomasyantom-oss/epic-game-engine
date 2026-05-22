@@ -1,19 +1,19 @@
 <template>
   <div class="battle-layout">
-    <div class="status-col player-col">
-      <div v-for="(unit, idx) in playerUnits" :key="unit.id" class="unit-status" :class="{ dead: !unit.alive }">
-        <div class="unit-header" :class="{ active: unit.id === currentActorId }">
-          <span class="unit-name player-name">{{ unit.name }}</span>
-        </div>
-        <div class="hp-row">
-          <div class="hp-bar"><div class="hp-fill" :style="{ width: hpPercent(unit) + '%' }"></div></div>
-          <span class="hp-text">{{ unit.hp }}/{{ unit.maxHp }}</span>
+    <div class="battle-row">
+      <div class="status-col player-col">
+        <div v-for="(unit, idx) in playerUnits" :key="unit.id" class="unit-status" :class="{ dead: !unit.alive }">
+          <div class="unit-header" :class="{ active: unit.id === currentActorId }">
+            <span class="unit-name player-name">{{ unit.name }}</span>
+            <span class="hp-text">{{ unit.hp }}/{{ unit.maxHp }}</span>
+          </div>
+          <div class="hp-bar">
+            <div class="hp-fill" :style="{ width: hpPercent(unit) + '%' }"></div>
+          </div>
         </div>
       </div>
-    </div>
 
-    <div class="center-col">
-      <div class="battle-field">
+      <div class="grid-area">
         <div class="player-grid">
           <div
             v-for="(cell, idx) in playerCells"
@@ -26,7 +26,7 @@
             </span>
           </div>
         </div>
-        <div class="field-gap"></div>
+        <div class="grid-gap"></div>
         <div class="enemy-grid">
           <div
             v-for="(cell, idx) in enemyCells"
@@ -43,39 +43,39 @@
         </div>
       </div>
 
-      <div class="command-area">
-        <div class="actor-box">
-          <div class="actor-avatar"></div>
-        </div>
-        <div class="cmd-section">
-          <div class="cmd-line">
-            <span class="actor-label">{{ currentActor?.name || '' }}</span>
+      <div class="status-col enemy-col">
+        <div v-for="(unit, idx) in enemyUnits" :key="unit.id" class="unit-status" :class="{ dead: !unit.alive }">
+          <div class="unit-header">
+            <span class="unit-name enemy-name">{{ unit.name }}</span>
+            <span class="hp-text">{{ unit.hp }}/{{ unit.maxHp }}</span>
           </div>
-          <div class="cmd-line" v-if="step === 'command' && currentActor">
-            <span class="cmd-item" @click="selectCommand('ATTACK')">攻击</span>
-            <span class="cmd-item" @click="selectCommand('DEFEND')">防御</span>
-            <span class="cmd-item" @click="selectCommand('SKILL')">技能</span>
-            <span class="cmd-item" @click="selectCommand('ITEM')">道具</span>
-            <span class="cmd-item" @click="selectCommand('FLEE')">逃跑</span>
+          <div class="hp-bar enemy-bar">
+            <div class="hp-fill enemy-fill" :style="{ width: hpPercent(unit) + '%' }"></div>
           </div>
-          <div class="cmd-line" v-else-if="step === 'target'">
-            <span class="target-hint">选择目标</span>
-            <span class="cmd-item cancel-item" @click="cancelSelect">取消</span>
-          </div>
-          <div class="cmd-line" v-else></div>
         </div>
       </div>
     </div>
 
-    <div class="status-col enemy-col">
-      <div v-for="(unit, idx) in enemyUnits" :key="unit.id" class="unit-status" :class="{ dead: !unit.alive }">
-        <div class="unit-header">
-          <span class="unit-name enemy-name">{{ unit.name }}</span>
+    <div class="command-row">
+      <div class="actor-box">
+        <div class="actor-avatar"></div>
+      </div>
+      <div class="cmd-section">
+        <div class="cmd-line actor-line">{{ currentActor?.name || '' }}</div>
+        <div class="cmd-line" v-if="step === 'command' && currentActor">
+          <span class="cmd-item" @click="selectCommand('ATTACK')">攻击</span>
+          <span class="cmd-item" @click="selectCommand('DEFEND')">防御</span>
+          <span class="cmd-item" @click="selectCommand('SKILL')">技能</span>
+          <span class="cmd-item" @click="selectCommand('ITEM')">道具</span>
+          <span class="cmd-item" @click="selectCommand('FLEE')">逃跑</span>
         </div>
-        <div class="hp-row">
-          <div class="hp-bar enemy-bar"><div class="hp-fill enemy-fill" :style="{ width: hpPercent(unit) + '%' }"></div></div>
-          <span class="hp-text">{{ unit.hp }}/{{ unit.maxHp }}</span>
+        <div class="cmd-line" v-else-if="step === 'target'">
+          <span class="cmd-item cancel-item" @click="cancelSelect">取消</span>
         </div>
+        <div class="cmd-line" v-else></div>
+      </div>
+      <div class="cmd-hint-area">
+        <span v-if="step === 'target'" class="target-hint">选择目标</span>
       </div>
     </div>
   </div>
@@ -197,24 +197,30 @@ function cancelSelect() {
 <style scoped>
 .battle-layout {
   display: flex;
+  flex-direction: column;
   height: 100%;
-  padding: 0.3rem;
-  box-sizing: border-box;
-  gap: 0.4rem;
+}
+
+.battle-row {
+  flex: 1;
+  display: flex;
+  align-items: stretch;
+  min-height: 0;
 }
 
 .status-col {
+  width: 8rem;
   display: flex;
   flex-direction: column;
   justify-content: center;
-  gap: 0.5rem;
-  min-width: 5.5rem;
+  gap: 0.8rem;
+  padding: 0.5rem;
 }
 
 .unit-status {
   display: flex;
   flex-direction: column;
-  gap: 2px;
+  gap: 3px;
 }
 
 .unit-status.dead {
@@ -224,25 +230,23 @@ function cancelSelect() {
 .unit-header {
   display: flex;
   align-items: center;
-  gap: 0.3rem;
-  font-size: 0.8em;
+  justify-content: space-between;
 }
 
 .unit-header.active {
   text-shadow: 0 0 4px var(--link-color);
 }
 
+.unit-name {
+}
+
+.hp-text {
+}
+
 .player-name { color: #4ecdc4; }
 .enemy-name { color: #e94560; }
 
-.hp-row {
-  display: flex;
-  align-items: center;
-  gap: 0.3rem;
-}
-
 .hp-bar {
-  flex: 1;
   height: 4px;
   background: #333;
   border-radius: 2px;
@@ -259,37 +263,27 @@ function cancelSelect() {
   background: #e94560;
 }
 
-.hp-text {
-  font-size: 0.65em;
-  color: var(--text-color);
-  white-space: nowrap;
-}
-
-.center-col {
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-  min-width: 0;
-  overflow: hidden;
-}
-
-.battle-field {
+.grid-area {
   flex: 1;
   display: flex;
   align-items: center;
   justify-content: center;
-  min-height: 0;
+  gap: 0;
+  min-width: 0;
 }
 
 .player-grid, .enemy-grid {
   display: grid;
-  grid-template-columns: repeat(3, 2.5rem);
-  grid-template-rows: repeat(3, 2.5rem);
+  grid-template-columns: repeat(3, 1fr);
+  grid-template-rows: repeat(3, 1fr);
   gap: 2px;
+  width: 45%;
+  max-width: 14rem;
+  aspect-ratio: 1;
 }
 
-.field-gap {
-  width: 1.2rem;
+.grid-gap {
+  width: 1rem;
 }
 
 .terrain-cell {
@@ -310,7 +304,6 @@ function cancelSelect() {
 }
 
 .marker {
-  font-size: 1.1rem;
   font-weight: bold;
   display: flex;
   align-items: center;
@@ -320,18 +313,16 @@ function cancelSelect() {
 .marker.enemy { color: #e94560; }
 
 .marker-num {
-  font-size: 0.6em;
   color: #fff;
 }
 
-.command-area {
+.command-row {
   border-top: 2px solid var(--panel-border-color);
   height: 3.6rem;
   display: flex;
-  align-items: stretch;
+  align-items: center;
   gap: 0.5rem;
-  padding: 0.2rem 0.5rem;
-  box-sizing: border-box;
+  padding: 0 0.5rem;
 }
 
 .actor-box {
@@ -341,8 +332,8 @@ function cancelSelect() {
 }
 
 .actor-avatar {
-  width: 3rem;
-  height: 3rem;
+  width: 2.8rem;
+  height: 2.8rem;
   border: 1px solid #4ecdc4;
   border-radius: 4px;
   background: #1a2a3a;
@@ -353,28 +344,22 @@ function cancelSelect() {
   display: flex;
   flex-direction: column;
   justify-content: center;
-  gap: 0;
 }
 
 .cmd-line {
   height: 1.2rem;
   display: flex;
   align-items: center;
-  gap: 0.4rem;
+  gap: 0.6rem;
 }
 
-.actor-label {
-  font-size: 0.8em;
+.actor-line {
   color: #4ecdc4;
 }
 
 .cmd-item {
-  font-size: 0.75em;
   cursor: pointer;
-  padding: 0 0.3rem;
-  border-radius: 3px;
   transition: color 0.2s;
-  color: var(--text-color);
 }
 
 .cmd-item:hover {
@@ -385,8 +370,14 @@ function cancelSelect() {
   color: var(--text-color);
 }
 
+.cmd-hint-area {
+  width: 5rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
 .target-hint {
-  font-size: 0.75em;
   color: #e94560;
 }
 </style>
