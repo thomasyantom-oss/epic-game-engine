@@ -151,22 +151,22 @@ watch(() => mapLog.value.length, () => {
 
 watch(() => combat.state?.phase, (phase) => {
     if (phase === 'VICTORY') {
-        combatLog.value.unshift({ segments: [{ text: '战斗胜利！', color: '#4ecdc4' }] })
+        combatLog.value.push({ segments: [{ text: '战斗胜利！', color: '#4ecdc4' }] })
     } else if (phase === 'DEFEAT') {
-        combatLog.value.unshift({ segments: [{ text: '战斗失败...', color: '#e94560' }] })
+        combatLog.value.push({ segments: [{ text: '战斗失败...', color: '#e94560' }] })
     }
     nextTick(() => {
-        if (combatLogEl.value) combatLogEl.value.scrollTop = 0
+        if (combatLogEl.value) combatLogEl.value.scrollTop = combatLogEl.value.scrollHeight
     })
 })
 
 watch(() => combat.results, (results) => {
     if (results && results.length > 0) {
         const roundNum = (combat.state?.round || 1) - 1
-        const entries = []
+        combatLog.value.push({ segments: [{ text: `— 第 ${roundNum} 回合 —`, color: '#666' }] })
         results.forEach(r => {
             if (r.action === 'defend') {
-                entries.push({ segments: [
+                combatLog.value.push({ segments: [
                     { text: r.actorName, color: r.actorId?.startsWith('player') || r.actorId === state.playerId ? '#4ecdc4' : '#e94560' },
                     { text: ' 进行防御。', color: '#ffffff' }
                 ]})
@@ -183,10 +183,11 @@ watch(() => combat.results, (results) => {
                 { text: ' 点伤害', color: '#ffffff' }
             ]
             if (r.targetDefeated) segments.push({ text: '（击败）', color: '#e94560' })
-            entries.push({ segments })
+            combatLog.value.push({ segments })
         })
-        entries.unshift({ segments: [{ text: `— 第 ${roundNum} 回合 —`, color: '#666' }] })
-        combatLog.value.unshift(...entries)
+        nextTick(() => {
+            if (combatLogEl.value) combatLogEl.value.scrollTop = combatLogEl.value.scrollHeight
+        })
     }
 }, { deep: true })
 
