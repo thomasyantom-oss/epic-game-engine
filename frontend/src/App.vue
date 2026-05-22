@@ -92,18 +92,11 @@ const logTabs = [
 ]
 
 const navTabs = [
-  { id: 'actions', label: '操作' }
+  { id: 'actions', label: '快捷' }
 ]
 
 const currentActions = computed(() => {
-    const actions = []
-    actions.push(
-        { id: 'move-up', label: '↑ 北', type: 'mapMove', params: { direction: 'UP' } },
-        { id: 'move-down', label: '↓ 南', type: 'mapMove', params: { direction: 'DOWN' } },
-        { id: 'move-left', label: '← 西', type: 'mapMove', params: { direction: 'LEFT' } },
-        { id: 'move-right', label: '→ 东', type: 'mapMove', params: { direction: 'RIGHT' } }
-    )
-    return actions
+    return []
 })
 
 watch(() => state.currentScene, (scene) => {
@@ -120,8 +113,7 @@ watch(() => mapLog.value.length, () => {
 })
 
 async function handleAction(action) {
-    if (action.type === 'mapMove') {
-        await moveDirection(action.params.direction)
+    if (action.type === 'combatCancel') {
         return
     }
     sceneHistory.value = [{ type: 'action', text: action.label }]
