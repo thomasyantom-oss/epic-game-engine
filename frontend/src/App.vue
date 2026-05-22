@@ -124,7 +124,7 @@ watch(() => combat.results, (results) => {
     if (results && results.length > 0) {
         const entries = results.map(r => ({
             type: 'scene',
-            segments: [{ text: r.description || `${r.attackerName} 对 ${r.targetName} 造成 ${r.damage} 点伤害`, color: '#e0e0e0' }]
+            segments: [{ text: r.action === 'defend' ? `${r.actorName} 进行防御。` : `${r.actorName} 对 ${r.targetName} 造成 ${r.damage} 点伤害${r.targetDefeated ? '（击败）' : ''}`, color: '#e0e0e0' }]
         }))
         sceneHistory.value = entries
     }

@@ -44,16 +44,17 @@
       </div>
 
       <div class="command-area">
-        <div v-if="currentActor" class="command-flow">
-          <div class="actor-label">{{ currentActor.name }} 的回合</div>
-          <div class="cmd-row">
-            <div class="cmd-btn" @click="selectCommand('ATTACK')">攻击</div>
-            <div class="cmd-btn" @click="selectCommand('DEFEND')">防御</div>
-            <div class="cmd-btn" @click="selectCommand('SKILL')">技能</div>
-            <div class="cmd-btn" @click="selectCommand('ITEM')">道具</div>
-            <div class="cmd-btn" @click="selectCommand('FLEE')">逃跑</div>
-            <div v-if="step === 'target'" class="cmd-btn cancel-btn" @click="cancelSelect">取消</div>
-          </div>
+        <div class="actor-box">
+          <div class="actor-avatar"></div>
+          <div class="actor-name" v-if="currentActor">{{ currentActor.name }}</div>
+        </div>
+        <div class="cmd-grid">
+          <div class="cmd-btn" @click="selectCommand('ATTACK')">攻击</div>
+          <div class="cmd-btn" @click="selectCommand('DEFEND')">防御</div>
+          <div class="cmd-btn" @click="selectCommand('SKILL')">技能</div>
+          <div class="cmd-btn" @click="selectCommand('ITEM')">道具</div>
+          <div class="cmd-btn" @click="selectCommand('FLEE')">逃跑</div>
+          <div v-if="step === 'target'" class="cmd-btn cancel-btn" @click="cancelSelect">取消</div>
           <div v-if="step === 'target'" class="target-hint">点击敌方目标</div>
         </div>
       </div>
@@ -262,6 +263,7 @@ function cancelSelect() {
   display: flex;
   flex-direction: column;
   min-width: 0;
+  overflow: hidden;
 }
 
 .battle-field {
@@ -269,6 +271,7 @@ function cancelSelect() {
   display: flex;
   align-items: center;
   justify-content: center;
+  min-height: 0;
 }
 
 .player-grid, .enemy-grid {
@@ -316,34 +319,54 @@ function cancelSelect() {
 
 .command-area {
   border-top: 1px solid var(--panel-border-color);
-  padding: 0.3rem 0;
-  min-height: 3.5rem;
+  height: 4.5rem;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.3rem 0.5rem;
+  box-sizing: border-box;
 }
 
-.command-flow {
+.actor-box {
   display: flex;
   flex-direction: column;
+  align-items: center;
   gap: 0.2rem;
+  width: 3.5rem;
+  flex-shrink: 0;
 }
 
-.actor-label {
-  font-size: 0.8em;
+.actor-avatar {
+  width: 2.5rem;
+  height: 2.5rem;
+  border: 1px solid #4ecdc4;
+  border-radius: 4px;
+  background: #1a2a3a;
+}
+
+.actor-name {
+  font-size: 0.65em;
   color: #4ecdc4;
+  text-align: center;
+  white-space: nowrap;
 }
 
-.cmd-row {
-  display: flex;
-  gap: 0.3rem;
-  flex-wrap: wrap;
+.cmd-grid {
+  display: grid;
+  grid-template-columns: repeat(3, auto);
+  grid-template-rows: repeat(3, auto);
+  gap: 0.2rem;
+  align-items: center;
 }
 
 .cmd-btn {
-  padding: 0.25rem 0.5rem;
+  padding: 0.2rem 0.5rem;
   border: 1px solid var(--panel-border-color);
   border-radius: 4px;
   cursor: pointer;
   font-size: 0.75em;
   transition: border-color 0.2s, background-color 0.2s;
+  text-align: center;
 }
 
 .cmd-btn:hover {
@@ -357,7 +380,8 @@ function cancelSelect() {
 }
 
 .target-hint {
-  font-size: 0.75em;
+  font-size: 0.7em;
   color: #e94560;
+  grid-column: span 2;
 }
 </style>
