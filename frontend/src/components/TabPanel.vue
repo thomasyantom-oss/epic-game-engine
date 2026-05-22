@@ -77,7 +77,8 @@ watch(() => props.defaultTab, (newTab) => {
 
 .tab-content {
   flex: 1;
-  overflow-y: auto;
-  padding: 0.8rem;
+  overflow: hidden;
+  padding: 0.5rem;
+  min-height: 0;
 }
 </style>
