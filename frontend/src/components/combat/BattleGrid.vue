@@ -46,24 +46,26 @@
       <div class="command-row">
         <div class="actor-box">
           <div class="actor-avatar"></div>
+          <div class="actor-name">{{ currentActor?.name || '' }}</div>
         </div>
-        <div class="cmd-section">
-          <div class="cmd-line actor-line">{{ currentActor?.name || '' }}</div>
-          <div class="cmd-line" v-if="step === 'command' && currentActor">
+        <div class="cmd-section" v-if="step === 'command' && currentActor">
+          <div class="cmd-line">
             <span class="cmd-item" @click="selectCommand('ATTACK')">攻击</span>
             <span class="cmd-item" @click="selectCommand('DEFEND')">防御</span>
             <span class="cmd-item" @click="selectCommand('SKILL')">技能</span>
+          </div>
+          <div class="cmd-line">
             <span class="cmd-item" @click="selectCommand('ITEM')">道具</span>
             <span class="cmd-item" @click="selectCommand('FLEE')">逃跑</span>
           </div>
-          <div class="cmd-line" v-else-if="step === 'target'">
+        </div>
+        <div class="cmd-section" v-else-if="step === 'target'">
+          <div class="cmd-line">
+            <span class="target-hint">选择目标</span>
             <span class="cmd-item cancel-item" @click="cancelSelect">取消</span>
           </div>
-          <div class="cmd-line" v-else></div>
         </div>
-        <div class="cmd-hint-area">
-          <span v-if="step === 'target'" class="target-hint">选择目标</span>
-        </div>
+        <div class="cmd-section" v-else></div>
       </div>
     </div>
 
@@ -332,7 +334,9 @@ function cancelSelect() {
 
 .actor-box {
   display: flex;
+  flex-direction: column;
   align-items: center;
+  gap: 0.2rem;
   flex-shrink: 0;
 }
 
@@ -342,6 +346,10 @@ function cancelSelect() {
   border: 1px solid #4ecdc4;
   border-radius: 4px;
   background: #1a2a3a;
+}
+
+.actor-name {
+  color: #4ecdc4;
 }
 
 .cmd-section {
@@ -357,9 +365,6 @@ function cancelSelect() {
   gap: 0.6rem;
 }
 
-.actor-line {
-  color: #4ecdc4;
-}
 
 .cmd-item {
   cursor: pointer;
@@ -372,13 +377,6 @@ function cancelSelect() {
 
 .cancel-item {
   color: var(--text-color);
-}
-
-.cmd-hint-area {
-  width: 5rem;
-  display: flex;
-  align-items: center;
-  justify-content: center;
 }
 
 .target-hint {
