@@ -20,6 +20,18 @@ pois:
     type: enter
     target: village_square
     label: "进入村庄"
+  - id: goblin_camp
+    x: 2
+    y: 4
+    type: combat
+    target: forest_goblin
+    label: "哥布林营地"
+  - id: forest_ambush
+    x: 7
+    y: 5
+    type: combat
+    target: forest_goblin
+    label: "林中伏击"
 spawn:
   x: 4
   y: 3

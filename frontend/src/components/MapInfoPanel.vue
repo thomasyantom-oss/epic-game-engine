@@ -58,7 +58,7 @@ const poiAction = computed(() => {
   return {
     id: 'poi-' + mapState.poi.id,
     label: mapState.poi.label,
-    type: 'move',
+    type: mapState.poi.type,
     params: { target: mapState.poi.target }
   }
 })
