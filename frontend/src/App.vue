@@ -39,7 +39,8 @@
             </div>
           </template>
           <template #combat-log>
-            <div class="scene-log" ref="combatLogEl">
+            <div class="scene-log combat-log" ref="combatLogEl">
+              <div class="combat-log-spacer"></div>
               <div v-for="(entry, i) in combatLog" :key="i">
                 <TextRenderer :segments="entry.segments" />
               </div>
@@ -269,6 +270,15 @@ onMounted(async () => {
   height: 100%;
   overflow-y: auto;
   line-height: 1.8;
+}
+
+.combat-log {
+  display: flex;
+  flex-direction: column;
+}
+
+.combat-log-spacer {
+  flex: 1;
 }
 
 .action-log {
