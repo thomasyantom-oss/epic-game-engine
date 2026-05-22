@@ -3,30 +3,24 @@
     <BattleGrid
       :combatants="combat.state?.combatants || []"
       :current-actor-id="currentActor?.id || ''"
-    />
-    <CommandBar
-      ref="commandBarRef"
       :current-actor="currentActor"
       :targets="combat.validTargets"
       @command="onCommand"
-      @cancel="onCancel"
     />
   </div>
 </template>
 
 <script setup>
-import { computed, ref } from 'vue'
+import { computed } from 'vue'
 import BattleGrid from './BattleGrid.vue'
-import CommandBar from './CommandBar.vue'
 import { useCombat } from '../../composables/useCombat.js'
 import { useGameState } from '../../composables/useGameState.js'
 import { useMap } from '../../composables/useMap.js'
 
 const { combat, getCurrentActor, addCommand, allCommandsIssued, executeRound, loadTargets, exitCombat } = useCombat()
-const { state, initialize } = useGameState()
+const { state } = useGameState()
 const { loadMap } = useMap()
 
-const commandBarRef = ref(null)
 const currentActor = computed(() => getCurrentActor())
 
 async function onCommand(cmd) {
@@ -45,21 +39,10 @@ async function onCommand(cmd) {
         await loadTargets(state.playerId)
     }
 }
-
-function onCancel() {
-    // Future: undo last command
-}
 </script>
 
 <style scoped>
 .combat-view {
-  display: flex;
-  flex-direction: column;
   height: 100%;
-}
-
-.combat-view > :first-child {
-  flex: 1;
-  min-height: 0;
 }
 </style>

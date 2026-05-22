@@ -1,41 +1,60 @@
 <template>
-  <div class="battle-grid-container">
+  <div class="battle-layout">
     <div class="status-col player-col">
       <div v-for="(unit, idx) in playerUnits" :key="unit.id" class="unit-status" :class="{ dead: !unit.alive }">
         <div class="unit-header" :class="{ active: unit.id === currentActorId }">
-          <span class="unit-idx">{{ idx + 1 }}</span>
           <span class="unit-name player-name">{{ unit.name }}</span>
         </div>
-        <div class="hp-bar">
-          <div class="hp-fill" :style="{ width: (unit.hp / unit.maxHp * 100) + '%' }"></div>
+        <div class="hp-row">
+          <div class="hp-bar"><div class="hp-fill" :style="{ width: hpPercent(unit) + '%' }"></div></div>
+          <span class="hp-text">{{ unit.hp }}/{{ unit.maxHp }}</span>
         </div>
       </div>
     </div>
 
-    <div class="battle-field">
-      <div class="player-grid">
-        <div
-          v-for="(cell, idx) in playerCells"
-          :key="'p'+idx"
-          class="terrain-cell"
-          :style="{ backgroundColor: terrainColor }"
-        >
-          <span v-if="cell.marker && cell.marker.alive" class="marker player">
-            ▶<span class="marker-idx">{{ cell.marker.index }}</span>
-          </span>
+    <div class="center-col">
+      <div class="battle-field">
+        <div class="player-grid">
+          <div
+            v-for="(cell, idx) in playerCells"
+            :key="'p'+idx"
+            class="terrain-cell"
+            :style="{ backgroundColor: terrainColor }"
+          >
+            <span v-if="cell.marker && cell.marker.alive" class="marker player">
+              <span class="marker-num">{{ cell.marker.index }}</span>▶
+            </span>
+          </div>
+        </div>
+        <div class="field-gap"></div>
+        <div class="enemy-grid">
+          <div
+            v-for="(cell, idx) in enemyCells"
+            :key="'e'+idx"
+            class="terrain-cell"
+            :style="{ backgroundColor: terrainColor }"
+            :class="{ 'target-cell': selectingTarget && cell.marker && cell.marker.alive }"
+            @click="onCellClick(cell)"
+          >
+            <span v-if="cell.marker && cell.marker.alive" class="marker enemy">
+              ◀<span class="marker-num">{{ cell.marker.index }}</span>
+            </span>
+          </div>
         </div>
       </div>
-      <div class="field-gap"></div>
-      <div class="enemy-grid">
-        <div
-          v-for="(cell, idx) in enemyCells"
-          :key="'e'+idx"
-          class="terrain-cell"
-          :style="{ backgroundColor: terrainColor }"
-        >
-          <span v-if="cell.marker && cell.marker.alive" class="marker enemy">
-            ◀<span class="marker-idx">{{ cell.marker.index }}</span>
-          </span>
+
+      <div class="command-area">
+        <div v-if="currentActor" class="command-flow">
+          <div class="actor-label">{{ currentActor.name }} 的回合</div>
+          <div class="cmd-row">
+            <div class="cmd-btn" @click="selectCommand('ATTACK')">攻击</div>
+            <div class="cmd-btn" @click="selectCommand('DEFEND')">防御</div>
+            <div class="cmd-btn" @click="selectCommand('SKILL')">技能</div>
+            <div class="cmd-btn" @click="selectCommand('ITEM')">道具</div>
+            <div class="cmd-btn" @click="selectCommand('FLEE')">逃跑</div>
+            <div v-if="step === 'target'" class="cmd-btn cancel-btn" @click="cancelSelect">取消</div>
+          </div>
+          <div v-if="step === 'target'" class="target-hint">点击敌方目标</div>
         </div>
       </div>
     </div>
@@ -43,11 +62,11 @@
     <div class="status-col enemy-col">
       <div v-for="(unit, idx) in enemyUnits" :key="unit.id" class="unit-status" :class="{ dead: !unit.alive }">
         <div class="unit-header">
-          <span class="unit-idx">{{ idx + 1 }}</span>
           <span class="unit-name enemy-name">{{ unit.name }}</span>
         </div>
-        <div class="hp-bar enemy-bar">
-          <div class="hp-fill enemy-fill" :style="{ width: (unit.hp / unit.maxHp * 100) + '%' }"></div>
+        <div class="hp-row">
+          <div class="hp-bar enemy-bar"><div class="hp-fill enemy-fill" :style="{ width: hpPercent(unit) + '%' }"></div></div>
+          <span class="hp-text">{{ unit.hp }}/{{ unit.maxHp }}</span>
         </div>
       </div>
     </div>
@@ -55,15 +74,28 @@
 </template>
 
 <script setup>
-import { computed } from 'vue'
+import { computed, ref, watch } from 'vue'
 import { useMap } from '../../composables/useMap.js'
 
 const props = defineProps({
   combatants: { type: Array, required: true },
-  currentActorId: { type: String, default: '' }
+  currentActorId: { type: String, default: '' },
+  currentActor: { type: Object, default: null },
+  targets: { type: Array, default: () => [] }
 })
 
+const emit = defineEmits(['command'])
+
 const { mapState } = useMap()
+const step = ref('command')
+const selectedCommand = ref(null)
+
+watch(() => props.currentActor, () => {
+  step.value = 'command'
+  selectedCommand.value = null
+})
+
+const selectingTarget = computed(() => step.value === 'target')
 
 const playerUnits = computed(() =>
   props.combatants.filter(c => c.side === 'PLAYER')
@@ -72,6 +104,10 @@ const playerUnits = computed(() =>
 const enemyUnits = computed(() =>
   props.combatants.filter(c => c.side === 'ENEMY')
 )
+
+function hpPercent(unit) {
+  return Math.max(0, unit.hp / unit.maxHp * 100)
+}
 
 const terrainColor = computed(() => {
   const map = mapState.mapData
@@ -109,8 +145,6 @@ const enemyCells = computed(() => {
 
 function mapUnitsToGrid(units, side) {
   const markers = []
-  // Player: col 0=back, 1=mid, 2=front (front nearest enemy)
-  // Enemy: col 0=front (nearest player), 1=mid, 2=back
   const playerColMap = { BACK: 0, MID: 1, FRONT: 2 }
   const enemyColMap = { FRONT: 0, MID: 1, BACK: 2 }
 
@@ -118,20 +152,47 @@ function mapUnitsToGrid(units, side) {
     const unitRow = unit.row || 'FRONT'
     const col = side === 'player' ? (playerColMap[unitRow] ?? 2) : (enemyColMap[unitRow] ?? 0)
     const row = unit.slot ?? idx % 3
-    markers.push({ col, row, side, index: idx + 1, alive: unit.alive })
+    markers.push({ col, row, side, index: idx + 1, alive: unit.alive, id: unit.id })
   })
   return markers
+}
+
+function selectCommand(cmd) {
+  if (!props.currentActor) return
+  if (cmd === 'DEFEND' || cmd === 'FLEE') {
+    emit('command', { actorId: props.currentActor.id, type: cmd, targetId: null })
+    return
+  }
+  if (cmd === 'SKILL' || cmd === 'ITEM') {
+    selectedCommand.value = 'ATTACK'
+    step.value = 'target'
+    return
+  }
+  selectedCommand.value = cmd
+  step.value = 'target'
+}
+
+function onCellClick(cell) {
+  if (step.value !== 'target') return
+  if (!cell.marker || !cell.marker.alive) return
+  emit('command', { actorId: props.currentActor.id, type: selectedCommand.value, targetId: cell.marker.id })
+  step.value = 'command'
+  selectedCommand.value = null
+}
+
+function cancelSelect() {
+  step.value = 'command'
+  selectedCommand.value = null
 }
 </script>
 
 <style scoped>
-.battle-grid-container {
+.battle-layout {
   display: flex;
-  align-items: center;
-  gap: 0.5rem;
   height: 100%;
-  padding: 0.5rem;
+  padding: 0.3rem;
   box-sizing: border-box;
+  gap: 0.4rem;
 }
 
 .status-col {
@@ -139,7 +200,7 @@ function mapUnitsToGrid(units, side) {
   flex-direction: column;
   justify-content: center;
   gap: 0.5rem;
-  min-width: 5rem;
+  min-width: 5.5rem;
 }
 
 .unit-status {
@@ -163,16 +224,17 @@ function mapUnitsToGrid(units, side) {
   text-shadow: 0 0 4px var(--link-color);
 }
 
-.unit-idx {
-  font-size: 0.7em;
-  color: #888;
-  width: 1em;
-}
-
 .player-name { color: #4ecdc4; }
 .enemy-name { color: #e94560; }
 
+.hp-row {
+  display: flex;
+  align-items: center;
+  gap: 0.3rem;
+}
+
 .hp-bar {
+  flex: 1;
   height: 4px;
   background: #333;
   border-radius: 2px;
@@ -189,12 +251,24 @@ function mapUnitsToGrid(units, side) {
   background: #e94560;
 }
 
+.hp-text {
+  font-size: 0.65em;
+  color: #888;
+  white-space: nowrap;
+}
+
+.center-col {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
 .battle-field {
   flex: 1;
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 0;
 }
 
 .player-grid, .enemy-grid {
@@ -205,7 +279,7 @@ function mapUnitsToGrid(units, side) {
 }
 
 .field-gap {
-  width: 1.5rem;
+  width: 1.2rem;
 }
 
 .terrain-cell {
@@ -216,17 +290,74 @@ function mapUnitsToGrid(units, side) {
   border-radius: 2px;
 }
 
+.terrain-cell.target-cell {
+  cursor: pointer;
+  border-color: #e94560;
+}
+
+.terrain-cell.target-cell:hover {
+  box-shadow: 0 0 4px #e94560;
+}
+
 .marker {
   font-size: 1.1rem;
   font-weight: bold;
+  display: flex;
+  align-items: center;
 }
 
 .marker.player { color: #4ecdc4; }
 .marker.enemy { color: #e94560; }
 
-.marker-idx {
-  font-size: 0.5em;
-  vertical-align: super;
+.marker-num {
+  font-size: 0.6em;
   color: #fff;
+}
+
+.command-area {
+  border-top: 1px solid var(--panel-border-color);
+  padding: 0.3rem 0;
+  min-height: 3.5rem;
+}
+
+.command-flow {
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+}
+
+.actor-label {
+  font-size: 0.8em;
+  color: #4ecdc4;
+}
+
+.cmd-row {
+  display: flex;
+  gap: 0.3rem;
+  flex-wrap: wrap;
+}
+
+.cmd-btn {
+  padding: 0.25rem 0.5rem;
+  border: 1px solid var(--panel-border-color);
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 0.75em;
+  transition: border-color 0.2s, background-color 0.2s;
+}
+
+.cmd-btn:hover {
+  border-color: var(--link-color);
+  background-color: rgba(233, 69, 96, 0.1);
+}
+
+.cancel-btn {
+  border-color: #666;
+  color: #999;
+}
+
+.target-hint {
+  font-size: 0.75em;
+  color: #e94560;
 }
 </style>
