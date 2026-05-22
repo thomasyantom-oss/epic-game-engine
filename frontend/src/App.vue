@@ -39,15 +39,18 @@
             </div>
           </template>
           <template #combat-log>
-            <div class="scene-log" ref="combatLogEl">
-              <div
-                v-for="(entry, i) in allCombatLog"
-                :key="i"
-                :ref="el => { if (i === currentRoundStart) currentRoundEl = el }"
-              >
+            <div class="scene-log">
+              <div v-if="combatHistory.length > 0" class="history-toggle" @click="showHistory = !showHistory">
+                {{ showHistory ? '▼ 收起历史' : '▶ 查看历史 (' + combatHistory.length + ')' }}
+              </div>
+              <div v-if="showHistory" class="combat-history">
+                <div v-for="(entry, i) in combatHistory" :key="'h'+i">
+                  <TextRenderer :segments="entry.segments" />
+                </div>
+              </div>
+              <div v-for="(entry, i) in currentRound" :key="'c'+i">
                 <TextRenderer :segments="entry.segments" />
               </div>
-              <div :style="{ height: padHeight + 'px' }"></div>
             </div>
           </template>
         </TabPanel>
@@ -92,11 +95,9 @@ const { mapState, mapLog, loadMap, moveDirection, clearPoi } = useMap()
 
 const sceneHistory = ref([])
 const sceneLogEl = ref(null)
-const allCombatLog = ref([])
-const currentRoundStart = ref(0)
-const combatLogEl = ref(null)
-const padHeight = ref(0)
-let currentRoundEl = null
+const combatHistory = ref([])
+const currentRound = ref([])
+const showHistory = ref(false)
 let roundCounter = 0
 
 const mainTabs = computed(() => {
@@ -115,7 +116,7 @@ const funcTabs = [
 ]
 
 const logTabs = computed(() => {
-  if (combat.active || allCombatLog.value.length > 0) {
+  if (combat.active || combatHistory.value.length > 0 || currentRound.value.length > 0) {
     return [
       { id: 'combat-log', label: '战斗' },
       { id: 'all', label: '事件' }
@@ -134,8 +135,9 @@ const currentActions = computed(() => {
 
 watch(() => combat.active, (active) => {
     if (active) {
-        allCombatLog.value = []
-        currentRoundStart.value = 0
+        combatHistory.value = []
+        currentRound.value = []
+        showHistory.value = false
         roundCounter = 0
     } else {
         sceneHistory.value = []
@@ -162,20 +164,23 @@ watch(() => mapLog.value.length, () => {
 
 watch(() => combat.state?.phase, (phase) => {
     if (phase === 'VICTORY') {
-        allCombatLog.value.push({ segments: [{ text: '战斗胜利！', color: '#4ecdc4' }] })
+        currentRound.value.push({ segments: [{ text: '战斗胜利！', color: '#4ecdc4' }] })
     } else if (phase === 'DEFEAT') {
-        allCombatLog.value.push({ segments: [{ text: '战斗失败...', color: '#e94560' }] })
+        currentRound.value.push({ segments: [{ text: '战斗失败...', color: '#e94560' }] })
     }
 })
 
 watch(() => combat.results, (results) => {
     if (results && results.length > 0) {
         roundCounter++
-        currentRoundStart.value = allCombatLog.value.length
-        allCombatLog.value.push({ segments: [{ text: `— 第 ${roundCounter} 回合 —`, color: '#666' }] })
+        if (currentRound.value.length > 0) {
+            combatHistory.value.push(...currentRound.value)
+        }
+        currentRound.value = []
+        currentRound.value.push({ segments: [{ text: `— 第 ${roundCounter} 回合 —`, color: '#666' }] })
         results.forEach(r => {
             if (r.action === 'defend') {
-                allCombatLog.value.push({ segments: [
+                currentRound.value.push({ segments: [
                     { text: r.actorName, color: r.actorId?.startsWith('player') || r.actorId === state.playerId ? '#4ecdc4' : '#e94560' },
                     { text: ' 进行防御。', color: '#ffffff' }
                 ]})
@@ -192,17 +197,7 @@ watch(() => combat.results, (results) => {
                 { text: ' 点伤害', color: '#ffffff' }
             ]
             if (r.targetDefeated) segments.push({ text: '（击败）', color: '#e94560' })
-            allCombatLog.value.push({ segments })
-        })
-        nextTick(() => {
-            if (currentRoundEl && combatLogEl.value) {
-                const containerH = combatLogEl.value.clientHeight
-                const contentAfterMarker = combatLogEl.value.scrollHeight - currentRoundEl.offsetTop - containerH
-                padHeight.value = contentAfterMarker < 0 ? Math.abs(contentAfterMarker) : 0
-                nextTick(() => {
-                    combatLogEl.value.scrollTop = currentRoundEl.offsetTop
-                })
-            }
+            currentRound.value.push({ segments })
         })
     }
 }, { deep: true })
@@ -292,4 +287,16 @@ onMounted(async () => {
   margin: 0.3rem 0;
 }
 
+.history-toggle {
+  cursor: pointer;
+  color: var(--link-color);
+  margin-bottom: 0.3rem;
+}
+
+.combat-history {
+  border-bottom: 1px solid var(--panel-border-color);
+  margin-bottom: 0.3rem;
+  padding-bottom: 0.3rem;
+  opacity: 0.7;
+}
 </style>
