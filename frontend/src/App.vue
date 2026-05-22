@@ -108,6 +108,12 @@ const currentActions = computed(() => {
     return []
 })
 
+watch(() => combat.active, (active) => {
+    if (!active) {
+        sceneHistory.value = []
+    }
+})
+
 let sceneWatchReady = false
 watch(() => state.currentScene, (scene) => {
     if (!sceneWatchReady) {
