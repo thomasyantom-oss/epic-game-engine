@@ -90,7 +90,7 @@ const gridStyle = computed(() => {
 
 function cellStyle(cell) {
   const bg = cell.terrain?.color || '#333'
-  const color = cell.terrain?.textColor || '#ccc'
+  const color = cell.terrain?.textColor || '#fff'
   return {
     backgroundColor: bg,
     color: color,

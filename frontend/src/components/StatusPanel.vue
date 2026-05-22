@@ -47,7 +47,7 @@ defineProps({
 }
 
 .label {
-  color: #999;
+  color: var(--text-color);
 }
 
 .value {

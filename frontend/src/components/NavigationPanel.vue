@@ -9,7 +9,7 @@
       >{{ action.label }}</div>
     </div>
     <div v-else class="empty-hint">
-      <span style="color: #666">快捷行动</span>
+      <span>快捷行动</span>
     </div>
   </div>
 </template>
@@ -41,7 +41,7 @@ defineEmits(['action'])
     padding: 0.2rem 0;
     cursor: pointer;
     font-size: 0.85em;
-    color: #ccc;
+    color: var(--text-color);
     transition: color 0.2s;
 }
 

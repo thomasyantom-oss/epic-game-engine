@@ -31,7 +31,7 @@
               <div v-for="(entry, i) in sceneHistory" :key="i">
                 <TextRenderer v-if="entry.type === 'scene'" :segments="entry.segments" />
                 <div v-else-if="entry.type === 'action'" class="action-log">
-                  <span style="color: #999">→ {{ entry.text }}</span>
+                  <span>→ {{ entry.text }}</span>
                 </div>
               </div>
             </div>
@@ -124,7 +124,7 @@ watch(() => combat.results, (results) => {
     if (results && results.length > 0) {
         const entries = results.map(r => ({
             type: 'scene',
-            segments: [{ text: r.action === 'defend' ? `${r.actorName} 进行防御。` : `${r.actorName} 对 ${r.targetName} 造成 ${r.damage} 点伤害${r.targetDefeated ? '（击败）' : ''}`, color: '#e0e0e0' }]
+            segments: [{ text: r.action === 'defend' ? `${r.actorName} 进行防御。` : `${r.actorName} 对 ${r.targetName} 造成 ${r.damage} 点伤害${r.targetDefeated ? '（击败）' : ''}`, color: '#ffffff' }]
         }))
         sceneHistory.value = entries
     }
@@ -192,7 +192,7 @@ onMounted(() => {
 .panel-nav { grid-column: 2; grid-row: 2; min-height: 0; }
 
 .placeholder-content {
-  color: #666;
+  color: var(--text-color);
   font-style: italic;
   display: flex;
   align-items: center;

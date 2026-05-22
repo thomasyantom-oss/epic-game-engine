@@ -13,7 +13,7 @@
     </div>
   </div>
   <div class="scene-panel loading" v-else>
-    <span style="color: #666">加载中...</span>
+    <span>加载中...</span>
   </div>
 </template>
 

@@ -261,7 +261,7 @@ function cancelSelect() {
 
 .hp-text {
   font-size: 0.65em;
-  color: #888;
+  color: var(--text-color);
   white-space: nowrap;
 }
 
@@ -374,7 +374,7 @@ function cancelSelect() {
   padding: 0 0.3rem;
   border-radius: 3px;
   transition: color 0.2s;
-  color: #ccc;
+  color: var(--text-color);
 }
 
 .cmd-item:hover {
@@ -382,7 +382,7 @@ function cancelSelect() {
 }
 
 .cancel-item {
-  color: #666;
+  color: var(--text-color);
 }
 
 .target-hint {

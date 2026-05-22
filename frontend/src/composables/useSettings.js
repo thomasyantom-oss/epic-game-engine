@@ -5,7 +5,7 @@ const STORAGE_KEY = 'epic-settings'
 const defaults = {
     fontSize: '16px',
     bgColor: '#1a1a2e',
-    textColor: '#e0e0e0',
+    textColor: '#ffffff',
     panelBg: '#16213e',
     panelBorderColor: '#0f3460',
     linkColor: '#e94560',

@@ -82,19 +82,16 @@ const poiAction = computed(() => {
 }
 
 .region-name {
-  font-size: 1em;
   font-weight: bold;
   color: var(--text-color);
 }
 
 .coordinates {
-  font-size: 0.8em;
-  color: #888;
+  color: var(--text-color);
 }
 
 .section-label {
-  font-size: 0.75em;
-  color: #666;
+  color: var(--text-color);
   letter-spacing: 0.05em;
 }
 
@@ -111,19 +108,16 @@ const poiAction = computed(() => {
   align-items: center;
   justify-content: center;
   border-radius: 3px;
-  font-size: 0.85em;
   border: 1px solid #333;
 }
 
 .terrain-name {
-  font-size: 0.85em;
-  color: #ccc;
+  color: var(--text-color);
 }
 
 .poi-btn {
   cursor: pointer;
-  font-size: 0.85em;
-  color: #ccc;
+  color: var(--text-color);
   transition: color 0.2s;
 }
 
@@ -132,11 +126,10 @@ const poiAction = computed(() => {
 }
 
 .monster-list {
-  font-size: 0.85em;
 }
 
 .no-data {
-  color: #555;
+  color: var(--text-color);
   font-style: italic;
 }
 </style>

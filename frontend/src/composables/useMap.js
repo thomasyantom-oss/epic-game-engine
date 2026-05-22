@@ -25,18 +25,18 @@ function pushMoveLog(result) {
     mapLog.value.push({
         type: 'scene',
         segments: [
-            { text: '你来到了', color: '#e0e0e0' },
+            { text: '你来到了', color: '#ffffff' },
             { text: name, color: color },
-            { text: '。', color: '#e0e0e0' }
+            { text: '。', color: '#ffffff' }
         ]
     })
     if (result.poi) {
         mapLog.value.push({
             type: 'scene',
             segments: [
-                { text: '前方可以', color: '#e0e0e0' },
-                { text: result.poi.label, color: '#ffd93d' },
-                { text: '。', color: '#e0e0e0' }
+                { text: '前方可以', color: '#ffffff' },
+                { text: result.poi.label, color: '#ffffff' },
+                { text: '。', color: '#ffffff' }
             ]
         })
     }

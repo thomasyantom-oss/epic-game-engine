@@ -41,13 +41,13 @@ watch(() => props.entries.length, async () => {
 }
 
 .log-time {
-  color: #666;
+  color: var(--text-color);
   margin-right: 0.5rem;
   font-size: 0.8em;
 }
 
 .log-empty {
-  color: #666;
+  color: var(--text-color);
   font-style: italic;
 }
 </style>
