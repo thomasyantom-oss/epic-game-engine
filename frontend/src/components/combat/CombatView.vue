@@ -25,6 +25,7 @@ const currentActor = computed(() => getCurrentActor())
 
 async function onCommand(cmd) {
     if (cmd.type === 'FLEE') {
+        await new Promise(r => setTimeout(r, 800))
         exitCombat(state.playerId)
         loadMap()
         return
