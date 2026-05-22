@@ -1,5 +1,5 @@
 import { reactive } from 'vue'
-import { getCombatState, submitCombatCommands, getCombatTargets } from '../api/client.js'
+import { getCombatState, submitCombatCommands, getCombatTargets, endCombat as apiEndCombat } from '../api/client.js'
 
 const combat = reactive({
     active: false,
@@ -65,7 +65,8 @@ export function useCombat() {
         }
     }
 
-    function exitCombat() {
+    function exitCombat(playerId) {
+        if (playerId) apiEndCombat(playerId)
         combat.active = false
         combat.state = null
         combat.results = []

@@ -43,6 +43,12 @@ public class CombatController {
         return ResponseEntity.ok(new RoundResultDto(results, toDto(state)));
     }
 
+    @PostMapping("/{playerId}/end")
+    public ResponseEntity<Void> endCombat(@PathVariable String playerId) {
+        combatService.endCombat(playerId);
+        return ResponseEntity.ok().build();
+    }
+
     @GetMapping("/{playerId}/targets/{combatantId}")
     public List<TargetDto> getValidTargets(@PathVariable String playerId,
                                            @PathVariable String combatantId) {

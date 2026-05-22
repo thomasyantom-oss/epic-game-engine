@@ -54,6 +54,10 @@ export function useMap() {
             mapState.playerY = pos.y
         }
         mapState.mapData = await fetchMap(pos?.mapId || 'world_map')
+        if (mapState.mapData) {
+            const poi = mapState.mapData.pois.find(p => p.x === mapState.playerX && p.y === mapState.playerY)
+            mapState.poi = poi || null
+        }
     }
 
     async function moveDirection(direction) {

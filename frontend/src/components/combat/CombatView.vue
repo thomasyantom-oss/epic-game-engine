@@ -24,6 +24,11 @@ const { loadMap } = useMap()
 const currentActor = computed(() => getCurrentActor())
 
 async function onCommand(cmd) {
+    if (cmd.type === 'FLEE') {
+        exitCombat(state.playerId)
+        loadMap()
+        return
+    }
     addCommand(cmd.actorId, cmd.type, cmd.targetId)
     if (allCommandsIssued()) {
         await new Promise(r => setTimeout(r, 800))
@@ -31,7 +36,7 @@ async function onCommand(cmd) {
 
         if (combat.state?.phase === 'VICTORY' || combat.state?.phase === 'DEFEAT') {
             setTimeout(() => {
-                exitCombat()
+                exitCombat(state.playerId)
                 loadMap()
             }, 2000)
         }

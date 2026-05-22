@@ -68,6 +68,7 @@ import { useSettings } from './composables/useSettings.js'
 import { usePanelRefresh } from './composables/usePanelRefresh.js'
 import { useCombat } from './composables/useCombat.js'
 import { useMap } from './composables/useMap.js'
+import { getCombatState } from './api/client.js'
 
 const { state, initialize, doAction } = useGameState()
 const { handleRefresh } = usePanelRefresh()
@@ -169,9 +170,13 @@ async function handleAction(action) {
     }
 }
 
-onMounted(() => {
+onMounted(async () => {
   initialize()
-  loadMap()
+  await loadMap()
+  const combatState = await getCombatState(state.playerId)
+  if (combatState) {
+    await enterCombat(state.playerId)
+  }
 })
 </script>
 

@@ -41,6 +41,10 @@ export async function getCombatTargets(playerId, combatantId) {
     return response.json()
 }
 
+export async function endCombat(playerId) {
+    await fetch(`${BASE_URL}/combat/${playerId}/end`, { method: 'POST' })
+}
+
 export async function fetchMap(mapId) {
     const response = await fetch(`${BASE_URL}/map/${mapId}`)
     if (!response.ok) return null

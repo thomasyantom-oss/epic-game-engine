@@ -56,12 +56,9 @@
           <span class="cmd-item" :class="{ active: selectedCommand === 'SKILL' }" @click="selectCommand('SKILL')">技能</span>
           <span class="cmd-item" :class="{ active: selectedCommand === 'ITEM' }" @click="selectCommand('ITEM')">道具</span>
           <span class="cmd-item" @click="selectCommand('FLEE')">逃跑</span>
+          <span v-if="step === 'target'" class="cmd-item cancel-item" @click="cancelSelect">取消</span>
         </div>
         <div class="cmd-col cmd-detail">
-          <template v-if="step === 'target'">
-            <span class="target-hint">选择目标</span>
-            <span class="cmd-item cancel-item" @click="cancelSelect">取消</span>
-          </template>
         </div>
       </div>
     </div>
@@ -166,7 +163,11 @@ function mapUnitsToGrid(units, side) {
 
 function selectCommand(cmd) {
   if (!props.currentActor) return
-  if (cmd === 'DEFEND' || cmd === 'FLEE') {
+  if (cmd === 'FLEE') {
+    emit('command', { actorId: props.currentActor.id, type: 'FLEE', targetId: null })
+    return
+  }
+  if (cmd === 'DEFEND') {
     emit('command', { actorId: props.currentActor.id, type: cmd, targetId: null })
     return
   }
@@ -300,7 +301,7 @@ function cancelSelect() {
 
 .terrain-cell.target-cell {
   cursor: pointer;
-  border-color: #e94560;
+  border: 3px solid #e94560;
 }
 
 .terrain-cell.target-cell:hover {
@@ -379,10 +380,6 @@ function cancelSelect() {
 }
 
 .cancel-item {
-  color: var(--text-color);
-}
-
-.target-hint {
   color: #e94560;
 }
 </style>
