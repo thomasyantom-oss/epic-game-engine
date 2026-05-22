@@ -269,8 +269,10 @@ function cancelSelect() {
 }
 
 .grid-area {
-  display: grid;
-  grid-template-columns: 1fr 5% 1fr;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 5%;
   padding: 5%;
   min-width: 0;
   min-height: 0;
@@ -281,9 +283,12 @@ function cancelSelect() {
   grid-template-columns: repeat(3, 1fr);
   grid-template-rows: repeat(3, 1fr);
   gap: 2px;
+  height: 90%;
+  aspect-ratio: 1;
 }
 
 .grid-gap {
+  display: none;
 }
 
 .terrain-cell {
@@ -340,7 +345,6 @@ function cancelSelect() {
 }
 
 .cmd-section {
-  flex: 1;
   display: flex;
   flex-direction: column;
   justify-content: center;
