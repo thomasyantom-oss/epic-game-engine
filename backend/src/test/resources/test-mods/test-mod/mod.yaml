@@ -1,0 +1,5 @@
+id: test-mod
+name: "Test Module"
+version: "1.0.0"
+load-order: 0
+dependencies: []
