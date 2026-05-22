@@ -1,4 +1,4 @@
-import { reactive } from 'vue'
+import { reactive, ref } from 'vue'
 import { fetchMap, mapMove, mapMoveTo, getMapPosition } from '../api/client.js'
 import { useGameState } from './useGameState.js'
 
@@ -10,6 +10,37 @@ const mapState = reactive({
     currentPath: [],
     poi: null
 })
+
+const mapLog = ref([])
+
+const TERRAIN_NAMES = { forest: '密林', grass: '草地', road: '道路', sand: '沙地', water: '水域', town: '城镇', mountain: '山地' }
+
+function pushMoveLog(result) {
+    if (!result.success || !mapState.mapData) return
+    const row = mapState.mapData.terrain[result.newY]
+    const ch = row.charAt(result.newX)
+    const terrain = mapState.mapData.terrains.find(t => t.char === ch)
+    const name = terrain ? (TERRAIN_NAMES[terrain.id] || ch) : ch
+    const color = terrain?.color || '#999'
+    mapLog.value.push({
+        type: 'scene',
+        segments: [
+            { text: '你来到了', color: '#e0e0e0' },
+            { text: name, color: color },
+            { text: '。', color: '#e0e0e0' }
+        ]
+    })
+    if (result.poi) {
+        mapLog.value.push({
+            type: 'scene',
+            segments: [
+                { text: '前方可以', color: '#e0e0e0' },
+                { text: result.poi.label, color: '#ffd93d' },
+                { text: '。', color: '#e0e0e0' }
+            ]
+        })
+    }
+}
 
 let pathTimer = null
 
@@ -34,6 +65,7 @@ export function useMap() {
             mapState.playerX = result.newX
             mapState.playerY = result.newY
             mapState.poi = result.poi || null
+            pushMoveLog(result)
         }
         return result
     }
@@ -68,6 +100,7 @@ export function useMap() {
             if (result.success) {
                 mapState.playerX = result.newX
                 mapState.playerY = result.newY
+                pushMoveLog(result)
                 if (result.poi) {
                     mapState.poi = result.poi
                     mapState.moving = false
@@ -97,5 +130,5 @@ export function useMap() {
         mapState.poi = null
     }
 
-    return { mapState, loadMap, moveDirection, moveToTarget, cancelPath, clearPoi }
+    return { mapState, mapLog, loadMap, moveDirection, moveToTarget, cancelPath, clearPoi }
 }

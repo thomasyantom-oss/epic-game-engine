@@ -69,7 +69,7 @@ const { state, initialize, doAction } = useGameState()
 const { handleRefresh } = usePanelRefresh()
 const { combat, enterCombat } = useCombat()
 const { settings } = useSettings()
-const { mapState, loadMap, moveDirection, clearPoi } = useMap()
+const { mapState, mapLog, loadMap, moveDirection, clearPoi } = useMap()
 
 const sceneHistory = ref([])
 const sceneLogEl = ref(null)
@@ -121,29 +121,19 @@ watch(() => state.currentScene, (scene) => {
     }
 })
 
-function getTerrainName(ch) {
-    if (!mapState.mapData) return ch
-    const t = mapState.mapData.terrains.find(t => t.char === ch)
-    if (!t) return ch
-    const names = { forest: '密林', grass: '草地', road: '道路', sand: '沙地', water: '水域', town: '城镇', mountain: '山地' }
-    return names[t.id] || ch
-}
+watch(() => mapLog.value.length, () => {
+    const latest = mapLog.value[mapLog.value.length - 1]
+    if (latest) {
+        sceneHistory.value.push(latest)
+        nextTick(() => {
+            if (sceneLogEl.value) sceneLogEl.value.scrollTop = sceneLogEl.value.scrollHeight
+        })
+    }
+})
 
 async function handleAction(action) {
     if (action.type === 'mapMove') {
-        const result = await moveDirection(action.params.direction)
-        if (result && result.success) {
-            const row = mapState.mapData.terrain[result.newY]
-            const ch = row.charAt(result.newX)
-            const name = getTerrainName(ch)
-            sceneHistory.value.push({ type: 'action', text: `你来到了${name}。` })
-            if (result.poi) {
-                sceneHistory.value.push({ type: 'action', text: `前方可以${result.poi.label}。` })
-            }
-            nextTick(() => {
-                if (sceneLogEl.value) sceneLogEl.value.scrollTop = sceneLogEl.value.scrollHeight
-            })
-        }
+        await moveDirection(action.params.direction)
         return
     }
     sceneHistory.value.push({ type: 'action', text: action.label })
