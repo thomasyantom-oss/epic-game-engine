@@ -1,0 +1,6 @@
+id: base-rules
+name: "基础规则"
+version: "1.0.0"
+description: "默认游戏规则 - 战斗、移动、场景"
+load-order: 0
+dependencies: []

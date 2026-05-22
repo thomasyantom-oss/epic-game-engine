@@ -29,6 +29,10 @@ public class EntityStore {
         return tagIndex.getByTag(tag);
     }
 
+    public List<Entity> getByTagAsList(String tag) {
+        return new ArrayList<>(getByTag(tag));
+    }
+
     public Set<Entity> getByComponent(String componentType) {
         return entities.values().stream()
                 .filter(e -> e.hasComponent(componentType))
