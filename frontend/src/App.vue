@@ -39,8 +39,8 @@
             </div>
           </template>
           <template #combat-log>
-            <div class="scene-log" ref="combatLogEl" style="padding-bottom: 80%;">
-              <div v-for="(entry, i) in combatLog" :key="i">
+            <div class="scene-log" ref="combatLogEl">
+              <div v-for="(entry, i) in reversedCombatLog" :key="i">
                 <TextRenderer :segments="entry.segments" />
               </div>
             </div>
@@ -89,6 +89,8 @@ const sceneHistory = ref([])
 const sceneLogEl = ref(null)
 const combatLog = ref([])
 const combatLogEl = ref(null)
+
+const reversedCombatLog = computed(() => [...combatLog.value].reverse())
 
 const mainTabs = computed(() => {
   if (combat.active) {
@@ -156,7 +158,7 @@ watch(() => combat.state?.phase, (phase) => {
         combatLog.value.push({ segments: [{ text: '战斗失败...', color: '#e94560' }] })
     }
     nextTick(() => {
-        if (combatLogEl.value) combatLogEl.value.scrollTop = combatLogEl.value.scrollHeight
+        if (combatLogEl.value) combatLogEl.value.scrollTop = 0
     })
 })
 
@@ -186,7 +188,7 @@ watch(() => combat.results, (results) => {
             combatLog.value.push({ segments })
         })
         nextTick(() => {
-            if (combatLogEl.value) combatLogEl.value.scrollTop = combatLogEl.value.scrollHeight
+            if (combatLogEl.value) combatLogEl.value.scrollTop = 0
         })
     }
 }, { deep: true })
