@@ -130,7 +130,7 @@ async function handleAction(action) {
         await moveDirection(action.params.direction)
         return
     }
-    sceneHistory.value.push({ type: 'action', text: action.label })
+    sceneHistory.value = [{ type: 'action', text: action.label }]
     if (mapState.poi && action.type === 'move') {
         clearPoi()
     }
