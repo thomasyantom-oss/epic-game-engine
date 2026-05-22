@@ -41,7 +41,7 @@
           <template #combat-log>
             <div class="scene-log">
               <div v-if="combatHistory.length > 0" class="history-toggle" @click="showHistory = !showHistory">
-                {{ showHistory ? '▼ 收起历史' : '▶ 查看历史 (' + combatHistory.length + ')' }}
+                {{ showHistory ? '▼ 收起历史' : '▶ 查看历史 (' + historyRounds + '回合)' }}
               </div>
               <div v-if="showHistory" class="combat-history">
                 <div v-for="(entry, i) in combatHistory" :key="'h'+i">
@@ -97,6 +97,7 @@ const sceneHistory = ref([])
 const sceneLogEl = ref(null)
 const combatHistory = ref([])
 const currentRound = ref([])
+const historyRounds = ref(0)
 const showHistory = ref(false)
 let roundCounter = 0
 
@@ -137,6 +138,7 @@ watch(() => combat.active, (active) => {
     if (active) {
         combatHistory.value = []
         currentRound.value = []
+        historyRounds.value = 0
         showHistory.value = false
         roundCounter = 0
     } else {
@@ -175,6 +177,7 @@ watch(() => combat.results, (results) => {
         roundCounter++
         if (currentRound.value.length > 0) {
             combatHistory.value.push(...currentRound.value)
+            historyRounds.value++
         }
         currentRound.value = []
         currentRound.value.push({ segments: [{ text: `— 第 ${roundCounter} 回合 —`, color: '#666' }] })
@@ -226,6 +229,7 @@ onMounted(async () => {
   const combatState = await getCombatState(state.playerId)
   if (combatState) {
     await enterCombat(state.playerId)
+    currentRound.value = [{ segments: [{ text: '— 战斗进行中（第 ' + (combatState.round || 1) + ' 回合）—', color: '#666' }] }]
   }
 })
 </script>
