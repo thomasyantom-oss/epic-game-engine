@@ -40,7 +40,11 @@
           </template>
           <template #combat-log>
             <div class="scene-log" ref="combatLogEl">
-              <div v-for="(entry, i) in reversedCombatLog" :key="i">
+              <div v-for="(entry, i) in combatLog" :key="i">
+                <TextRenderer :segments="entry.segments" />
+              </div>
+              <div ref="currentRoundMarker"></div>
+              <div v-for="(entry, i) in currentRoundLog" :key="'cur'+i">
                 <TextRenderer :segments="entry.segments" />
               </div>
             </div>
@@ -88,9 +92,9 @@ const { mapState, mapLog, loadMap, moveDirection, clearPoi } = useMap()
 const sceneHistory = ref([])
 const sceneLogEl = ref(null)
 const combatLog = ref([])
+const currentRoundLog = ref([])
 const combatLogEl = ref(null)
-
-const reversedCombatLog = computed(() => [...combatLog.value].reverse())
+const currentRoundMarker = ref(null)
 
 const mainTabs = computed(() => {
   if (combat.active) {
@@ -108,7 +112,7 @@ const funcTabs = [
 ]
 
 const logTabs = computed(() => {
-  if (combat.active || combatLog.value.length > 0) {
+  if (combat.active || combatLog.value.length > 0 || currentRoundLog.value.length > 0) {
     return [
       { id: 'combat-log', label: '战斗' },
       { id: 'all', label: '事件' }
@@ -128,6 +132,7 @@ const currentActions = computed(() => {
 watch(() => combat.active, (active) => {
     if (active) {
         combatLog.value = []
+        currentRoundLog.value = []
     } else {
         sceneHistory.value = []
     }
@@ -153,22 +158,25 @@ watch(() => mapLog.value.length, () => {
 
 watch(() => combat.state?.phase, (phase) => {
     if (phase === 'VICTORY') {
-        combatLog.value.push({ segments: [{ text: '战斗胜利！', color: '#4ecdc4' }] })
+        currentRoundLog.value.push({ segments: [{ text: '战斗胜利！', color: '#4ecdc4' }] })
     } else if (phase === 'DEFEAT') {
-        combatLog.value.push({ segments: [{ text: '战斗失败...', color: '#e94560' }] })
+        currentRoundLog.value.push({ segments: [{ text: '战斗失败...', color: '#e94560' }] })
     }
-    nextTick(() => {
-        if (combatLogEl.value) combatLogEl.value.scrollTop = 0
-    })
 })
 
 watch(() => combat.results, (results) => {
     if (results && results.length > 0) {
         const roundNum = (combat.state?.round || 1) - 1
-        combatLog.value.push({ segments: [{ text: `— 第 ${roundNum} 回合 —`, color: '#666' }] })
+        // Move previous currentRoundLog into history
+        if (currentRoundLog.value.length > 0) {
+            combatLog.value.push(...currentRoundLog.value)
+        }
+        // Build new round entries
+        currentRoundLog.value = []
+        currentRoundLog.value.push({ segments: [{ text: `— 第 ${roundNum} 回合 —`, color: '#666' }] })
         results.forEach(r => {
             if (r.action === 'defend') {
-                combatLog.value.push({ segments: [
+                currentRoundLog.value.push({ segments: [
                     { text: r.actorName, color: r.actorId?.startsWith('player') || r.actorId === state.playerId ? '#4ecdc4' : '#e94560' },
                     { text: ' 进行防御。', color: '#ffffff' }
                 ]})
@@ -185,10 +193,12 @@ watch(() => combat.results, (results) => {
                 { text: ' 点伤害', color: '#ffffff' }
             ]
             if (r.targetDefeated) segments.push({ text: '（击败）', color: '#e94560' })
-            combatLog.value.push({ segments })
+            currentRoundLog.value.push({ segments })
         })
         nextTick(() => {
-            if (combatLogEl.value) combatLogEl.value.scrollTop = 0
+            if (currentRoundMarker.value) {
+                currentRoundMarker.value.scrollIntoView({ block: 'start' })
+            }
         })
     }
 }, { deep: true })
