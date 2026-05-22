@@ -31,7 +31,7 @@
               <div v-for="(entry, i) in sceneHistory" :key="i">
                 <TextRenderer v-if="entry.type === 'scene'" :segments="entry.segments" />
                 <div v-else-if="entry.type === 'action'" class="action-log">
-                  <span>→ {{ entry.text }}</span>
+                  <span>{{ entry.text }}</span>
                 </div>
               </div>
             </div>
