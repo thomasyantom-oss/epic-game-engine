@@ -40,11 +40,11 @@
           </template>
           <template #combat-log>
             <div class="scene-log" ref="combatLogEl">
-              <div v-for="(entry, i) in combatLog" :key="i">
-                <TextRenderer :segments="entry.segments" />
-              </div>
-              <div ref="currentRoundMarker"></div>
-              <div v-for="(entry, i) in currentRoundLog" :key="'cur'+i">
+              <div
+                v-for="(entry, i) in allCombatLog"
+                :key="i"
+                :ref="el => { if (i === currentRoundStart) currentRoundEl = el }"
+              >
                 <TextRenderer :segments="entry.segments" />
               </div>
             </div>
@@ -91,10 +91,11 @@ const { mapState, mapLog, loadMap, moveDirection, clearPoi } = useMap()
 
 const sceneHistory = ref([])
 const sceneLogEl = ref(null)
-const combatLog = ref([])
-const currentRoundLog = ref([])
+const allCombatLog = ref([])
+const currentRoundStart = ref(0)
 const combatLogEl = ref(null)
-const currentRoundMarker = ref(null)
+let currentRoundEl = null
+let roundCounter = 0
 
 const mainTabs = computed(() => {
   if (combat.active) {
@@ -112,7 +113,7 @@ const funcTabs = [
 ]
 
 const logTabs = computed(() => {
-  if (combat.active || combatLog.value.length > 0 || currentRoundLog.value.length > 0) {
+  if (combat.active || allCombatLog.value.length > 0) {
     return [
       { id: 'combat-log', label: '战斗' },
       { id: 'all', label: '事件' }
@@ -131,8 +132,9 @@ const currentActions = computed(() => {
 
 watch(() => combat.active, (active) => {
     if (active) {
-        combatLog.value = []
-        currentRoundLog.value = []
+        allCombatLog.value = []
+        currentRoundStart.value = 0
+        roundCounter = 0
     } else {
         sceneHistory.value = []
     }
@@ -158,25 +160,20 @@ watch(() => mapLog.value.length, () => {
 
 watch(() => combat.state?.phase, (phase) => {
     if (phase === 'VICTORY') {
-        currentRoundLog.value.push({ segments: [{ text: '战斗胜利！', color: '#4ecdc4' }] })
+        allCombatLog.value.push({ segments: [{ text: '战斗胜利！', color: '#4ecdc4' }] })
     } else if (phase === 'DEFEAT') {
-        currentRoundLog.value.push({ segments: [{ text: '战斗失败...', color: '#e94560' }] })
+        allCombatLog.value.push({ segments: [{ text: '战斗失败...', color: '#e94560' }] })
     }
 })
 
 watch(() => combat.results, (results) => {
     if (results && results.length > 0) {
-        const roundNum = (combat.state?.round || 1) - 1
-        // Move previous currentRoundLog into history
-        if (currentRoundLog.value.length > 0) {
-            combatLog.value.push(...currentRoundLog.value)
-        }
-        // Build new round entries
-        currentRoundLog.value = []
-        currentRoundLog.value.push({ segments: [{ text: `— 第 ${roundNum} 回合 —`, color: '#666' }] })
+        roundCounter++
+        currentRoundStart.value = allCombatLog.value.length
+        allCombatLog.value.push({ segments: [{ text: `— 第 ${roundCounter} 回合 —`, color: '#666' }] })
         results.forEach(r => {
             if (r.action === 'defend') {
-                currentRoundLog.value.push({ segments: [
+                allCombatLog.value.push({ segments: [
                     { text: r.actorName, color: r.actorId?.startsWith('player') || r.actorId === state.playerId ? '#4ecdc4' : '#e94560' },
                     { text: ' 进行防御。', color: '#ffffff' }
                 ]})
@@ -193,13 +190,11 @@ watch(() => combat.results, (results) => {
                 { text: ' 点伤害', color: '#ffffff' }
             ]
             if (r.targetDefeated) segments.push({ text: '（击败）', color: '#e94560' })
-            currentRoundLog.value.push({ segments })
+            allCombatLog.value.push({ segments })
         })
         nextTick(() => {
-            if (currentRoundMarker.value && combatLogEl.value) {
-                const containerRect = combatLogEl.value.getBoundingClientRect()
-                const markerRect = currentRoundMarker.value.getBoundingClientRect()
-                combatLogEl.value.scrollTop += markerRect.top - containerRect.top
+            if (currentRoundEl && combatLogEl.value) {
+                combatLogEl.value.scrollTop = currentRoundEl.offsetTop
             }
         })
     }
