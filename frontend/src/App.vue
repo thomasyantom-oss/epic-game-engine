@@ -124,10 +124,7 @@ watch(() => state.currentScene, (scene) => {
 watch(() => mapLog.value.length, () => {
     const latest = mapLog.value[mapLog.value.length - 1]
     if (latest) {
-        sceneHistory.value.push(latest)
-        nextTick(() => {
-            if (sceneLogEl.value) sceneLogEl.value.scrollTop = sceneLogEl.value.scrollHeight
-        })
+        sceneHistory.value = [latest]
     }
 })
 
