@@ -46,7 +46,7 @@
       <div class="command-area">
         <div class="actor-box">
           <div class="actor-avatar"></div>
-          <div class="actor-name" v-if="currentActor">{{ currentActor.name }}</div>
+          <div class="actor-name">{{ currentActor?.name || '' }}</div>
         </div>
         <div class="cmd-grid">
           <div class="cmd-btn" @click="selectCommand('ATTACK')">攻击</div>
@@ -55,7 +55,9 @@
           <div class="cmd-btn" @click="selectCommand('ITEM')">道具</div>
           <div class="cmd-btn" @click="selectCommand('FLEE')">逃跑</div>
           <div v-if="step === 'target'" class="cmd-btn cancel-btn" @click="cancelSelect">取消</div>
-          <div v-if="step === 'target'" class="target-hint">点击敌方目标</div>
+        </div>
+        <div class="cmd-hint">
+          <span v-if="step === 'target'" class="target-hint">点击敌方目标</span>
         </div>
       </div>
     </div>
@@ -349,18 +351,18 @@ function cancelSelect() {
   color: #4ecdc4;
   text-align: center;
   white-space: nowrap;
+  min-height: 1em;
 }
 
 .cmd-grid {
   display: grid;
-  grid-template-columns: repeat(3, auto);
-  grid-template-rows: repeat(3, auto);
+  grid-template-columns: repeat(3, 3rem);
   gap: 0.2rem;
   align-items: center;
 }
 
 .cmd-btn {
-  padding: 0.2rem 0.5rem;
+  padding: 0.2rem 0;
   border: 1px solid var(--panel-border-color);
   border-radius: 4px;
   cursor: pointer;
@@ -379,9 +381,15 @@ function cancelSelect() {
   color: #999;
 }
 
+.cmd-hint {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
 .target-hint {
-  font-size: 0.7em;
+  font-size: 0.8em;
   color: #e94560;
-  grid-column: span 2;
 }
 </style>
