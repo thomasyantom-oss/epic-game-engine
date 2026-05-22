@@ -114,10 +114,7 @@ const currentActions = computed(() => {
 
 watch(() => state.currentScene, (scene) => {
     if (scene && scene.description) {
-        sceneHistory.value.push({ type: 'scene', segments: scene.description })
-        nextTick(() => {
-            if (sceneLogEl.value) sceneLogEl.value.scrollTop = sceneLogEl.value.scrollHeight
-        })
+        sceneHistory.value = [{ type: 'scene', segments: scene.description }]
     }
 })
 
