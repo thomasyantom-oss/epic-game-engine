@@ -96,9 +96,6 @@ const navTabs = [
 ]
 
 const currentActions = computed(() => {
-    if (combat.active) {
-        return [{ id: 'cancel', label: '取消', type: 'combatCancel', params: {} }]
-    }
     return []
 })
 

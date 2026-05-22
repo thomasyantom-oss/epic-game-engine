@@ -20,9 +20,11 @@ import BattleGrid from './BattleGrid.vue'
 import CommandBar from './CommandBar.vue'
 import { useCombat } from '../../composables/useCombat.js'
 import { useGameState } from '../../composables/useGameState.js'
+import { useMap } from '../../composables/useMap.js'
 
 const { combat, getCurrentActor, addCommand, allCommandsIssued, executeRound, loadTargets, exitCombat } = useCombat()
 const { state, initialize } = useGameState()
+const { loadMap } = useMap()
 
 const commandBarRef = ref(null)
 const currentActor = computed(() => getCurrentActor())
@@ -36,7 +38,7 @@ async function onCommand(cmd) {
         if (combat.state?.phase === 'VICTORY' || combat.state?.phase === 'DEFEAT') {
             setTimeout(() => {
                 exitCombat()
-                initialize()
+                loadMap()
             }, 2000)
         }
     } else {

@@ -21,9 +21,7 @@
           <span class="target-hp">({{ target.hp }}/{{ target.maxHp }})</span>
         </div>
       </div>
-    </div>
-    <div v-else class="waiting">
-      结算中...
+      <div v-if="step === 'target'" class="cmd-btn cancel-btn" @click="cancel">取消</div>
     </div>
   </div>
 </template>
@@ -81,6 +79,7 @@ defineExpose({ cancel })
 .command-bar {
   padding: 0.4rem 0.5rem;
   border-top: 1px solid var(--panel-border-color);
+  min-height: 2.5rem;
 }
 
 .command-flow {
@@ -137,9 +136,8 @@ defineExpose({ cancel })
   font-size: 0.9em;
 }
 
-.waiting {
-  color: #666;
-  font-style: italic;
-  font-size: 0.85em;
+.cancel-btn {
+  border-color: #666;
+  color: #999;
 }
 </style>
