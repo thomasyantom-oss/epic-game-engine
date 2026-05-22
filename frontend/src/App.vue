@@ -1,11 +1,11 @@
 <template>
   <div class="app-container">
-    <CombatView v-if="combat.active" />
-    <div v-else class="game-grid">
+    <div class="game-grid">
       <div class="panel-main">
         <TabPanel :tabs="mainTabs" default-tab="map">
           <template #map>
-            <div class="map-split">
+            <CombatView v-if="combat.active" />
+            <div v-else class="map-split">
               <MapGrid :map-size="settings.mapSize || 10" />
               <MapInfoPanel @poi-action="handleAction" />
             </div>
@@ -78,9 +78,9 @@ const { mapState, mapLog, loadMap, moveDirection, clearPoi } = useMap()
 const sceneHistory = ref([])
 const sceneLogEl = ref(null)
 
-const mainTabs = [
-  { id: 'map', label: '地图' }
-]
+const mainTabs = computed(() => [
+  { id: 'map', label: combat.active ? '战场' : '地图' }
+])
 
 const funcTabs = [
   { id: 'status', label: '人物' },
@@ -96,6 +96,9 @@ const navTabs = [
 ]
 
 const currentActions = computed(() => {
+    if (combat.active) {
+        return [{ id: 'cancel', label: '取消', type: 'combatCancel', params: {} }]
+    }
     return []
 })
 
