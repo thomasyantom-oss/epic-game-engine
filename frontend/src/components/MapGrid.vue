@@ -31,7 +31,8 @@ const containerEl = ref(null)
 const cellSize = ref(32)
 
 const props = defineProps({
-  mapSize: { type: Number, default: 10 }
+  mapSize: { type: Number, default: 10 },
+  disabled: { type: Boolean, default: false }
 })
 
 const playerX = computed(() => mapState.playerX)
@@ -106,6 +107,7 @@ function cellStyle(cell) {
 }
 
 function onCellClick(cell) {
+  if (props.disabled) return
   if (cell.x === playerX.value && cell.y === playerY.value) return
   moveToTarget(cell.x, cell.y)
 }
@@ -116,7 +118,7 @@ function onKeyDown(e) {
     w: 'UP', W: 'UP', s: 'DOWN', S: 'DOWN', a: 'LEFT', A: 'LEFT', d: 'RIGHT', D: 'RIGHT'
   }
   const dir = dirMap[e.key]
-  if (dir && !e.target.closest('input, textarea, select')) {
+  if (dir && !props.disabled && !e.target.closest('input, textarea, select')) {
     e.preventDefault()
     moveDirection(dir)
   }
