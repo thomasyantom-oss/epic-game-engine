@@ -23,11 +23,12 @@
 </template>
 
 <script setup>
-import { computed, ref, onMounted, onUnmounted } from 'vue'
+import { computed, ref, onMounted, onUnmounted, nextTick } from 'vue'
 import { useMap } from '../composables/useMap.js'
 
 const { mapState, moveDirection, moveToTarget } = useMap()
 const containerEl = ref(null)
+const cellSize = ref(32)
 
 const props = defineProps({
   mapSize: { type: Number, default: 10 }
@@ -38,6 +39,16 @@ const playerY = computed(() => mapState.playerY)
 
 const viewportSize = computed(() => props.mapSize)
 
+function calcCellSize() {
+  if (!containerEl.value) return
+  const rect = containerEl.value.getBoundingClientRect()
+  const rows = viewportSize.value
+  const cols = viewportSize.value
+  const byHeight = Math.floor((rect.height - 8) / rows)
+  const byWidth = Math.floor((rect.width - 8) / cols)
+  cellSize.value = Math.max(20, Math.min(byHeight, byWidth))
+}
+
 const visibleCells = computed(() => {
   if (!mapState.mapData) return []
   const map = mapState.mapData
@@ -47,11 +58,9 @@ const visibleCells = computed(() => {
   let offsetX = playerX.value - halfView
   let offsetY = playerY.value - halfView
 
-  // Clamp to map edges
   offsetX = Math.max(0, Math.min(offsetX, map.width - viewportSize.value))
   offsetY = Math.max(0, Math.min(offsetY, map.height - viewportSize.value))
 
-  // If map smaller than viewport, start at 0
   if (map.width <= viewportSize.value) offsetX = 0
   if (map.height <= viewportSize.value) offsetY = 0
 
@@ -74,7 +83,7 @@ const gridStyle = computed(() => {
   const cols = Math.min(viewportSize.value, mapState.mapData?.width || viewportSize.value)
   return {
     display: 'grid',
-    gridTemplateColumns: `repeat(${cols}, 1fr)`,
+    gridTemplateColumns: `repeat(${cols}, ${cellSize.value}px)`,
     gap: '0px'
   }
 })
@@ -89,7 +98,10 @@ function cellStyle(cell) {
     display: 'flex',
     alignItems: 'center',
     justifyContent: 'center',
-    cursor: 'pointer'
+    cursor: 'pointer',
+    width: cellSize.value + 'px',
+    height: cellSize.value + 'px',
+    fontSize: Math.max(10, cellSize.value * 0.45) + 'px'
   }
 }
 
@@ -110,12 +122,18 @@ function onKeyDown(e) {
   }
 }
 
+let resizeObserver = null
+
 onMounted(() => {
   window.addEventListener('keydown', onKeyDown)
+  nextTick(() => calcCellSize())
+  resizeObserver = new ResizeObserver(() => calcCellSize())
+  if (containerEl.value) resizeObserver.observe(containerEl.value)
 })
 
 onUnmounted(() => {
   window.removeEventListener('keydown', onKeyDown)
+  if (resizeObserver) resizeObserver.disconnect()
 })
 </script>
 
@@ -124,22 +142,17 @@ onUnmounted(() => {
   width: 100%;
   height: 100%;
   overflow: hidden;
-  padding: 0.5rem;
+  padding: 4px;
   box-sizing: border-box;
 }
 
 .map-grid {
-  max-width: 100%;
-  max-height: 100%;
   width: fit-content;
 }
 
 .map-cell {
   user-select: none;
   transition: transform 0.1s;
-  width: 2.2rem;
-  height: 2.2rem;
-  font-size: 0.9rem;
 }
 
 .map-cell:hover {

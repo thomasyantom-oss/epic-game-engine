@@ -5,7 +5,10 @@
       <div class="panel-main">
         <TabPanel :tabs="mainTabs" default-tab="map">
           <template #map>
-            <MapGrid :map-size="settings.mapSize || 10" />
+            <div class="map-split">
+              <MapGrid :map-size="settings.mapSize || 10" />
+              <MapInfoPanel @poi-action="handleAction" />
+            </div>
           </template>
         </TabPanel>
       </div>
@@ -58,6 +61,7 @@ import StatusPanel from './components/StatusPanel.vue'
 import SettingsPanel from './components/SettingsPanel.vue'
 import NavigationPanel from './components/NavigationPanel.vue'
 import MapGrid from './components/MapGrid.vue'
+import MapInfoPanel from './components/MapInfoPanel.vue'
 import CombatView from './components/combat/CombatView.vue'
 import { useGameState } from './composables/useGameState.js'
 import { useSettings } from './composables/useSettings.js'
@@ -93,22 +97,12 @@ const navTabs = [
 
 const currentActions = computed(() => {
     const actions = []
-    // Direction buttons for map movement
     actions.push(
         { id: 'move-up', label: '↑ 北', type: 'mapMove', params: { direction: 'UP' } },
         { id: 'move-down', label: '↓ 南', type: 'mapMove', params: { direction: 'DOWN' } },
         { id: 'move-left', label: '← 西', type: 'mapMove', params: { direction: 'LEFT' } },
         { id: 'move-right', label: '→ 东', type: 'mapMove', params: { direction: 'RIGHT' } }
     )
-    // POI action when standing on a point of interest
-    if (mapState.poi) {
-        actions.push({
-            id: 'poi-' + mapState.poi.id,
-            label: mapState.poi.label,
-            type: 'move',
-            params: { target: mapState.poi.target }
-        })
-    }
     return actions
 })
 
@@ -165,7 +159,24 @@ onMounted(() => {
   height: 100%;
 }
 
-.panel-main { grid-column: 1; grid-row: 1; min-height: 0; }
+.panel-main { grid-column: 1; grid-row: 1; min-height: 0; overflow: hidden; }
+
+.map-split {
+  display: flex;
+  height: 100%;
+  gap: 0.5rem;
+}
+
+.map-split > :first-child {
+  flex: 1;
+  min-width: 0;
+}
+
+.map-split > :last-child {
+  width: 8rem;
+  flex-shrink: 0;
+  border-left: 1px solid var(--panel-border-color);
+}
 .panel-func { grid-column: 2; grid-row: 1; min-height: 0; }
 .panel-log { grid-column: 1; grid-row: 2; min-height: 0; }
 .panel-nav { grid-column: 2; grid-row: 2; min-height: 0; }
