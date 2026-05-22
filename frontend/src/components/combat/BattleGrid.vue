@@ -325,7 +325,7 @@ function cancelSelect() {
 }
 
 .command-area {
-  border-top: 1px solid var(--panel-border-color);
+  border-top: 2px solid var(--panel-border-color);
   height: 3.6rem;
   display: flex;
   align-items: stretch;
