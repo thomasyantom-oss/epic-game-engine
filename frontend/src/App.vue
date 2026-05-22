@@ -127,10 +127,26 @@ watch(() => combat.state?.phase, (phase) => {
 
 watch(() => combat.results, (results) => {
     if (results && results.length > 0) {
-        const entries = results.map(r => ({
-            type: 'scene',
-            segments: [{ text: r.action === 'defend' ? `${r.actorName} 进行防御。` : `${r.actorName} 对 ${r.targetName} 造成 ${r.damage} 点伤害${r.targetDefeated ? '（击败）' : ''}`, color: '#ffffff' }]
-        }))
+        const entries = results.map(r => {
+            if (r.action === 'defend') {
+                return { type: 'scene', segments: [
+                    { text: r.actorName, color: r.actorId?.startsWith('player') || r.actorId === state.playerId ? '#4ecdc4' : '#e94560' },
+                    { text: ' 进行防御。', color: '#ffffff' }
+                ]}
+            }
+            const actorColor = (r.actorId?.startsWith('player') || r.actorId === state.playerId) ? '#4ecdc4' : '#e94560'
+            const targetColor = (r.targetId?.startsWith('player') || r.targetId === state.playerId) ? '#4ecdc4' : '#e94560'
+            const segments = [
+                { text: r.actorName, color: actorColor },
+                { text: ' 对 ', color: '#ffffff' },
+                { text: r.targetName, color: targetColor },
+                { text: ' 造成 ', color: '#ffffff' },
+                { text: `${r.damage}`, color: '#ffd93d' },
+                { text: ' 点伤害', color: '#ffffff' }
+            ]
+            if (r.targetDefeated) segments.push({ text: '（击败）', color: '#e94560' })
+            return { type: 'scene', segments }
+        })
         sceneHistory.value = entries
     }
 }, { deep: true })

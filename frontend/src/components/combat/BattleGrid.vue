@@ -59,7 +59,7 @@
             <span class="cmd-item" @click="selectCommand('FLEE')">逃跑</span>
           </div>
           <div class="cmd-line" v-else-if="step === 'target'">
-            <span class="target-hint">← 点击敌方目标</span>
+            <span class="target-hint">选择目标</span>
             <span class="cmd-item cancel-item" @click="cancelSelect">取消</span>
           </div>
           <div class="cmd-line" v-else></div>
