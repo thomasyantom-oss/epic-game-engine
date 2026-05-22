@@ -1,18 +1,18 @@
 <template>
   <div class="battle-layout">
-    <div class="battle-row">
-      <div class="status-col player-col">
-        <div v-for="(unit, idx) in playerUnits" :key="unit.id" class="unit-status" :class="{ dead: !unit.alive }">
-          <div class="unit-header" :class="{ active: unit.id === currentActorId }">
-            <span class="unit-name player-name">{{ unit.name }}</span>
-            <span class="hp-text">{{ unit.hp }}/{{ unit.maxHp }}</span>
-          </div>
-          <div class="hp-bar">
-            <div class="hp-fill" :style="{ width: hpPercent(unit) + '%' }"></div>
-          </div>
+    <div class="status-col player-col">
+      <div v-for="(unit, idx) in playerUnits" :key="unit.id" class="unit-status" :class="{ dead: !unit.alive }">
+        <div class="unit-header" :class="{ active: unit.id === currentActorId }">
+          <span class="unit-name player-name">{{ unit.name }}</span>
+          <span class="hp-text">{{ unit.hp }}/{{ unit.maxHp }}</span>
+        </div>
+        <div class="hp-bar">
+          <div class="hp-fill" :style="{ width: hpPercent(unit) + '%' }"></div>
         </div>
       </div>
+    </div>
 
+    <div class="center-col">
       <div class="grid-area">
         <div class="player-grid">
           <div
@@ -43,39 +43,39 @@
         </div>
       </div>
 
-      <div class="status-col enemy-col">
-        <div v-for="(unit, idx) in enemyUnits" :key="unit.id" class="unit-status" :class="{ dead: !unit.alive }">
-          <div class="unit-header">
-            <span class="unit-name enemy-name">{{ unit.name }}</span>
-            <span class="hp-text">{{ unit.hp }}/{{ unit.maxHp }}</span>
+      <div class="command-row">
+        <div class="actor-box">
+          <div class="actor-avatar"></div>
+        </div>
+        <div class="cmd-section">
+          <div class="cmd-line actor-line">{{ currentActor?.name || '' }}</div>
+          <div class="cmd-line" v-if="step === 'command' && currentActor">
+            <span class="cmd-item" @click="selectCommand('ATTACK')">攻击</span>
+            <span class="cmd-item" @click="selectCommand('DEFEND')">防御</span>
+            <span class="cmd-item" @click="selectCommand('SKILL')">技能</span>
+            <span class="cmd-item" @click="selectCommand('ITEM')">道具</span>
+            <span class="cmd-item" @click="selectCommand('FLEE')">逃跑</span>
           </div>
-          <div class="hp-bar enemy-bar">
-            <div class="hp-fill enemy-fill" :style="{ width: hpPercent(unit) + '%' }"></div>
+          <div class="cmd-line" v-else-if="step === 'target'">
+            <span class="cmd-item cancel-item" @click="cancelSelect">取消</span>
           </div>
+          <div class="cmd-line" v-else></div>
+        </div>
+        <div class="cmd-hint-area">
+          <span v-if="step === 'target'" class="target-hint">选择目标</span>
         </div>
       </div>
     </div>
 
-    <div class="command-row">
-      <div class="actor-box">
-        <div class="actor-avatar"></div>
-      </div>
-      <div class="cmd-section">
-        <div class="cmd-line actor-line">{{ currentActor?.name || '' }}</div>
-        <div class="cmd-line" v-if="step === 'command' && currentActor">
-          <span class="cmd-item" @click="selectCommand('ATTACK')">攻击</span>
-          <span class="cmd-item" @click="selectCommand('DEFEND')">防御</span>
-          <span class="cmd-item" @click="selectCommand('SKILL')">技能</span>
-          <span class="cmd-item" @click="selectCommand('ITEM')">道具</span>
-          <span class="cmd-item" @click="selectCommand('FLEE')">逃跑</span>
+    <div class="status-col enemy-col">
+      <div v-for="(unit, idx) in enemyUnits" :key="unit.id" class="unit-status" :class="{ dead: !unit.alive }">
+        <div class="unit-header">
+          <span class="unit-name enemy-name">{{ unit.name }}</span>
+          <span class="hp-text">{{ unit.hp }}/{{ unit.maxHp }}</span>
         </div>
-        <div class="cmd-line" v-else-if="step === 'target'">
-          <span class="cmd-item cancel-item" @click="cancelSelect">取消</span>
+        <div class="hp-bar enemy-bar">
+          <div class="hp-fill enemy-fill" :style="{ width: hpPercent(unit) + '%' }"></div>
         </div>
-        <div class="cmd-line" v-else></div>
-      </div>
-      <div class="cmd-hint-area">
-        <span v-if="step === 'target'" class="target-hint">选择目标</span>
       </div>
     </div>
   </div>
@@ -197,14 +197,8 @@ function cancelSelect() {
 <style scoped>
 .battle-layout {
   display: grid;
-  grid-template-rows: 1fr auto;
-  height: 100%;
-}
-
-.battle-row {
-  display: grid;
   grid-template-columns: 15% 1fr 15%;
-  min-height: 0;
+  height: 100%;
 }
 
 .status-col {
@@ -213,6 +207,18 @@ function cancelSelect() {
   justify-content: center;
   gap: 0.8rem;
   padding: 0.5rem;
+  border-right: 2px solid var(--panel-border-color);
+}
+
+.enemy-col {
+  border-right: none;
+  border-left: 2px solid var(--panel-border-color);
+}
+
+.center-col {
+  display: grid;
+  grid-template-rows: 1fr auto;
+  min-height: 0;
 }
 
 .unit-status {
@@ -317,11 +323,10 @@ function cancelSelect() {
 
 .command-row {
   border-top: 2px solid var(--panel-border-color);
-  height: 3.6rem;
   display: flex;
   align-items: center;
   gap: 0.5rem;
-  padding: 0 0.5rem;
+  padding: 0.5rem;
 }
 
 .actor-box {
