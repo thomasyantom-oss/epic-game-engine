@@ -58,7 +58,7 @@ class SnapshotControllerTest {
     @Test
     void performAction_firesEventAndReturnsSnapshot() {
         var request = Map.of("playerId", "player1", "type", "test_action", "params", Map.of());
-        WorldSnapshot snapshot = rest.postForObject("/api/v2/action", request, WorldSnapshot.class);
+        WorldSnapshot snapshot = rest.postForObject("/api/action", request, WorldSnapshot.class);
 
         assertThat(snapshot).isNotNull();
         assertThat(snapshot.playerId()).isEqualTo("player1");

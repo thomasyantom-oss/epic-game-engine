@@ -18,7 +18,7 @@ public class SnapshotController {
         this.snapshotService = snapshotService;
     }
 
-    @PostMapping("/v2/action")
+    @PostMapping("/action")
     public WorldSnapshot performAction(@RequestBody Map<String, Object> request) {
         String playerId = (String) request.get("playerId");
         String type = (String) request.get("type");

@@ -1,8 +1,7 @@
 package com.epic.engine.debug;
 
-import com.epic.engine.mod.ModRegistry;
-import com.epic.engine.save.PlayerState;
-import com.epic.engine.save.PlayerStateRepository;
+import com.epic.engine.core.Entity;
+import com.epic.engine.core.EntityStore;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -13,27 +12,26 @@ import java.util.Map;
 @RequestMapping("/api/debug")
 public class DebugController {
 
-    private final PlayerStateRepository playerStateRepository;
-    private final ModRegistry modRegistry;
+    private final EntityStore entityStore;
     private final GameEventLog eventLog;
 
-    public DebugController(PlayerStateRepository playerStateRepository,
-                           ModRegistry modRegistry,
-                           GameEventLog eventLog) {
-        this.playerStateRepository = playerStateRepository;
-        this.modRegistry = modRegistry;
+    public DebugController(EntityStore entityStore, GameEventLog eventLog) {
+        this.entityStore = entityStore;
         this.eventLog = eventLog;
     }
 
-    @GetMapping("/state/{playerId}")
-    public ResponseEntity<Map<String, Object>> getPlayerDebugState(@PathVariable String playerId) {
-        return playerStateRepository.findByPlayerId(playerId)
-                .map(state -> ResponseEntity.ok(Map.<String, Object>of(
-                        "playerId", state.getPlayerId(),
-                        "currentScene", state.getCurrentScene(),
-                        "sceneExists", modRegistry.getScene(state.getCurrentScene()).isPresent()
-                )))
-                .orElse(ResponseEntity.notFound().build());
+    @GetMapping("/state/{entityId}")
+    public ResponseEntity<Map<String, Object>> getEntityState(@PathVariable String entityId) {
+        Entity entity = entityStore.get(entityId);
+        if (entity == null) return ResponseEntity.notFound().build();
+
+        return ResponseEntity.ok(Map.of(
+                "id", entity.getId(),
+                "tags", entity.getTags(),
+                "components", entity.getAllComponents().stream()
+                        .map(c -> Map.of("type", c.getType(), "data", c.getAll()))
+                        .toList()
+        ));
     }
 
     @GetMapping("/log")
@@ -42,19 +40,11 @@ public class DebugController {
         return eventLog.getRecentEntries(count);
     }
 
-    @GetMapping("/log/{playerId}")
-    public List<GameEventLog.LogEntry> getPlayerLog(
-            @PathVariable String playerId,
-            @RequestParam(defaultValue = "50") int count) {
-        return eventLog.getEntriesForPlayer(playerId, count);
-    }
-
     @GetMapping("/health")
     public Map<String, Object> health() {
         return Map.of(
                 "status", "running",
-                "scenes", modRegistry.getAllSceneIds().size(),
-                "players", playerStateRepository.count()
+                "entities", entityStore.all().size()
         );
     }
 }
