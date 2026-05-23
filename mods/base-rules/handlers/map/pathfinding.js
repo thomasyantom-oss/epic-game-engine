@@ -9,6 +9,24 @@ engine.on("map.pathfind", 100, function(event) {
     var mapData = map.getComponent("MapData");
     var width = mapData.getInt("width");
     var height = mapData.getInt("height");
+    var terrain = mapData.get("terrain");
+    var terrains = mapData.get("terrains");
+
+    var abilities = entity.hasComponent("Abilities") ? entity.getComponent("Abilities") : null;
+
+    function isPassable(x, y) {
+        if (terrain === null || terrains === null) return true;
+        var row = terrain.get(y);
+        var ch = row.charAt(x);
+        var info = terrains.get("" + ch);
+        if (info === null) return true;
+        var requires = info.get("requires");
+        if (requires === null || requires.size() === 0) return true;
+        for (var i = 0; i < requires.size(); i++) {
+            if (abilities === null || !abilities.has(requires.get(i).toString())) return false;
+        }
+        return true;
+    }
 
     var startX = pos.getInt("x");
     var startY = pos.getInt("y");
@@ -46,6 +64,7 @@ engine.on("map.pathfind", 100, function(event) {
             var n = neighbors[i];
             if (n.x < 0 || n.x >= width || n.y < 0 || n.y >= height) continue;
             if (closed[key(n.x, n.y)]) continue;
+            if (!isPassable(n.x, n.y)) continue;
 
             var g = current.g + 1;
             var h = Math.abs(n.x - targetX) + Math.abs(n.y - targetY);

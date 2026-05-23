@@ -25,9 +25,12 @@ public record WorldSnapshot(
     public record FormOption(String value, String label, String description) {}
     public record StatusBar(String id, String label, int current, int max, String color, int priority) {}
     public record BuffEntry(String id, String name, String remaining, int priority) {}
-    public record MapSnapshot(String mapId, int playerX, int playerY, int width, int height,
-                               List<String> terrain, Map<String, TerrainInfo> terrains) {}
-    public record TerrainInfo(String color, String textColor) {}
+    public record MapSnapshot(String mapId, String mapName, int playerX, int playerY, int width, int height,
+                               List<String> terrain, Map<String, TerrainInfo> terrains,
+                               String currentTerrain, String currentTerrainName,
+                               List<PoiInfo> pois) {}
+    public record TerrainInfo(String color, String textColor, List<String> requires, double moveCost) {}
+    public record PoiInfo(String id, int x, int y, String type, String target, String label) {}
     public record CombatSnapshot(String combatId, String phase, int round, List<CombatantInfo> combatants) {}
     public record CombatantInfo(String id, String name, String side, int hp, int maxHp, boolean alive) {}
     public record ActionOption(String type, String label, Map<String, Object> params) {}

@@ -28,6 +28,37 @@ engine.on("map.move", 100, function(event) {
         return;
     }
 
+    // Check terrain passability
+    var terrain = mapData.get("terrain");
+    var terrains = mapData.get("terrains");
+    if (terrain !== null && terrains !== null) {
+        var row = terrain.get(newY);
+        var ch = row.charAt(newX);
+        var terrainInfo = terrains.get("" + ch);
+
+        if (terrainInfo !== null) {
+            var requires = terrainInfo.get("requires");
+            if (requires !== null && requires.size() > 0) {
+                // Check if entity has required abilities
+                var abilities = entity.hasComponent("Abilities") ? entity.getComponent("Abilities") : null;
+                var canPass = true;
+                for (var i = 0; i < requires.size(); i++) {
+                    var req = requires.get(i);
+                    if (abilities === null || !abilities.has(req.toString())) {
+                        canPass = false;
+                        break;
+                    }
+                }
+                if (!canPass) {
+                    event.set("success", false);
+                    event.set("blocked", true);
+                    event.set("reason", "需要能力: " + requires);
+                    return;
+                }
+            }
+        }
+    }
+
     pos.set("x", newX);
     pos.set("y", newY);
     event.set("success", true);

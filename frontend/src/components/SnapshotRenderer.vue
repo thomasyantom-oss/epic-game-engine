@@ -8,14 +8,8 @@
                    @move="onMove" @moveTo="onMoveTo" />
         </template>
         <template #battle v-if="snapshot.combat">
-          <div class="combat-info">
-            <div>战斗 - 第 {{ snapshot.combat.round }} 回合 ({{ snapshot.combat.phase }})</div>
-            <div v-for="c in snapshot.combat.combatants" :key="c.id" class="combatant-row">
-              <span :style="{ color: c.side === 'PLAYER' ? '#4ecdc4' : '#e94560' }">{{ c.name }}</span>
-              <span> HP: {{ c.hp }}/{{ c.maxHp }}</span>
-              <span v-if="!c.alive" style="color: #e94560"> (击败)</span>
-            </div>
-          </div>
+          <BattleGrid :combat="snapshot.combat" :player-id="snapshot.playerId"
+                      @command="$emit('action', $event)" />
         </template>
       </TabPanel>
     </div>
@@ -29,6 +23,9 @@
               {{ buff.name }} ({{ buff.remaining }})
             </div>
           </div>
+        </template>
+        <template #mapinfo v-if="snapshot.map">
+          <MapInfoPanel :map="snapshot.map" @poi-action="onPoiAction" />
         </template>
         <template #settings>
           <SettingsPanel />
@@ -67,6 +64,8 @@ import StatusBars from './StatusBars.vue'
 import ActionPanel from './ActionPanel.vue'
 import SettingsPanel from './SettingsPanel.vue'
 import MapGrid from './MapGrid.vue'
+import MapInfoPanel from './MapInfoPanel.vue'
+import BattleGrid from './combat/BattleGrid.vue'
 import { useSettings } from '../composables/useSettings.js'
 
 const props = defineProps({ snapshot: Object })
@@ -80,7 +79,15 @@ const mainTabs = computed(() => {
   return [{ id: 'map', label: '地图' }]
 })
 
-const funcTabs = [{ id: 'status', label: '人物' }, { id: 'settings', label: '设置' }]
+const funcTabs = computed(() => {
+  const tabs = [{ id: 'status', label: '人物' }]
+  if (props.snapshot?.map) {
+    tabs.push({ id: 'mapinfo', label: '地图' })
+  }
+  tabs.push({ id: 'settings', label: '设置' })
+  return tabs
+})
+
 const logTabs = [{ id: 'events', label: '事件' }]
 const navTabs = [{ id: 'actions', label: '快捷' }]
 
@@ -95,6 +102,10 @@ function onMove(direction) {
 
 function onMoveTo(x, y) {
   emit('action', { type: 'map_moveto', params: { targetX: x, targetY: y, entityId: props.snapshot?.playerId } })
+}
+
+function onPoiAction(poi) {
+  emit('action', { type: 'poi_interact', params: { poiId: poi.id, poiType: poi.type, target: poi.target } })
 }
 </script>
 

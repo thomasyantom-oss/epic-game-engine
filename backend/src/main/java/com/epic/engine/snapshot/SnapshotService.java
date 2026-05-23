@@ -98,6 +98,8 @@ public class SnapshotService {
         if (map == null || !map.hasComponent("MapData")) return null;
         Component mapData = map.getComponent("MapData");
 
+        String mapName = mapData.has("name") ? mapData.getString("name") : mapId;
+
         @SuppressWarnings("unchecked")
         List<String> terrain = (List<String>) mapData.get("terrain");
 
@@ -105,14 +107,56 @@ public class SnapshotService {
         Map<String, Map<String, Object>> terrainsRaw = (Map<String, Map<String, Object>>) mapData.get("terrains");
         Map<String, WorldSnapshot.TerrainInfo> terrains = new LinkedHashMap<>();
         if (terrainsRaw != null) {
-            terrainsRaw.forEach((ch, info) -> terrains.put(ch,
-                    new WorldSnapshot.TerrainInfo((String) info.get("color"), (String) info.get("textColor"))));
+            terrainsRaw.forEach((ch, info) -> {
+                @SuppressWarnings("unchecked")
+                List<String> requires = info.get("requires") != null
+                        ? ((List<?>) info.get("requires")).stream().map(Object::toString).toList()
+                        : List.of();
+                double moveCost = info.get("moveCost") != null
+                        ? ((Number) info.get("moveCost")).doubleValue()
+                        : 1.0;
+                terrains.put(ch, new WorldSnapshot.TerrainInfo(
+                        (String) info.get("color"), (String) info.get("textColor"),
+                        requires, moveCost));
+            });
+        }
+
+        // Current terrain info
+        int px = pos.getInt("x");
+        int py = pos.getInt("y");
+        String currentTerrain = null;
+        String currentTerrainName = null;
+        if (terrain != null && py < terrain.size()) {
+            String row = terrain.get(py);
+            if (px < row.length()) {
+                currentTerrain = String.valueOf(row.charAt(px));
+                if (terrainsRaw != null && terrainsRaw.containsKey(currentTerrain)) {
+                    Object idObj = terrainsRaw.get(currentTerrain).get("id");
+                    if (idObj != null) currentTerrainName = idObj.toString();
+                }
+            }
+        }
+
+        // POIs
+        @SuppressWarnings("unchecked")
+        List<Map<String, Object>> poisRaw = (List<Map<String, Object>>) mapData.get("pois");
+        List<WorldSnapshot.PoiInfo> pois = new ArrayList<>();
+        if (poisRaw != null) {
+            for (Map<String, Object> poiMap : poisRaw) {
+                pois.add(new WorldSnapshot.PoiInfo(
+                        (String) poiMap.get("id"),
+                        ((Number) poiMap.get("x")).intValue(),
+                        ((Number) poiMap.get("y")).intValue(),
+                        (String) poiMap.get("type"),
+                        (String) poiMap.get("target"),
+                        (String) poiMap.get("label")));
+            }
         }
 
         return new WorldSnapshot.MapSnapshot(
-                mapId, pos.getInt("x"), pos.getInt("y"),
+                mapId, mapName, px, py,
                 mapData.getInt("width"), mapData.getInt("height"),
-                terrain, terrains);
+                terrain, terrains, currentTerrain, currentTerrainName, pois);
     }
 
     private WorldSnapshot.CombatSnapshot buildCombatSnapshot(String playerId) {

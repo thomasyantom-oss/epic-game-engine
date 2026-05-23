@@ -9,6 +9,7 @@ engine.on("world.init", 100, function(event) {
     mapComponent.set("name", mapData.get("name"));
     mapComponent.set("terrain", mapData.get("terrain"));
     mapComponent.set("terrains", terrainsData.get("terrains"));
+    mapComponent.set("pois", mapData.get("pois"));
     mapEntity.addComponent(mapComponent);
     mapEntity.addTag("map");
     store.add(mapEntity);

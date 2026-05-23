@@ -1,8 +1,43 @@
 terrains:
-  林: { color: "#2d5a27", textColor: "#8fce00" }
-  草: { color: "#4a7c3f", textColor: "#c8e6c9" }
-  路: { color: "#8d6e63", textColor: "#d7ccc8" }
-  城: { color: "#78909c", textColor: "#ffffff" }
-  山: { color: "#5d4037", textColor: "#bcaaa4" }
-  水: { color: "#1565c0", textColor: "#90caf9" }
-  沙: { color: "#f9a825", textColor: "#fff9c4" }
+  林:
+    id: forest
+    requires: []
+    color: "#2d6a4f"
+    textColor: "#a0d0b0"
+    moveCost: 1.2
+  草:
+    id: grass
+    requires: []
+    color: "#40916c"
+    textColor: "#c0e8d0"
+    moveCost: 1.0
+  路:
+    id: road
+    requires: []
+    color: "#6b705c"
+    textColor: "#b0b5a0"
+    moveCost: 0.5
+  沙:
+    id: sand
+    requires: []
+    color: "#a68a64"
+    textColor: "#d4c4a0"
+    moveCost: 1.5
+  水:
+    id: water
+    requires: [swim]
+    color: "#4a90d9"
+    textColor: "#cce4ff"
+    moveCost: 2.0
+  城:
+    id: town
+    requires: []
+    color: "#ffd93d"
+    textColor: "#333333"
+    moveCost: 0.5
+  山:
+    id: mountain
+    requires: [fly]
+    color: "#8b7355"
+    textColor: "#d4c4a0"
+    moveCost: 3.0
