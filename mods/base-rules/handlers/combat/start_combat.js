@@ -53,6 +53,7 @@ engine.on("combat.start_encounter", 100, function(event) {
 // Handle combat command action from frontend
 engine.on("action.combat_command", 100, function(event) {
     var playerId = event.get("playerId");
+    if (playerId === null || playerId === undefined) return;
     var command = event.get("command");
     var targetId = event.get("targetId");
 
@@ -73,7 +74,7 @@ engine.on("action.combat_command", 100, function(event) {
 
     // Handle FLEE — exit combat immediately
     if (command === "FLEE") {
-        endCombat(player, combatId);
+        endCombat(player, combatId, false);
         return;
     }
 
@@ -108,11 +109,11 @@ engine.on("action.combat_command", 100, function(event) {
     var state = combat.getComponent("CombatState");
     var phase = state.getString("phase");
     if (phase === "VICTORY" || phase === "DEFEAT") {
-        endCombat(player, combatId);
+        endCombat(player, combatId, phase === "DEFEAT");
     }
 });
 
-function endCombat(player, combatId) {
+function endCombat(player, combatId, isDefeat) {
     var combatants = store.getByTagAsList("combat:" + combatId);
     player.removeTag("combat:" + combatId);
     store.reindexTags(player);
@@ -123,5 +124,18 @@ function endCombat(player, combatId) {
         }
     }
     store.remove(combatId);
+
+    // On defeat, respawn with full stats
+    if (isDefeat) {
+        var health = player.getComponent("Health");
+        if (health !== null) {
+            health.set("hp", health.getInt("maxHp"));
+        }
+        var mana = player.getComponent("Mana");
+        if (mana !== null) {
+            mana.set("mp", mana.getInt("maxMp"));
+        }
+    }
+
     persistence.save(player);
 }
