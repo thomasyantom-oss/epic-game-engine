@@ -11,11 +11,24 @@ engine.on("combat.start_encounter", 100, function(event) {
     // Create combat state entity
     var combatEntity = engine.createEntity(combatId);
     var combatState = engine.newComponent("CombatState");
-    combatState.set("round", 0);
+    combatState.set("round", 1);
     combatState.set("phase", "COMMAND");
     combatEntity.addComponent(combatState);
     combatEntity.addTag("active_combat");
     store.add(combatEntity);
+
+    // Initialize combat log with first round marker
+    var logComp = engine.newComponent("CombatLog");
+    var entries = engine.newList();
+    var firstRound = engine.newList();
+    var s = engine.newMap();
+    s.put("text", "— 第 1 回合 —");
+    s.put("color", "highlight");
+    s.put("round", 1);
+    firstRound.add(s);
+    entries.add(firstRound);
+    logComp.set("entries", entries);
+    combatEntity.addComponent(logComp);
 
     // Tag the player as in this combat
     var player = store.get(playerId);

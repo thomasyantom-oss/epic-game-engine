@@ -4,7 +4,6 @@ engine.on("combat.resolve_round", 100, function(event) {
     var combat = store.get(combatId);
     var state = combat.getComponent("CombatState");
 
-    state.set("round", state.getInt("round") + 1);
     state.set("phase", "RESOLVE");
 
     // Clear defending status from previous round
@@ -45,6 +44,8 @@ engine.on("combat.resolve_round", 100, function(event) {
     if (endEvent.has("ended") && endEvent.get("ended")) {
         state.set("phase", endEvent.get("result"));
     } else {
+        // Advance to next round
+        state.set("round", state.getInt("round") + 1);
         state.set("phase", "COMMAND");
     }
 });

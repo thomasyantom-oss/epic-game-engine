@@ -1,24 +1,22 @@
-// Record combat events as log entries on the combat entity (after combat_flow increments round)
-engine.on("combat.resolve_round", 101, function(event) {
+// After a round resolves, add separator for the new round (combat_flow already incremented)
+engine.on("combat.resolve_round", 200, function(event) {
     var combatId = event.get("combatId");
     var combat = store.get(combatId);
-    if (combat === null) return;
+    if (combat === null || !combat.hasComponent("CombatLog")) return;
+    if (!combat.hasComponent("CombatState")) return;
 
-    // Initialize log component if not present
-    if (!combat.hasComponent("CombatLog")) {
-        combat.addComponent(engine.newComponent("CombatLog"));
-        combat.getComponent("CombatLog").set("entries", engine.newList());
+    var phase = combat.getComponent("CombatState").getString("phase");
+    // Only add next round separator if combat continues
+    if (phase === "COMMAND") {
+        var currentRound = combat.getComponent("CombatState").getInt("round");
+        var segments = engine.newList();
+        var s = engine.newMap();
+        s.put("text", "— 第 " + currentRound + " 回合 —");
+        s.put("color", "highlight");
+        s.put("round", currentRound);
+        segments.add(s);
+        combat.getComponent("CombatLog").get("entries").add(segments);
     }
-
-    // Add round separator
-    var round = combat.getComponent("CombatState").getInt("round");
-    var segments = engine.newList();
-    var s = engine.newMap();
-    s.put("text", "— 第 " + round + " 回合 —");
-    s.put("color", "highlight");
-    s.put("round", round);
-    segments.add(s);
-    combat.getComponent("CombatLog").get("entries").add(segments);
 });
 
 // Log damage dealt - store as pre-formatted TextSegment arrays with semantic roles
