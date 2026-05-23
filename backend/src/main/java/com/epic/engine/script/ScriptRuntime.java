@@ -17,6 +17,7 @@ import java.io.InputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -128,6 +129,21 @@ public class ScriptRuntime implements AutoCloseable {
         @HostAccess.Export
         public ArrayList<Object> newList() {
             return new ArrayList<>();
+        }
+
+        @HostAccess.Export
+        public WorldSnapshot.StatusBar newStatusBar(String id, String label, int current, int max, String color, int priority) {
+            return new WorldSnapshot.StatusBar(id, label, current, max, color, priority);
+        }
+
+        @HostAccess.Export
+        public WorldSnapshot.ActionOption newActionOption(String type, String label, Map<String, Object> params) {
+            return new WorldSnapshot.ActionOption(type, label, params);
+        }
+
+        @HostAccess.Export
+        public HashMap<String, Object> newMap() {
+            return new HashMap<>();
         }
 
         @HostAccess.Export
