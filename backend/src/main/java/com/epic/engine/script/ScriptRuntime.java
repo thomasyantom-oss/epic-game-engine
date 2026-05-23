@@ -5,6 +5,7 @@ import com.epic.engine.core.EventBus;
 import com.epic.engine.core.GameEvent;
 import com.epic.engine.core.Entity;
 import com.epic.engine.core.Component;
+import com.epic.engine.snapshot.WorldSnapshot;
 import org.graalvm.polyglot.Context;
 import org.graalvm.polyglot.HostAccess;
 import org.graalvm.polyglot.Source;
@@ -15,6 +16,8 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Map;
 
 public class ScriptRuntime implements AutoCloseable {
@@ -100,6 +103,36 @@ public class ScriptRuntime implements AutoCloseable {
             } catch (IOException e) {
                 throw new RuntimeException("Failed to load YAML: " + yamlPath, e);
             }
+        }
+
+        @HostAccess.Export
+        public WorldSnapshot.CharacterInfo newCharacterInfo(String id, String name, int level, String classId, String classLabel) {
+            return new WorldSnapshot.CharacterInfo(id, name, level, classId, classLabel);
+        }
+
+        @HostAccess.Export
+        public WorldSnapshot.FormData newFormData(List<WorldSnapshot.FormField> fields) {
+            return new WorldSnapshot.FormData(fields);
+        }
+
+        @HostAccess.Export
+        public WorldSnapshot.FormField newFormField(String name, String label, String type, boolean required, List<WorldSnapshot.FormOption> options) {
+            return new WorldSnapshot.FormField(name, label, type, required, options);
+        }
+
+        @HostAccess.Export
+        public WorldSnapshot.FormOption newFormOption(String value, String label, String description) {
+            return new WorldSnapshot.FormOption(value, label, description);
+        }
+
+        @HostAccess.Export
+        public ArrayList<Object> newList() {
+            return new ArrayList<>();
+        }
+
+        @HostAccess.Export
+        public long now() {
+            return System.currentTimeMillis();
         }
     }
 }

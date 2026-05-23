@@ -42,6 +42,12 @@ public class PersistenceService {
         return repository.findById(entityId).map(this::deserialize).orElse(null);
     }
 
+    public List<Entity> findByTag(String tag) {
+        return repository.findByTagContaining(tag).stream()
+                .map(this::deserialize)
+                .toList();
+    }
+
     public void loadAllPersistent() {
         repository.findAll().forEach(data -> {
             Entity entity = deserialize(data);
