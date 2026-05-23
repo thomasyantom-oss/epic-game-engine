@@ -34,13 +34,26 @@
     </div>
 
     <div class="panel-log">
-      <TabPanel :tabs="logTabs" default-tab="events">
+      <TabPanel :tabs="logTabs" :default-tab="snapshot.combat ? 'combat-log' : 'events'">
         <template #events>
           <div class="log-scroll">
-            <div v-for="(entry, i) in snapshot.log" :key="i">
+            <div v-if="!snapshot.log || snapshot.log.length === 0" class="empty-log">暂无事件</div>
+          </div>
+        </template>
+        <template #combat-log v-if="snapshot.combat">
+          <div class="log-scroll">
+            <div v-if="historyEntries.length > 0" class="history-toggle" @click="showHistory = !showHistory">
+              {{ showHistory ? '▼ 收起历史' : '▶ 查看历史 (' + historyRounds + '回合)' }}
+            </div>
+            <div v-if="showHistory" class="combat-history">
+              <div v-for="(entry, i) in historyEntries" :key="'h'+i">
+                <TextRenderer :segments="entry.segments" />
+              </div>
+            </div>
+            <div v-for="(entry, i) in currentRoundEntries" :key="'c'+i">
               <TextRenderer :segments="entry.segments" />
             </div>
-            <div v-if="!snapshot.log || snapshot.log.length === 0" class="empty-log">暂无事件</div>
+            <div v-if="currentRoundEntries.length === 0 && historyEntries.length === 0" class="empty-log">等待指令...</div>
           </div>
         </template>
       </TabPanel>
@@ -57,7 +70,7 @@
 </template>
 
 <script setup>
-import { computed } from 'vue'
+import { computed, ref } from 'vue'
 import TabPanel from './TabPanel.vue'
 import TextRenderer from './TextRenderer.vue'
 import StatusBars from './StatusBars.vue'
@@ -71,6 +84,7 @@ import { useSettings } from '../composables/useSettings.js'
 const props = defineProps({ snapshot: Object })
 const emit = defineEmits(['action'])
 const { settings } = useSettings()
+const showHistory = ref(false)
 
 const mainTabs = computed(() => {
   if (props.snapshot?.combat) {
@@ -88,8 +102,51 @@ const funcTabs = computed(() => {
   return tabs
 })
 
-const logTabs = [{ id: 'events', label: '事件' }]
+const logTabs = computed(() => {
+  if (props.snapshot?.combat) {
+    return [{ id: 'combat-log', label: '战斗' }, { id: 'events', label: '事件' }]
+  }
+  return [{ id: 'events', label: '事件' }]
+})
 const navTabs = [{ id: 'actions', label: '快捷' }]
+
+const currentRoundEntries = computed(() => {
+  const log = props.snapshot?.log || []
+  if (log.length === 0) return []
+  // Find last round separator
+  let lastRoundIdx = -1
+  for (let i = log.length - 1; i >= 0; i--) {
+    if (log[i].round != null) {
+      lastRoundIdx = i
+      break
+    }
+  }
+  if (lastRoundIdx === -1) return log
+  return log.slice(lastRoundIdx)
+})
+
+const historyEntries = computed(() => {
+  const log = props.snapshot?.log || []
+  if (log.length === 0) return []
+  let lastRoundIdx = -1
+  for (let i = log.length - 1; i >= 0; i--) {
+    if (log[i].round != null) {
+      lastRoundIdx = i
+      break
+    }
+  }
+  if (lastRoundIdx <= 0) return []
+  return log.slice(0, lastRoundIdx)
+})
+
+const historyRounds = computed(() => {
+  const log = props.snapshot?.log || []
+  let count = 0
+  for (let i = 0; i < log.length; i++) {
+    if (log[i].round != null) count++
+  }
+  return Math.max(0, count - 1)
+})
 
 // Filter out map_move actions (keyboard handles movement)
 const filteredActions = computed(() => {
@@ -131,4 +188,6 @@ function onPoiAction(poi) {
 .empty-log { color: var(--text-color); opacity: 0.5; }
 .buffs { margin-top: 0.5rem; }
 .buff-item { font-size: 0.9em; margin: 0.2rem 0; color: var(--text-color); }
+.history-toggle { cursor: pointer; color: var(--link-color); margin-bottom: 0.3rem; }
+.combat-history { border-bottom: 1px solid var(--panel-border-color); margin-bottom: 0.3rem; padding-bottom: 0.3rem; opacity: 0.7; }
 </style>

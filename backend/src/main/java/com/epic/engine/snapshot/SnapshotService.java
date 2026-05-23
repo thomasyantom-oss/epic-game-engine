@@ -108,14 +108,18 @@ public class SnapshotService {
                 for (Object entryObj : entries) {
                     List<Object> segments = (List<Object>) entryObj;
                     List<WorldSnapshot.TextSegment> textSegments = new ArrayList<>();
+                    Integer round = null;
                     for (Object segObj : segments) {
                         Map<String, Object> seg = (Map<String, Object>) segObj;
                         textSegments.add(new WorldSnapshot.TextSegment(
                                 (String) seg.get("text"),
                                 (String) seg.get("color")));
+                        if (seg.containsKey("round") && seg.get("round") != null) {
+                            round = ((Number) seg.get("round")).intValue();
+                        }
                     }
                     if (!textSegments.isEmpty()) {
-                        log.add(new WorldSnapshot.LogEntry(textSegments));
+                        log.add(new WorldSnapshot.LogEntry(textSegments, round));
                     }
                 }
                 return log;

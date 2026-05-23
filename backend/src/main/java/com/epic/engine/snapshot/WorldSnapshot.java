@@ -34,7 +34,9 @@ public record WorldSnapshot(
     public record CombatSnapshot(String combatId, String phase, int round, List<CombatantInfo> combatants) {}
     public record CombatantInfo(String id, String name, String side, int hp, int maxHp, boolean alive) {}
     public record ActionOption(String type, String label, Map<String, Object> params) {}
-    public record LogEntry(List<TextSegment> segments) {}
+    public record LogEntry(List<TextSegment> segments, Integer round) {
+        public LogEntry(List<TextSegment> segments) { this(segments, null); }
+    }
     public record TextSegment(String text, String color) {}
 
     public static WorldSnapshot characterSelect(String sessionToken, List<CharacterInfo> characters, int maxSlots) {

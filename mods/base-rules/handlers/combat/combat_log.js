@@ -9,6 +9,16 @@ engine.on("combat.resolve_round", 50, function(event) {
         combat.addComponent(engine.newComponent("CombatLog"));
         combat.getComponent("CombatLog").set("entries", engine.newList());
     }
+
+    // Add round separator
+    var round = combat.getComponent("CombatState").getInt("round");
+    var segments = engine.newList();
+    var s = engine.newMap();
+    s.put("text", "— 第 " + round + " 回合 —");
+    s.put("color", "highlight");
+    s.put("round", round);
+    segments.add(s);
+    combat.getComponent("CombatLog").get("entries").add(segments);
 });
 
 // Log damage dealt - store as pre-formatted TextSegment arrays with semantic roles
