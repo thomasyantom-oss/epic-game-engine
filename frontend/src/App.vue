@@ -62,15 +62,20 @@ async function handlePathfind(params) {
     const targetX = params.targetX
     const targetY = params.targetY
     const entityId = params.entityId
+    let lastX = null, lastY = null
 
     while (pathfindingActive) {
         const result = await performAction('map_moveto', { targetX, targetY, entityId })
         snapshot.value = result
 
-        // Stop if combat started, phase changed, or path done
         if (result.combat || result.phase !== 'in_game') break
         const map = result.map
-        if (!map || (map.playerX === targetX && map.playerY === targetY)) break
+        if (!map) break
+        if (map.playerX === targetX && map.playerY === targetY) break
+        // If player didn't move, path is blocked — stop
+        if (map.playerX === lastX && map.playerY === lastY) break
+        lastX = map.playerX
+        lastY = map.playerY
 
         await new Promise(r => setTimeout(r, 200))
     }
