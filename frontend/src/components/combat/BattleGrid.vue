@@ -1,5 +1,7 @@
 <template>
   <div class="battle-layout">
+    <div class="round-banner">第 {{ combat.round }} 回合</div>
+    <div class="battle-content">
     <div class="status-col player-col">
       <div v-for="(unit, idx) in playerUnits" :key="unit.id" class="unit-status" :class="{ dead: !unit.alive }">
         <div class="unit-header" :class="{ active: unit.id === currentActorId }">
@@ -71,6 +73,7 @@
           <div class="hp-fill enemy-fill" :style="{ width: hpPercent(unit) + '%' }"></div>
         </div>
       </div>
+    </div>
     </div>
   </div>
 </template>
@@ -191,9 +194,24 @@ function cancelSelect() {
 
 <style scoped>
 .battle-layout {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+}
+
+.round-banner {
+  text-align: center;
+  padding: 0.3rem;
+  color: #ffd93d;
+  font-weight: bold;
+  border-bottom: 2px solid var(--panel-border-color);
+}
+
+.battle-content {
   display: grid;
   grid-template-columns: 15% 1fr 15%;
-  height: 100%;
+  flex: 1;
+  min-height: 0;
 }
 
 .status-col {

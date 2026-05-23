@@ -3,7 +3,6 @@ engine.on("combat.start_encounter", 100, function(event) {
     var playerId = event.get("playerId");
     var encounterId = event.get("encounterId");
 
-    // Load encounter definition
     var encounterData = engine.loadYaml("entities/encounters/" + encounterId + ".yaml");
     if (encounterData === null) return;
 
@@ -27,7 +26,7 @@ engine.on("combat.start_encounter", 100, function(event) {
     var enemies = encounterData.get("enemies");
     for (var i = 0; i < enemies.size(); i++) {
         var enemyDef = enemies.get(i);
-        var enemyId = enemyDef.get("id") + "_" + engine.now() + "_" + i;
+        var enemyId = enemyDef.get("id") + "_" + i;
         var enemy = engine.createEntity(enemyId);
 
         var health = engine.newComponent("Health");
@@ -57,10 +56,10 @@ engine.on("action.combat_command", 100, function(event) {
     var command = event.get("command");
     var targetId = event.get("targetId");
 
-    // Find the active combat for this player
     var player = store.get(playerId);
     if (player === null) return;
 
+    // Find active combat
     var combatId = null;
     var tags = player.getTags().toArray();
     for (var i = 0; i < tags.length; i++) {
@@ -72,16 +71,21 @@ engine.on("action.combat_command", 100, function(event) {
     }
     if (combatId === null) return;
 
+    // Handle FLEE — exit combat immediately
+    if (command === "FLEE") {
+        endCombat(player, combatId);
+        return;
+    }
+
     // Build commands map: player command + AI commands for enemies
     var commands = engine.newMap();
 
-    // Player command
     var playerCmd = engine.newMap();
     playerCmd.put("type", command);
     if (targetId) playerCmd.put("targetId", targetId);
     commands.put(playerId, playerCmd);
 
-    // Enemy AI: each alive enemy attacks the player
+    // Enemy AI
     var combatants = store.getByTagAsList("combat:" + combatId);
     for (var i = 0; i < combatants.size(); i++) {
         var entity = combatants.get(i);
@@ -99,25 +103,25 @@ engine.on("action.combat_command", 100, function(event) {
     resolveEvent.set("commands", commands);
     engine.fire("combat.resolve_round", resolveEvent);
 
-    // Check if combat ended - clean up if VICTORY/DEFEAT
+    // Check if combat ended
     var combat = store.get(combatId);
     var state = combat.getComponent("CombatState");
     var phase = state.getString("phase");
     if (phase === "VICTORY" || phase === "DEFEAT") {
-        // Remove combat tags from player
-        player.removeTag("combat:" + combatId);
-        store.reindexTags(player);
-        // Remove enemy entities
-        for (var j = 0; j < combatants.size(); j++) {
-            var c = combatants.get(j);
-            if (c.hasTag("enemy")) {
-                store.remove(c.getId());
-            }
-        }
-        // Remove combat entity
-        store.remove(combatId);
-
-        // Save player state after combat
-        persistence.save(player);
+        endCombat(player, combatId);
     }
 });
+
+function endCombat(player, combatId) {
+    var combatants = store.getByTagAsList("combat:" + combatId);
+    player.removeTag("combat:" + combatId);
+    store.reindexTags(player);
+    for (var j = 0; j < combatants.size(); j++) {
+        var c = combatants.get(j);
+        if (c.hasTag("enemy")) {
+            store.remove(c.getId());
+        }
+    }
+    store.remove(combatId);
+    persistence.save(player);
+}

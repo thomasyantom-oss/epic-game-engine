@@ -1,39 +1,42 @@
 <template>
   <div class="status-bars">
-    <div v-for="bar in visibleBars" :key="bar.id" class="bar-item">
-      <span class="bar-label" :style="{ color: bar.color }">{{ bar.label }}</span>
-      <span class="bar-value">{{ bar.current }}/{{ bar.max }}</span>
-    </div>
-    <div v-if="hiddenCount > 0" class="bar-overflow" @click="expanded = !expanded">
-      {{ expanded ? '收起' : `+${hiddenCount} 更多` }}
-    </div>
-    <div v-if="expanded">
-      <div v-for="bar in hiddenBars" :key="bar.id" class="bar-item">
+    <div v-for="bar in sorted" :key="bar.id" class="bar-item">
+      <template v-if="bar.id === 'name'">
+        <span class="char-name" :style="{ color: bar.color }">{{ bar.label }}</span>
+        <span class="char-level">Lv.{{ bar.current }}</span>
+      </template>
+      <template v-else-if="bar.id === 'class'">
+        <span class="char-class" :style="{ color: bar.color }">{{ bar.label }}</span>
+      </template>
+      <template v-else-if="bar.current === bar.max && bar.id !== 'hp' && bar.id !== 'mp'">
+        <span class="stat-label">{{ bar.label }}</span>
+        <span class="stat-value" :style="{ color: bar.color }">{{ bar.current }}</span>
+      </template>
+      <template v-else>
         <span class="bar-label" :style="{ color: bar.color }">{{ bar.label }}</span>
         <span class="bar-value">{{ bar.current }}/{{ bar.max }}</span>
-      </div>
+      </template>
     </div>
   </div>
 </template>
 
 <script setup>
-import { ref, computed } from 'vue'
+import { computed } from 'vue'
 
 const props = defineProps({ bars: Array })
-const expanded = ref(false)
-const MAX_VISIBLE = 3
 
 const sorted = computed(() =>
     [...(props.bars || [])].sort((a, b) => a.priority - b.priority)
 )
-const visibleBars = computed(() => sorted.value.slice(0, MAX_VISIBLE))
-const hiddenBars = computed(() => sorted.value.slice(MAX_VISIBLE))
-const hiddenCount = computed(() => hiddenBars.value.length)
 </script>
 
 <style scoped>
 .bar-item { display: flex; justify-content: space-between; margin: 0.2rem 0; }
 .bar-label { font-weight: bold; }
 .bar-value { color: var(--text-color); }
-.bar-overflow { cursor: pointer; color: var(--link-color); font-size: 0.9em; }
+.char-name { font-weight: bold; font-size: 1.1em; }
+.char-level { color: var(--text-color); opacity: 0.8; }
+.char-class { font-size: 0.9em; }
+.stat-label { color: var(--text-color); opacity: 0.8; }
+.stat-value { font-weight: bold; }
 </style>

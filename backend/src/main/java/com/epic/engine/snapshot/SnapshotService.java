@@ -87,7 +87,56 @@ public class SnapshotService {
                 buildMapSnapshot(player),
                 buildCombatSnapshot(playerId),
                 actions != null ? actions : List.of(),
-                List.of());
+                buildCombatLog(playerId));
+    }
+
+    @SuppressWarnings("unchecked")
+    private List<WorldSnapshot.LogEntry> buildCombatLog(String playerId) {
+        Entity player = entityStore.get(playerId);
+        if (player == null) return List.of();
+
+        for (String tag : player.getTags()) {
+            if (tag.startsWith("combat:")) {
+                String combatId = tag.substring(7);
+                Entity combat = entityStore.get(combatId);
+                if (combat == null || !combat.hasComponent("CombatLog")) continue;
+
+                List<Object> entries = (List<Object>) combat.getComponent("CombatLog").get("entries");
+                if (entries == null) return List.of();
+
+                List<WorldSnapshot.LogEntry> log = new ArrayList<>();
+                for (Object entryObj : entries) {
+                    Map<String, Object> entry = (Map<String, Object>) entryObj;
+                    String type = (String) entry.get("type");
+                    List<WorldSnapshot.TextSegment> segments = new ArrayList<>();
+
+                    if ("damage".equals(type)) {
+                        String attackerSide = (String) entry.get("attackerSide");
+                        String targetSide = (String) entry.get("targetSide");
+                        String attackerColor = "player".equals(attackerSide) ? "#4ecdc4" : "#e94560";
+                        String targetColor = "player".equals(targetSide) ? "#4ecdc4" : "#e94560";
+
+                        segments.add(new WorldSnapshot.TextSegment((String) entry.get("attackerName"), attackerColor));
+                        segments.add(new WorldSnapshot.TextSegment(" 对 ", "#ffffff"));
+                        segments.add(new WorldSnapshot.TextSegment((String) entry.get("targetName"), targetColor));
+                        segments.add(new WorldSnapshot.TextSegment(" 造成 ", "#ffffff"));
+                        segments.add(new WorldSnapshot.TextSegment(String.valueOf(entry.get("damage")), "#ffd93d"));
+                        segments.add(new WorldSnapshot.TextSegment(" 点伤害", "#ffffff"));
+                    } else if ("death".equals(type)) {
+                        String side = (String) entry.get("side");
+                        String color = "player".equals(side) ? "#4ecdc4" : "#e94560";
+                        segments.add(new WorldSnapshot.TextSegment((String) entry.get("name"), color));
+                        segments.add(new WorldSnapshot.TextSegment(" 被击败了！", "#e94560"));
+                    }
+
+                    if (!segments.isEmpty()) {
+                        log.add(new WorldSnapshot.LogEntry(segments));
+                    }
+                }
+                return log;
+            }
+        }
+        return List.of();
     }
 
     private WorldSnapshot.MapSnapshot buildMapSnapshot(Entity player) {
