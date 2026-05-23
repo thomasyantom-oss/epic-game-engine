@@ -1,5 +1,5 @@
 <template>
-  <div class="settings-panel" v-if="visible">
+  <div class="settings-panel">
     <div class="setting-row">
       <label>字体大小</label>
       <input type="range" min="12" max="24" step="1"
@@ -40,13 +40,6 @@
 
 <script setup>
 import { useSettings } from '../composables/useSettings.js'
-
-defineProps({
-    visible: {
-        type: Boolean,
-        default: true
-    }
-})
 
 const { settings, defaults } = useSettings()
 

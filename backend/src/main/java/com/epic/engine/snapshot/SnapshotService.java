@@ -6,7 +6,9 @@ import com.epic.engine.session.SessionService;
 import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 
 @Service
 public class SnapshotService {
@@ -95,9 +97,22 @@ public class SnapshotService {
         Entity map = entityStore.get(mapId);
         if (map == null || !map.hasComponent("MapData")) return null;
         Component mapData = map.getComponent("MapData");
+
+        @SuppressWarnings("unchecked")
+        List<String> terrain = (List<String>) mapData.get("terrain");
+
+        @SuppressWarnings("unchecked")
+        Map<String, Map<String, Object>> terrainsRaw = (Map<String, Map<String, Object>>) mapData.get("terrains");
+        Map<String, WorldSnapshot.TerrainInfo> terrains = new LinkedHashMap<>();
+        if (terrainsRaw != null) {
+            terrainsRaw.forEach((ch, info) -> terrains.put(ch,
+                    new WorldSnapshot.TerrainInfo((String) info.get("color"), (String) info.get("textColor"))));
+        }
+
         return new WorldSnapshot.MapSnapshot(
                 mapId, pos.getInt("x"), pos.getInt("y"),
-                mapData.getInt("width"), mapData.getInt("height"));
+                mapData.getInt("width"), mapData.getInt("height"),
+                terrain, terrains);
     }
 
     private WorldSnapshot.CombatSnapshot buildCombatSnapshot(String playerId) {

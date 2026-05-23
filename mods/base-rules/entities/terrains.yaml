@@ -1,0 +1,8 @@
+terrains:
+  林: { color: "#2d5a27", textColor: "#8fce00" }
+  草: { color: "#4a7c3f", textColor: "#c8e6c9" }
+  路: { color: "#8d6e63", textColor: "#d7ccc8" }
+  城: { color: "#78909c", textColor: "#ffffff" }
+  山: { color: "#5d4037", textColor: "#bcaaa4" }
+  水: { color: "#1565c0", textColor: "#90caf9" }
+  沙: { color: "#f9a825", textColor: "#fff9c4" }
