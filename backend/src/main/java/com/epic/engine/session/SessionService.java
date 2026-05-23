@@ -29,6 +29,11 @@ public class SessionService {
         return token;
     }
 
+    public String restoreSession(String token) {
+        sessions.put(token, new SessionData(token, null, Instant.now()));
+        return token;
+    }
+
     public SessionData getSession(String token) {
         return sessions.get(token);
     }

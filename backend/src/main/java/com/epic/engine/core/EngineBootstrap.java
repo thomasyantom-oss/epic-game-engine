@@ -56,6 +56,10 @@ public class EngineBootstrap {
         moduleLoader.loadAll();
         log.info("引擎启动完成，已加载 {} 个 schema", schemaRegistry.getAll().size());
 
+        // Load persistent entities from database (player characters etc.)
+        persistenceService.loadAllPersistent();
+        log.info("已从数据库恢复 {} 个持久实体", entityStore.all().size());
+
         eventBus.fire("world.init", new GameEvent("world.init"));
         log.info("世界初始化完成，实体数: {}", entityStore.all().size());
     }

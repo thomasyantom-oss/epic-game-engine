@@ -63,8 +63,11 @@ public class SnapshotController {
     }
 
     private String ensureToken(String token) {
-        if (token == null || sessionService.getSession(token) == null) {
+        if (token == null) {
             return sessionService.createSession();
+        }
+        if (sessionService.getSession(token) == null) {
+            return sessionService.restoreSession(token);
         }
         return token;
     }
