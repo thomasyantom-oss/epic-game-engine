@@ -1,15 +1,38 @@
 const BASE_URL = '/api'
 
-export async function performAction(playerId, type, params = {}) {
-    const response = await fetch(`${BASE_URL}/action`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ playerId, type, params })
-    })
-    return response.json()
+let sessionToken = localStorage.getItem('epic_session_token')
+
+function getHeaders() {
+    const headers = { 'Content-Type': 'application/json' }
+    if (sessionToken) {
+        headers['X-Session-Token'] = sessionToken
+    }
+    return headers
 }
 
-export async function getSnapshot(playerId) {
-    const response = await fetch(`${BASE_URL}/snapshot/${playerId}`)
-    return response.json()
+function saveToken(snapshot) {
+    if (snapshot && snapshot.sessionToken) {
+        sessionToken = snapshot.sessionToken
+        localStorage.setItem('epic_session_token', sessionToken)
+    }
+}
+
+export async function performAction(type, params = {}) {
+    const response = await fetch(`${BASE_URL}/action`, {
+        method: 'POST',
+        headers: getHeaders(),
+        body: JSON.stringify({ type, params })
+    })
+    const data = await response.json()
+    saveToken(data)
+    return data
+}
+
+export async function getSnapshot() {
+    const response = await fetch(`${BASE_URL}/snapshot`, {
+        headers: getHeaders()
+    })
+    const data = await response.json()
+    saveToken(data)
+    return data
 }
