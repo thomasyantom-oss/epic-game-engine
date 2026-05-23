@@ -3,7 +3,7 @@
     <span
       v-for="(segment, index) in segments"
       :key="index"
-      :style="{ color: segment.color }"
+      :style="{ color: resolveColor(segment.color) }"
       v-text="segment.text"
     ></span>
   </span>
@@ -16,6 +16,12 @@ defineProps({
         required: true
     }
 })
+
+function resolveColor(color) {
+    if (!color) return undefined
+    if (color.startsWith('#')) return color
+    return `var(--color-${color})`
+}
 </script>
 
 <style scoped>

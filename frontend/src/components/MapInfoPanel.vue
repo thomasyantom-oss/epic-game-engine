@@ -65,13 +65,13 @@ const currentPois = computed(() => {
   display: inline-block;
   padding: 0.3rem 0.8rem;
   margin: 0.2rem 0.3rem 0.2rem 0;
-  background: rgba(255, 217, 61, 0.15);
-  border: 1px solid rgba(255, 217, 61, 0.4);
+  background: color-mix(in srgb, var(--color-highlight) 15%, transparent);
+  border: 1px solid color-mix(in srgb, var(--color-highlight) 40%, transparent);
   border-radius: 4px;
-  color: #ffd93d;
+  color: var(--color-highlight);
   cursor: pointer;
   font-size: 0.9em;
   transition: background 0.2s;
 }
-.poi-button:hover { background: rgba(255, 217, 61, 0.3); }
+.poi-button:hover { background: color-mix(in srgb, var(--color-highlight) 30%, transparent); }
 </style>

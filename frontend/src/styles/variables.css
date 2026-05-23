@@ -9,4 +9,11 @@
     --link-hover-color: #ff6b6b;
     --font-size: 16px;
     --font-family: "LXGW WenKai", "Noto Serif SC", serif;
+
+    /* Semantic color roles */
+    --color-player: #4ecdc4;
+    --color-enemy: #e94560;
+    --color-damage: #ffd93d;
+    --color-text: #ffffff;
+    --color-highlight: #ffd93d;
 }

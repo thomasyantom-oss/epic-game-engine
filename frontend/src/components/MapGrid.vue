@@ -134,5 +134,5 @@ onUnmounted(() => {
 .map-grid { width: fit-content; }
 .map-cell { user-select: none; transition: transform 0.1s; }
 .map-cell:hover { transform: scale(1.05); z-index: 1; }
-.player-marker { color: #ffd700; font-weight: bold; text-shadow: -1px -1px 0 #000, 1px -1px 0 #000, -1px 1px 0 #000, 1px 1px 0 #000, 0 0 8px #ffd700; font-size: 1.2em; }
+.player-marker { color: var(--color-highlight); font-weight: bold; text-shadow: -1px -1px 0 #000, 1px -1px 0 #000, -1px 1px 0 #000, 1px 1px 0 #000, 0 0 8px var(--color-highlight); font-size: 1.2em; }
 </style>

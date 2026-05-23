@@ -106,31 +106,16 @@ public class SnapshotService {
 
                 List<WorldSnapshot.LogEntry> log = new ArrayList<>();
                 for (Object entryObj : entries) {
-                    Map<String, Object> entry = (Map<String, Object>) entryObj;
-                    String type = (String) entry.get("type");
-                    List<WorldSnapshot.TextSegment> segments = new ArrayList<>();
-
-                    if ("damage".equals(type)) {
-                        String attackerSide = (String) entry.get("attackerSide");
-                        String targetSide = (String) entry.get("targetSide");
-                        String attackerColor = "player".equals(attackerSide) ? "#4ecdc4" : "#e94560";
-                        String targetColor = "player".equals(targetSide) ? "#4ecdc4" : "#e94560";
-
-                        segments.add(new WorldSnapshot.TextSegment((String) entry.get("attackerName"), attackerColor));
-                        segments.add(new WorldSnapshot.TextSegment(" 对 ", "#ffffff"));
-                        segments.add(new WorldSnapshot.TextSegment((String) entry.get("targetName"), targetColor));
-                        segments.add(new WorldSnapshot.TextSegment(" 造成 ", "#ffffff"));
-                        segments.add(new WorldSnapshot.TextSegment(String.valueOf(entry.get("damage")), "#ffd93d"));
-                        segments.add(new WorldSnapshot.TextSegment(" 点伤害", "#ffffff"));
-                    } else if ("death".equals(type)) {
-                        String side = (String) entry.get("side");
-                        String color = "player".equals(side) ? "#4ecdc4" : "#e94560";
-                        segments.add(new WorldSnapshot.TextSegment((String) entry.get("name"), color));
-                        segments.add(new WorldSnapshot.TextSegment(" 被击败了！", "#e94560"));
+                    List<Object> segments = (List<Object>) entryObj;
+                    List<WorldSnapshot.TextSegment> textSegments = new ArrayList<>();
+                    for (Object segObj : segments) {
+                        Map<String, Object> seg = (Map<String, Object>) segObj;
+                        textSegments.add(new WorldSnapshot.TextSegment(
+                                (String) seg.get("text"),
+                                (String) seg.get("color")));
                     }
-
-                    if (!segments.isEmpty()) {
-                        log.add(new WorldSnapshot.LogEntry(segments));
+                    if (!textSegments.isEmpty()) {
+                        log.add(new WorldSnapshot.LogEntry(textSegments));
                     }
                 }
                 return log;

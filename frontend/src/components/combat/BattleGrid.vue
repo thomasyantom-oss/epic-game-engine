@@ -202,7 +202,7 @@ function cancelSelect() {
 .round-banner {
   text-align: center;
   padding: 0.3rem;
-  color: #ffd93d;
+  color: var(--color-highlight);
   font-weight: bold;
   border-bottom: 2px solid var(--panel-border-color);
 }
@@ -255,8 +255,8 @@ function cancelSelect() {
   text-shadow: 0 0 4px var(--link-color);
 }
 
-.player-name { color: #4ecdc4; }
-.enemy-name { color: #e94560; }
+.player-name { color: var(--color-player); }
+.enemy-name { color: var(--color-enemy); }
 
 .hp-bar {
   height: 4px;
@@ -267,12 +267,12 @@ function cancelSelect() {
 
 .hp-fill {
   height: 100%;
-  background: #4ecdc4;
+  background: var(--color-player);
   transition: width 0.3s;
 }
 
 .enemy-bar .hp-fill, .enemy-fill {
-  background: #e94560;
+  background: var(--color-enemy);
 }
 
 .grid-area {
@@ -309,11 +309,11 @@ function cancelSelect() {
 
 .terrain-cell.target-cell {
   cursor: pointer;
-  border: 3px solid #e94560;
+  border: 3px solid var(--color-enemy);
 }
 
 .terrain-cell.target-cell:hover {
-  box-shadow: 0 0 4px #e94560;
+  box-shadow: 0 0 4px var(--color-enemy);
 }
 
 .marker {
@@ -322,8 +322,8 @@ function cancelSelect() {
   align-items: center;
 }
 
-.marker.player { color: #4ecdc4; }
-.marker.enemy { color: #e94560; }
+.marker.player { color: var(--color-player); }
+.marker.enemy { color: var(--color-enemy); }
 
 .marker-num {
   color: #fff;
@@ -361,13 +361,13 @@ function cancelSelect() {
 .actor-avatar {
   width: 2.2rem;
   height: 2.2rem;
-  border: 1px solid #4ecdc4;
+  border: 1px solid var(--color-player);
   border-radius: 4px;
   background: #1a2a3a;
 }
 
 .actor-name {
-  color: #4ecdc4;
+  color: var(--color-player);
 }
 
 .cmd-item {
@@ -384,6 +384,6 @@ function cancelSelect() {
 }
 
 .cancel-item {
-  color: #e94560;
+  color: var(--color-enemy);
 }
 </style>
