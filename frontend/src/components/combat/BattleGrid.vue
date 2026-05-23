@@ -1,68 +1,94 @@
 <template>
-  <div class="battle-grid">
-    <div class="battle-header">
-      <span class="round-info">第 {{ combat.round }} 回合</span>
-      <span class="phase-info">{{ phaseLabel }}</span>
-    </div>
-
-    <div class="battle-field">
-      <!-- Player side -->
-      <div class="side player-side">
-        <div class="side-label">我方</div>
-        <div v-for="unit in playerUnits" :key="unit.id" class="unit-card player-unit">
-          <div class="unit-name">{{ unit.name }}</div>
-          <div class="hp-bar-container">
-            <div class="hp-bar" :style="hpBarStyle(unit)"></div>
-            <span class="hp-text">{{ unit.hp }}/{{ unit.maxHp }}</span>
-          </div>
-          <div v-if="!unit.alive" class="unit-dead">击败</div>
+  <div class="battle-layout">
+    <div class="status-col player-col">
+      <div v-for="(unit, idx) in playerUnits" :key="unit.id" class="unit-status" :class="{ dead: !unit.alive }">
+        <div class="unit-header" :class="{ active: unit.id === currentActorId }">
+          <span class="unit-name player-name">{{ unit.name }}</span>
+          <span class="hp-text">{{ unit.hp }}/{{ unit.maxHp }}</span>
         </div>
-      </div>
-
-      <!-- VS divider -->
-      <div class="vs-divider">VS</div>
-
-      <!-- Enemy side -->
-      <div class="side enemy-side">
-        <div class="side-label">敌方</div>
-        <div v-for="unit in enemyUnits" :key="unit.id"
-             class="unit-card enemy-unit"
-             :class="{ selected: selectedTarget === unit.id, targetable: canSelectTarget }"
-             @click="selectTarget(unit)">
-          <div class="unit-name">{{ unit.name }}</div>
-          <div class="hp-bar-container">
-            <div class="hp-bar enemy-bar" :style="hpBarStyle(unit)"></div>
-            <span class="hp-text">{{ unit.hp }}/{{ unit.maxHp }}</span>
-          </div>
-          <div v-if="!unit.alive" class="unit-dead">击败</div>
+        <div class="hp-bar">
+          <div class="hp-fill" :style="{ width: hpPercent(unit) + '%' }"></div>
         </div>
       </div>
     </div>
 
-    <!-- Command menu -->
-    <div class="command-menu">
-      <button class="cmd-btn cmd-attack" @click="doCommand('ATTACK')"
-              :disabled="!canAct">攻击</button>
-      <button class="cmd-btn cmd-defend" @click="doCommand('DEFEND')"
-              :disabled="!canAct">防御</button>
-      <button class="cmd-btn cmd-flee" @click="doCommand('FLEE')"
-              :disabled="!canAct">逃跑</button>
+    <div class="center-col">
+      <div class="grid-area">
+        <div class="player-grid">
+          <div
+            v-for="(cell, idx) in playerCells"
+            :key="'p'+idx"
+            class="terrain-cell"
+          >
+            <span v-if="cell.marker && cell.marker.alive" class="marker player">
+              <span class="marker-num">{{ cell.marker.index }}</span>▶
+            </span>
+          </div>
+        </div>
+        <div class="grid-gap"></div>
+        <div class="enemy-grid">
+          <div
+            v-for="(cell, idx) in enemyCells"
+            :key="'e'+idx"
+            class="terrain-cell"
+            :class="{ 'target-cell': selectingTarget && cell.marker && cell.marker.alive }"
+            @click="onCellClick(cell)"
+          >
+            <span v-if="cell.marker && cell.marker.alive" class="marker enemy">
+              ◀<span class="marker-num">{{ cell.marker.index }}</span>
+            </span>
+          </div>
+        </div>
+      </div>
+
+      <div class="command-row">
+        <div class="cmd-col cmd-actor">
+          <template v-if="currentActor && phase === 'COMMAND'">
+            <div class="actor-avatar"></div>
+            <div class="actor-name">{{ currentActor.name }}</div>
+          </template>
+        </div>
+        <div class="cmd-col cmd-actions" v-if="currentActor && phase === 'COMMAND'">
+          <span class="cmd-item" :class="{ active: selectedCommand === 'ATTACK' }" @click="selectCommand('ATTACK')">攻击</span>
+          <span class="cmd-item" :class="{ active: selectedCommand === 'DEFEND' }" @click="selectCommand('DEFEND')">防御</span>
+          <span class="cmd-item" :class="{ active: selectedCommand === 'SKILL' }" @click="selectCommand('SKILL')">技能</span>
+          <span class="cmd-item" :class="{ active: selectedCommand === 'ITEM' }" @click="selectCommand('ITEM')">道具</span>
+          <span class="cmd-item" @click="selectCommand('FLEE')">逃跑</span>
+          <span v-if="step === 'target'" class="cmd-item cancel-item" @click="cancelSelect">取消</span>
+        </div>
+        <div class="cmd-col cmd-detail">
+        </div>
+      </div>
     </div>
 
-    <div v-if="needsTarget" class="target-hint">
-      请点击一个敌方目标
+    <div class="status-col enemy-col">
+      <div v-for="(unit, idx) in enemyUnits" :key="unit.id" class="unit-status" :class="{ dead: !unit.alive }">
+        <div class="unit-header">
+          <span class="unit-name enemy-name">{{ unit.name }}</span>
+          <span class="hp-text">{{ unit.hp }}/{{ unit.maxHp }}</span>
+        </div>
+        <div class="hp-bar enemy-bar">
+          <div class="hp-fill enemy-fill" :style="{ width: hpPercent(unit) + '%' }"></div>
+        </div>
+      </div>
     </div>
   </div>
 </template>
 
 <script setup>
-import { ref, computed } from 'vue'
+import { computed, ref, watch } from 'vue'
 
-const props = defineProps({ combat: Object, playerId: String })
+const props = defineProps({
+  combat: { type: Object, required: true },
+  playerId: { type: String, default: '' }
+})
+
 const emit = defineEmits(['command'])
 
-const selectedTarget = ref(null)
-const pendingCommand = ref(null)
+const step = ref('command')
+const selectedCommand = ref(null)
+
+const phase = computed(() => props.combat?.phase || 'COMMAND')
 
 const playerUnits = computed(() =>
   (props.combat?.combatants || []).filter(c => c.side === 'PLAYER')
@@ -72,116 +98,274 @@ const enemyUnits = computed(() =>
   (props.combat?.combatants || []).filter(c => c.side === 'ENEMY')
 )
 
-const phaseLabel = computed(() => {
-  const p = props.combat?.phase
-  if (p === 'AWAITING_INPUT') return '等待指令'
-  if (p === 'RESOLVING') return '回合结算中'
-  if (p === 'FINISHED') return '战斗结束'
-  return p || ''
+const currentActorId = computed(() => {
+  const alive = playerUnits.value.find(u => u.alive)
+  return alive ? alive.id : ''
 })
 
-const canAct = computed(() => props.combat?.phase === 'AWAITING_INPUT')
-const canSelectTarget = computed(() => canAct.value)
-const needsTarget = computed(() => pendingCommand.value === 'ATTACK' && !selectedTarget.value)
+const currentActor = computed(() => {
+  return playerUnits.value.find(u => u.id === currentActorId.value) || null
+})
 
-function hpBarStyle(unit) {
-  const pct = unit.maxHp > 0 ? (unit.hp / unit.maxHp) * 100 : 0
-  const color = unit.side === 'PLAYER' ? '#4ecdc4' : '#e94560'
-  return { width: pct + '%', backgroundColor: color }
+watch(currentActor, () => {
+  step.value = 'command'
+  selectedCommand.value = null
+})
+
+const selectingTarget = computed(() => step.value === 'target')
+
+function hpPercent(unit) {
+  return Math.max(0, unit.hp / unit.maxHp * 100)
 }
 
-function selectTarget(unit) {
-  if (!canSelectTarget.value) return
-  if (!unit.alive) return
-  selectedTarget.value = unit.id
-  if (pendingCommand.value === 'ATTACK') {
-    submitCommand('ATTACK', unit.id)
-    pendingCommand.value = null
-  }
-}
-
-function doCommand(cmd) {
-  if (!canAct.value) return
-  if (cmd === 'ATTACK') {
-    // If target already selected, use it; otherwise prompt
-    if (selectedTarget.value) {
-      submitCommand('ATTACK', selectedTarget.value)
-    } else {
-      // Auto-select first alive enemy
-      const firstAlive = enemyUnits.value.find(u => u.alive)
-      if (firstAlive) {
-        selectedTarget.value = firstAlive.id
-        submitCommand('ATTACK', firstAlive.id)
-      } else {
-        pendingCommand.value = 'ATTACK'
-      }
+const playerCells = computed(() => {
+  const cells = []
+  const positions = mapUnitsToGrid(playerUnits.value, 'player')
+  for (let row = 0; row < 3; row++) {
+    for (let col = 0; col < 3; col++) {
+      const marker = positions.find(p => p.col === col && p.row === row)
+      cells.push({ marker })
     }
-  } else {
-    submitCommand(cmd, null)
   }
-}
+  return cells
+})
 
-function submitCommand(command, targetId) {
-  emit('command', {
-    type: 'combat_command',
-    params: {
-      combatId: props.combat.combatId,
-      entityId: props.playerId,
-      command: command,
-      targetId: targetId
+const enemyCells = computed(() => {
+  const cells = []
+  const positions = mapUnitsToGrid(enemyUnits.value, 'enemy')
+  for (let row = 0; row < 3; row++) {
+    for (let col = 0; col < 3; col++) {
+      const marker = positions.find(p => p.col === col && p.row === row)
+      cells.push({ marker })
     }
+  }
+  return cells
+})
+
+function mapUnitsToGrid(units, side) {
+  const markers = []
+  const playerColMap = { BACK: 0, MID: 1, FRONT: 2 }
+  const enemyColMap = { FRONT: 0, MID: 1, BACK: 2 }
+
+  units.forEach((unit, idx) => {
+    const unitRow = unit.row || 'FRONT'
+    const col = side === 'player' ? (playerColMap[unitRow] ?? 2) : (enemyColMap[unitRow] ?? 0)
+    const row = unit.slot ?? idx % 3
+    markers.push({ col, row, side, index: idx + 1, alive: unit.alive, id: unit.id })
   })
-  selectedTarget.value = null
+  return markers
+}
+
+function selectCommand(cmd) {
+  if (!currentActor.value) return
+  if (cmd === 'FLEE') {
+    emit('command', { type: 'combat_command', params: { command: 'FLEE', targetId: null } })
+    return
+  }
+  if (cmd === 'DEFEND') {
+    emit('command', { type: 'combat_command', params: { command: 'DEFEND', targetId: null } })
+    return
+  }
+  if (cmd === 'SKILL' || cmd === 'ITEM') {
+    selectedCommand.value = 'ATTACK'
+    step.value = 'target'
+    return
+  }
+  selectedCommand.value = cmd
+  step.value = 'target'
+}
+
+function onCellClick(cell) {
+  if (step.value !== 'target') return
+  if (!cell.marker || !cell.marker.alive) return
+  emit('command', { type: 'combat_command', params: { command: selectedCommand.value, targetId: cell.marker.id } })
+  step.value = 'command'
+  selectedCommand.value = null
+}
+
+function cancelSelect() {
+  step.value = 'command'
+  selectedCommand.value = null
 }
 </script>
 
 <style scoped>
-.battle-grid { display: flex; flex-direction: column; height: 100%; padding: 0.5rem; gap: 0.5rem; }
-.battle-header { display: flex; justify-content: space-between; align-items: center; padding: 0.3rem 0.5rem; border-bottom: 1px solid rgba(255,255,255,0.15); }
-.round-info { color: #ffd93d; font-weight: bold; }
-.phase-info { color: var(--text-color); opacity: 0.8; font-size: 0.9em; }
-
-.battle-field { display: flex; flex: 1; align-items: center; justify-content: center; gap: 1rem; min-height: 0; }
-.side { display: flex; flex-direction: column; gap: 0.4rem; flex: 1; }
-.side-label { font-size: 0.85em; opacity: 0.6; margin-bottom: 0.2rem; text-align: center; }
-.vs-divider { font-size: 1.2em; font-weight: bold; color: #ffd93d; padding: 0 0.5rem; }
-
-.unit-card {
-  padding: 0.4rem 0.6rem;
-  border-radius: 4px;
-  border: 1px solid rgba(255,255,255,0.1);
-  background: rgba(255,255,255,0.03);
+.battle-layout {
+  display: grid;
+  grid-template-columns: 15% 1fr 15%;
+  height: 100%;
 }
-.unit-card.targetable { cursor: pointer; }
-.unit-card.targetable:hover { border-color: #e94560; background: rgba(233, 69, 96, 0.1); }
-.unit-card.selected { border-color: #e94560; background: rgba(233, 69, 96, 0.15); box-shadow: 0 0 6px rgba(233, 69, 96, 0.3); }
 
-.unit-name { font-size: 0.9em; margin-bottom: 0.2rem; color: var(--text-color); }
-.hp-bar-container { position: relative; height: 16px; background: rgba(255,255,255,0.1); border-radius: 3px; overflow: hidden; }
-.hp-bar { height: 100%; transition: width 0.3s ease; border-radius: 3px; }
-.hp-text { position: absolute; top: 0; left: 50%; transform: translateX(-50%); font-size: 0.7em; line-height: 16px; color: #fff; text-shadow: 0 0 2px #000; }
-.unit-dead { color: #e94560; font-size: 0.8em; margin-top: 0.2rem; }
+.status-col {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 0.8rem;
+  padding: 0.5rem;
+  border-right: 2px solid var(--panel-border-color);
+}
 
-.command-menu { display: flex; gap: 0.5rem; justify-content: center; padding: 0.5rem 0; border-top: 1px solid rgba(255,255,255,0.15); }
-.cmd-btn {
-  padding: 0.4rem 1.2rem;
-  border: 1px solid rgba(255,255,255,0.2);
-  border-radius: 4px;
-  background: rgba(255,255,255,0.05);
-  color: var(--text-color);
+.enemy-col {
+  border-right: none;
+  border-left: 2px solid var(--panel-border-color);
+}
+
+.center-col {
+  display: grid;
+  grid-template-rows: 1fr 25%;
+  min-height: 0;
+  overflow: hidden;
+}
+
+.unit-status {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.unit-status.dead {
+  opacity: 0.4;
+}
+
+.unit-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.unit-header.active {
+  text-shadow: 0 0 4px var(--link-color);
+}
+
+.player-name { color: #4ecdc4; }
+.enemy-name { color: #e94560; }
+
+.hp-bar {
+  height: 4px;
+  background: #333;
+  border-radius: 2px;
+  overflow: hidden;
+}
+
+.hp-fill {
+  height: 100%;
+  background: #4ecdc4;
+  transition: width 0.3s;
+}
+
+.enemy-bar .hp-fill, .enemy-fill {
+  background: #e94560;
+}
+
+.grid-area {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 5%;
+  padding: 5%;
+  min-width: 0;
+  min-height: 0;
+}
+
+.player-grid, .enemy-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  grid-template-rows: repeat(3, 1fr);
+  gap: 2px;
+  height: 90%;
+  aspect-ratio: 1;
+}
+
+.grid-gap {
+  display: none;
+}
+
+.terrain-cell {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid #222;
+  border-radius: 2px;
+  background-color: #333;
+}
+
+.terrain-cell.target-cell {
   cursor: pointer;
-  font-size: 0.9em;
-  transition: all 0.2s;
+  border: 3px solid #e94560;
 }
-.cmd-btn:hover:not(:disabled) { background: rgba(255,255,255,0.1); }
-.cmd-btn:disabled { opacity: 0.4; cursor: not-allowed; }
-.cmd-attack { border-color: rgba(233, 69, 96, 0.5); color: #e94560; }
-.cmd-attack:hover:not(:disabled) { background: rgba(233, 69, 96, 0.1); }
-.cmd-defend { border-color: rgba(78, 205, 196, 0.5); color: #4ecdc4; }
-.cmd-defend:hover:not(:disabled) { background: rgba(78, 205, 196, 0.1); }
-.cmd-flee { border-color: rgba(255, 217, 61, 0.5); color: #ffd93d; }
-.cmd-flee:hover:not(:disabled) { background: rgba(255, 217, 61, 0.1); }
 
-.target-hint { text-align: center; color: #e94560; font-size: 0.85em; animation: blink 1.5s infinite; }
-@keyframes blink { 0%, 100% { opacity: 1; } 50% { opacity: 0.5; } }
+.terrain-cell.target-cell:hover {
+  box-shadow: 0 0 4px #e94560;
+}
+
+.marker {
+  font-weight: bold;
+  display: flex;
+  align-items: center;
+}
+
+.marker.player { color: #4ecdc4; }
+.marker.enemy { color: #e94560; }
+
+.marker-num {
+  color: #fff;
+}
+
+.command-row {
+  border-top: 2px solid var(--panel-border-color);
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  height: 100%;
+}
+
+.cmd-col {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.2rem;
+}
+
+.cmd-actor {
+  border-right: 1px solid var(--panel-border-color);
+}
+
+.cmd-actions {
+  border-right: 1px solid var(--panel-border-color);
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.3rem;
+  align-items: center;
+  justify-items: center;
+  padding: 0.3rem;
+}
+
+.actor-avatar {
+  width: 2.2rem;
+  height: 2.2rem;
+  border: 1px solid #4ecdc4;
+  border-radius: 4px;
+  background: #1a2a3a;
+}
+
+.actor-name {
+  color: #4ecdc4;
+}
+
+.cmd-item {
+  cursor: pointer;
+  transition: color 0.2s;
+}
+
+.cmd-item:hover {
+  color: var(--link-color);
+}
+
+.cmd-item.active {
+  color: var(--link-color);
+}
+
+.cancel-item {
+  color: #e94560;
+}
 </style>
