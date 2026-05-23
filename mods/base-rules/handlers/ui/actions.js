@@ -63,7 +63,7 @@ engine.on("action.map_move", 100, function(event) {
     engine.fire("map.move", moveEvent);
 });
 
-// Handle click-to-move (pathfind + execute path)
+// Handle click-to-move (pathfind + step-by-step execution)
 engine.on("action.map_moveto", 100, function(event) {
     var playerId = event.get("playerId");
     var targetX = event.get("targetX");
@@ -71,7 +71,6 @@ engine.on("action.map_moveto", 100, function(event) {
     var entityId = event.get("entityId");
     if (!entityId) entityId = playerId;
 
-    // Pathfind
     var pathEvent = engine.newEvent("map.pathfind");
     pathEvent.set("entityId", entityId);
     pathEvent.set("targetX", targetX);
@@ -80,18 +79,43 @@ engine.on("action.map_moveto", 100, function(event) {
 
     var found = pathEvent.get("found");
     if (found) {
-        // Execute path - move to final position directly
+        var path = pathEvent.get("path");
+        // Execute each step via map.move to trigger terrain checks
         var entity = store.get(entityId);
         var pos = entity.getComponent("Position");
-        pos.set("x", targetX);
-        pos.set("y", targetY);
+        for (var i = 0; i < path.length; i++) {
+            var step = path[i];
+            var cx = pos.getInt("x");
+            var cy = pos.getInt("y");
+            var sx = step.x !== undefined ? step.x : step.get("x");
+            var sy = step.y !== undefined ? step.y : step.get("y");
+            var dir = "";
+            if (sx > cx) dir = "EAST";
+            else if (sx < cx) dir = "WEST";
+            else if (sy > cy) dir = "SOUTH";
+            else if (sy < cy) dir = "NORTH";
 
-        // Fire enter_area event for destination
-        var enterEvent = engine.newEvent("map.enter_area");
-        enterEvent.set("entityId", entityId);
-        enterEvent.set("x", targetX);
-        enterEvent.set("y", targetY);
-        enterEvent.set("mapId", pos.getString("map"));
-        engine.fire("map.enter_area", enterEvent);
+            var moveEvent = engine.newEvent("map.move");
+            moveEvent.set("entityId", entityId);
+            moveEvent.set("direction", dir);
+            engine.fire("map.move", moveEvent);
+
+            if (!moveEvent.get("success")) break;
+        }
+    }
+});
+
+// Handle POI interaction
+engine.on("action.poi_interact", 100, function(event) {
+    var playerId = event.get("playerId");
+    var poiType = event.get("poiType");
+    var target = event.get("target");
+
+    if (poiType === "combat") {
+        // Start combat with encounter template
+        var combatEvent = engine.newEvent("combat.start_encounter");
+        combatEvent.set("playerId", playerId);
+        combatEvent.set("encounterId", target);
+        engine.fire("combat.start_encounter", combatEvent);
     }
 });
