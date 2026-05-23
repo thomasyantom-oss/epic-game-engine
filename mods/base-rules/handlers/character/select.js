@@ -106,6 +106,11 @@ engine.on("action.confirm_character", 100, function(event) {
     charComp.set("classLabel", classSchema !== null ? classSchema.label() : classId);
     entity.addComponent(charComp);
 
+    // Name 组件用于战斗等界面显示
+    var nameComp = engine.newComponent("Name");
+    nameComp.set("value", name);
+    entity.addComponent(nameComp);
+
     // 标签
     entity.addTag("persistent");
     entity.addTag("player");

@@ -21,6 +21,7 @@ engine.on("combat.start_encounter", 100, function(event) {
     // Tag the player as in this combat
     var player = store.get(playerId);
     player.addTag("combat:" + combatId);
+    store.reindexTags(player);
 
     // Create enemy entities from encounter definition
     var enemies = encounterData.get("enemies");
@@ -105,6 +106,7 @@ engine.on("action.combat_command", 100, function(event) {
     if (phase === "VICTORY" || phase === "DEFEAT") {
         // Remove combat tags from player
         player.removeTag("combat:" + combatId);
+        store.reindexTags(player);
         // Remove enemy entities
         for (var j = 0; j < combatants.size(); j++) {
             var c = combatants.get(j);
