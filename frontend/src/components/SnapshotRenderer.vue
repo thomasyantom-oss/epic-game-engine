@@ -5,7 +5,7 @@
         <template #map>
           <MapGrid :map="snapshot.map" :map-size="settings.mapSize || 10"
                    :disabled="!!snapshot.combat"
-                   @move="onMove" @moveTo="onMoveTo" />
+                   @move="onMove" @moveTo="onMoveTo" @interrupt="onInterrupt" />
         </template>
         <template #battle v-if="snapshot.combat">
           <BattleGrid :combat="snapshot.combat" :player-id="snapshot.playerId"
@@ -102,6 +102,10 @@ function onMove(direction) {
 
 function onMoveTo(x, y) {
   emit('action', { type: 'map_moveto', params: { targetX: x, targetY: y, entityId: props.snapshot?.playerId } })
+}
+
+function onInterrupt() {
+  emit('action', { type: '_interrupt' })
 }
 
 function onPoiAction(poi) {

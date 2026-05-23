@@ -22,7 +22,7 @@ const props = defineProps({
   disabled: { type: Boolean, default: false }
 })
 
-const emit = defineEmits(['move', 'moveTo'])
+const emit = defineEmits(['move', 'moveTo', 'interrupt'])
 
 const containerEl = ref(null)
 const cellSize = ref(32)
@@ -111,6 +111,7 @@ function onKeyDown(e) {
   const dir = dirMap[e.key]
   if (dir) {
     e.preventDefault()
+    emit('interrupt')
     emit('move', dir)
   }
 }

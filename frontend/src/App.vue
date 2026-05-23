@@ -42,8 +42,39 @@ async function cancelCreate() {
     snapshot.value = await getSnapshot()
 }
 
+let pathfindingActive = false
+
 async function handleAction(action) {
-    snapshot.value = await performAction(action.type, action.params || {})
+    if (action.type === '_interrupt') {
+        pathfindingActive = false
+        return
+    }
+    if (action.type === 'map_moveto') {
+        await handlePathfind(action.params)
+    } else {
+        pathfindingActive = false
+        snapshot.value = await performAction(action.type, action.params || {})
+    }
+}
+
+async function handlePathfind(params) {
+    pathfindingActive = true
+    const targetX = params.targetX
+    const targetY = params.targetY
+    const entityId = params.entityId
+
+    while (pathfindingActive) {
+        const result = await performAction('map_moveto', { targetX, targetY, entityId })
+        snapshot.value = result
+
+        // Stop if combat started, phase changed, or path done
+        if (result.combat || result.phase !== 'in_game') break
+        const map = result.map
+        if (!map || (map.playerX === targetX && map.playerY === targetY)) break
+
+        await new Promise(r => setTimeout(r, 200))
+    }
+    pathfindingActive = false
 }
 
 onMounted(async () => {

@@ -63,7 +63,7 @@ engine.on("action.map_move", 100, function(event) {
     engine.fire("map.move", moveEvent);
 });
 
-// Handle click-to-move (pathfind + step-by-step execution)
+// Handle click-to-move: compute path and return it for frontend to step through
 engine.on("action.map_moveto", 100, function(event) {
     var playerId = event.get("playerId");
     var targetX = event.get("targetX");
@@ -79,14 +79,14 @@ engine.on("action.map_moveto", 100, function(event) {
 
     var found = pathEvent.get("found");
     if (found) {
+        // Just execute one step — frontend will call again for each step
         var path = pathEvent.get("path");
-        // Execute each step via map.move to trigger terrain checks
-        var entity = store.get(entityId);
-        var pos = entity.getComponent("Position");
-        for (var i = 0; i < path.length; i++) {
-            var step = path[i];
+        if (path.length > 0) {
+            var entity = store.get(entityId);
+            var pos = entity.getComponent("Position");
             var cx = pos.getInt("x");
             var cy = pos.getInt("y");
+            var step = path[0];
             var sx = step.x !== undefined ? step.x : step.get("x");
             var sy = step.y !== undefined ? step.y : step.get("y");
             var dir = "";
@@ -99,9 +99,13 @@ engine.on("action.map_moveto", 100, function(event) {
             moveEvent.set("entityId", entityId);
             moveEvent.set("direction", dir);
             engine.fire("map.move", moveEvent);
-
-            if (!moveEvent.get("success")) break;
         }
+        // Set remaining path length so frontend knows if more steps needed
+        event.set("pathRemaining", path.length - 1);
+        event.set("targetX", targetX);
+        event.set("targetY", targetY);
+    } else {
+        event.set("pathRemaining", 0);
     }
 });
 
