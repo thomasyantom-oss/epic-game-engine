@@ -44,6 +44,7 @@ public class ModuleLoader {
     }
 
     private void loadModule(ModuleDescriptor mod) throws IOException {
+        runtime.setModuleContext(mod.path());
         Path handlersDir = mod.path().resolve("handlers");
         if (!Files.isDirectory(handlersDir)) return;
 

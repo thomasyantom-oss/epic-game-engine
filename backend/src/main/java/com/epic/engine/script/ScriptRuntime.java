@@ -9,14 +9,20 @@ import org.graalvm.polyglot.Context;
 import org.graalvm.polyglot.HostAccess;
 import org.graalvm.polyglot.Source;
 import org.graalvm.polyglot.Value;
+import org.yaml.snakeyaml.Yaml;
 
 import java.io.IOException;
+import java.io.InputStream;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.util.Map;
 
 public class ScriptRuntime implements AutoCloseable {
 
     private final Context context;
     private final EventBus bus;
     private final EntityStore store;
+    private Path moduleContext;
 
     public ScriptRuntime(EventBus bus, EntityStore store) {
         this.bus = bus;
@@ -32,6 +38,14 @@ public class ScriptRuntime implements AutoCloseable {
         Value bindings = context.getBindings("js");
         bindings.putMember("engine", new EngineApi());
         bindings.putMember("store", store);
+    }
+
+    public void setModuleContext(Path modulePath) {
+        this.moduleContext = modulePath;
+    }
+
+    public void bindService(String name, Object service) {
+        context.getBindings("js").putMember(name, service);
     }
 
     public void execute(String script, String sourceName) {
@@ -72,6 +86,20 @@ public class ScriptRuntime implements AutoCloseable {
         @HostAccess.Export
         public Component newComponent(String type) {
             return new Component(type);
+        }
+
+        @HostAccess.Export
+        public Map<String, Object> loadYaml(String relativePath) {
+            if (moduleContext == null) {
+                throw new RuntimeException("No module context set");
+            }
+            Path yamlPath = moduleContext.resolve(relativePath);
+            Yaml yaml = new Yaml();
+            try (InputStream is = Files.newInputStream(yamlPath)) {
+                return yaml.load(is);
+            } catch (IOException e) {
+                throw new RuntimeException("Failed to load YAML: " + yamlPath, e);
+            }
         }
     }
 }
