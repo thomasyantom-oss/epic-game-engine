@@ -1,5 +1,5 @@
-// Record combat events as log entries on the combat entity
-engine.on("combat.resolve_round", 50, function(event) {
+// Record combat events as log entries on the combat entity (after combat_flow increments round)
+engine.on("combat.resolve_round", 101, function(event) {
     var combatId = event.get("combatId");
     var combat = store.get(combatId);
     if (combat === null) return;
