@@ -1,6 +1,0 @@
-id: base
-name: "基础内容包"
-version: "0.1.0"
-description: "引擎默认内容包"
-load-order: 0
-dependencies: []
