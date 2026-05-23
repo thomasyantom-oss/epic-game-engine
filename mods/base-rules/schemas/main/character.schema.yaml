@@ -1,0 +1,15 @@
+id: character
+type: main
+required_subs: [class]
+fields:
+  - name: name
+    type: string
+    required: true
+  - name: level
+    type: int
+    default: 1
+base_components:
+  Health: { hp: 100, maxHp: 100 }
+  Mana: { mp: 50, maxMp: 50 }
+  CombatStats: { attack: 5, defense: 3, speed: 5 }
+  Position: { map: "world_map", x: 4, y: 3 }

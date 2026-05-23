@@ -1,0 +1,15 @@
+id: mage
+type: sub
+category: class
+compatible_with: [character]
+label: "法师"
+description: "远程魔法攻击者"
+modifiers:
+  - field: "Mana.maxMp"
+    value: "+30"
+  - field: "Mana.mp"
+    value: "+30"
+  - field: "CombatStats.attack"
+    value: "+5"
+  - field: "CombatStats.speed"
+    value: "+2"

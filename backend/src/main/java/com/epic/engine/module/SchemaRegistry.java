@@ -6,6 +6,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.nio.file.*;
 import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.stream.Stream;
 
@@ -41,6 +42,12 @@ public class SchemaRegistry {
         Schema sub = schemas.get(subSchemaId);
         if (sub == null) return false;
         return sub.compatibleWith().contains(mainSchemaId);
+    }
+
+    public List<Schema> getByCategory(String category) {
+        return schemas.values().stream()
+                .filter(s -> category.equals(s.category()))
+                .toList();
     }
 
     public Map<String, Schema> getAll() {

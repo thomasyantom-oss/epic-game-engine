@@ -1,0 +1,15 @@
+id: warrior
+type: sub
+category: class
+compatible_with: [character]
+label: "战士"
+description: "近战物理攻击者"
+modifiers:
+  - field: "Health.maxHp"
+    value: "+50"
+  - field: "Health.hp"
+    value: "+50"
+  - field: "CombatStats.attack"
+    value: "+3"
+  - field: "CombatStats.defense"
+    value: "+2"
