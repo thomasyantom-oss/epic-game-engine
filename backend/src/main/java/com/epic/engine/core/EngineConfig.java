@@ -41,7 +41,8 @@ public class EngineConfig {
     }
 
     @Bean
-    public EngineBootstrap engineBootstrap(ModuleLoader moduleLoader, SchemaRegistry schemaRegistry) {
-        return new EngineBootstrap(moduleLoader, schemaRegistry, Path.of(modsPath));
+    public EngineBootstrap engineBootstrap(ModuleLoader moduleLoader, SchemaRegistry schemaRegistry,
+                                           EventBus eventBus, EntityStore entityStore) {
+        return new EngineBootstrap(moduleLoader, schemaRegistry, eventBus, entityStore, Path.of(modsPath));
     }
 }

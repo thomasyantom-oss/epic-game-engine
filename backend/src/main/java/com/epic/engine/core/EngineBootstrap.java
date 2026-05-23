@@ -16,11 +16,16 @@ public class EngineBootstrap {
 
     private final ModuleLoader moduleLoader;
     private final SchemaRegistry schemaRegistry;
+    private final EventBus eventBus;
+    private final EntityStore entityStore;
     private final Path modsPath;
 
-    public EngineBootstrap(ModuleLoader moduleLoader, SchemaRegistry schemaRegistry, Path modsPath) {
+    public EngineBootstrap(ModuleLoader moduleLoader, SchemaRegistry schemaRegistry,
+                           EventBus eventBus, EntityStore entityStore, Path modsPath) {
         this.moduleLoader = moduleLoader;
         this.schemaRegistry = schemaRegistry;
+        this.eventBus = eventBus;
+        this.entityStore = entityStore;
         this.modsPath = modsPath;
     }
 
@@ -33,5 +38,8 @@ public class EngineBootstrap {
         }
         moduleLoader.loadAll();
         log.info("引擎启动完成，已加载 {} 个 schema", schemaRegistry.getAll().size());
+
+        eventBus.fire("world.init", new GameEvent("world.init"));
+        log.info("世界初始化完成，实体数: {}", entityStore.all().size());
     }
 }
