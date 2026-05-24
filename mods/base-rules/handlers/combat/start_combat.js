@@ -106,7 +106,7 @@ engine.on("action.combat_command", 100, function(event) {
         var entity = combatants.get(i);
         if (entity.hasTag("enemy") && entity.hasComponent("Health") && entity.getComponent("Health").getInt("hp") > 0) {
             var enemyCmd = engine.newMap();
-            enemyCmd.put("type", "ATTACK");
+            enemyCmd.put("type", "basic_attack");
             enemyCmd.put("targetId", playerId);
             commands.put(entity.getId(), enemyCmd);
         }
