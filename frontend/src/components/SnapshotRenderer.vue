@@ -180,25 +180,32 @@ watch(() => props.snapshot?.combat?.events, async (events) => {
 
   isAnimating.value = true
   playedCount.value = 0
+  visibleLogCount.value = 0
   await nextTick()
   if (battleGridRef.value) {
     battleGridRef.value.updateCellPositions()
     await battleGridRef.value.play(events, (idx) => {
       playedCount.value = idx + 1
+      const event = events[idx]
+      const logCount = event.logCount || 1
+      visibleLogCount.value += logCount
     })
     battleGridRef.value.animationDone()
   }
   playedCount.value = events.length
+  visibleLogCount.value = 999
   isAnimating.value = false
 }, { immediate: true })
 
 
 // Visible current round entries — show all completed (not animated anymore)
+const visibleLogCount = ref(0)
+
 const visibleCurrentEntries = computed(() => {
   const entries = currentRoundEntries.value
   if (!isAnimating.value) return entries
-  // First entry is round separator, rest correspond to events
-  return entries.slice(0, playedCount.value + 1)
+  // First entry is round separator, rest are log entries
+  return entries.slice(0, visibleLogCount.value + 1)
 })
 
 // Current terrain color for battle grid background tint
