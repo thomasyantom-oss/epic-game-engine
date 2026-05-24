@@ -6,12 +6,6 @@ engine.on("combat.resolve_round", 100, function(event) {
 
     state.set("phase", "RESOLVE");
 
-    // Clear defending status from previous round
-    var combatants = store.getByTagAsList("combat:" + combatId);
-    for (var i = 0; i < combatants.size(); i++) {
-        combatants.get(i).removeComponent("Defending");
-    }
-
     // Determine turn order
     var initEvent = engine.newEvent("combat.determine_order");
     initEvent.set("combatId", combatId);

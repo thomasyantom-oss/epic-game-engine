@@ -11,7 +11,7 @@ engine.on("combat.damage_calc", 100, function(event) {
 
     var attack = attacker.getComponent("CombatStats").getInt("attack");
     var defense = target.getComponent("CombatStats").getInt("defense");
-    var isDefending = target.hasComponent("Defending");
+    var isDefending = target.hasComponent("Buff_defending");
 
     var damage = Math.max(1, attack - defense);
     if (isDefending) {

@@ -33,8 +33,7 @@ engine.on("combat.unit_action", 100, function(event) {
         dealEvent.set("combatId", combatId);
         engine.fire("combat.damage_dealt", dealEvent);
     } else if (cmdTypeStr === "DEFEND") {
-        var actor = store.get(actorId);
-        actor.addComponent(engine.newComponent("Defending"));
+        buffs.applyBuff(actorId, "defending", engine.newMap());
     }
 });
 
