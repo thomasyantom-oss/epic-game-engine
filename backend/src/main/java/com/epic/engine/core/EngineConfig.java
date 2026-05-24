@@ -1,5 +1,6 @@
 package com.epic.engine.core;
 
+import com.epic.engine.buff.BuffService;
 import com.epic.engine.module.ModuleLoader;
 import com.epic.engine.module.SchemaRegistry;
 import com.epic.engine.persistence.PersistenceService;
@@ -43,11 +44,16 @@ public class EngineConfig {
     }
 
     @Bean
+    public BuffService buffService(EventBus eventBus, EntityStore entityStore) {
+        return new BuffService(eventBus, entityStore);
+    }
+
+    @Bean
     public EngineBootstrap engineBootstrap(ModuleLoader moduleLoader, SchemaRegistry schemaRegistry,
                                            EventBus eventBus, EntityStore entityStore,
                                            ScriptRuntime scriptRuntime, PersistenceService persistenceService,
-                                           SessionService sessionService) {
+                                           SessionService sessionService, BuffService buffService) {
         return new EngineBootstrap(moduleLoader, schemaRegistry, eventBus, entityStore, Path.of(modsPath),
-                scriptRuntime, persistenceService, sessionService);
+                scriptRuntime, persistenceService, sessionService, buffService);
     }
 }

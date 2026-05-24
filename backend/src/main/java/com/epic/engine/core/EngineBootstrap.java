@@ -1,5 +1,6 @@
 package com.epic.engine.core;
 
+import com.epic.engine.buff.BuffService;
 import com.epic.engine.module.ModuleLoader;
 import com.epic.engine.module.ModuleDescriptor;
 import com.epic.engine.module.SchemaRegistry;
@@ -27,12 +28,13 @@ public class EngineBootstrap {
     private final ScriptRuntime scriptRuntime;
     private final PersistenceService persistenceService;
     private final SessionService sessionService;
+    private final BuffService buffService;
     private HotReloader hotReloader;
 
     public EngineBootstrap(ModuleLoader moduleLoader, SchemaRegistry schemaRegistry,
                            EventBus eventBus, EntityStore entityStore, Path modsPath,
                            ScriptRuntime scriptRuntime, PersistenceService persistenceService,
-                           SessionService sessionService) {
+                           SessionService sessionService, BuffService buffService) {
         this.moduleLoader = moduleLoader;
         this.schemaRegistry = schemaRegistry;
         this.eventBus = eventBus;
@@ -41,6 +43,7 @@ public class EngineBootstrap {
         this.scriptRuntime = scriptRuntime;
         this.persistenceService = persistenceService;
         this.sessionService = sessionService;
+        this.buffService = buffService;
     }
 
     @PostConstruct
@@ -55,6 +58,7 @@ public class EngineBootstrap {
         scriptRuntime.bindService("persistence", persistenceService);
         scriptRuntime.bindService("schemas", schemaRegistry);
         scriptRuntime.bindService("sessions", sessionService);
+        scriptRuntime.bindService("buffs", buffService);
 
         moduleLoader.loadAll();
         log.info("引擎启动完成，已加载 {} 个 schema", schemaRegistry.getAll().size());
