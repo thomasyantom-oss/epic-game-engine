@@ -111,6 +111,39 @@ engine.on("action.confirm_character", 100, function(event) {
     nameComp.set("value", name);
     entity.addComponent(nameComp);
 
+    // 添加 Skills 组件 — 默认技能 + 职业技能
+    var skills = engine.newComponent("Skills");
+    var skillList = engine.newList();
+
+    var atkSkill = engine.newMap();
+    atkSkill.put("id", "basic_attack");
+    atkSkill.put("level", 1);
+    atkSkill.put("cooldown", 0);
+    skillList.add(atkSkill);
+
+    var defSkill = engine.newMap();
+    defSkill.put("id", "defend");
+    defSkill.put("level", 1);
+    defSkill.put("cooldown", 0);
+    skillList.add(defSkill);
+
+    var fleeSkill = engine.newMap();
+    fleeSkill.put("id", "flee");
+    fleeSkill.put("level", 1);
+    fleeSkill.put("cooldown", 0);
+    skillList.add(fleeSkill);
+
+    if (classId === "mage") {
+        var fbSkill = engine.newMap();
+        fbSkill.put("id", "fireball");
+        fbSkill.put("level", 1);
+        fbSkill.put("cooldown", 0);
+        skillList.add(fbSkill);
+    }
+
+    skills.set("list", skillList);
+    entity.addComponent(skills);
+
     // 标签
     entity.addTag("persistent");
     entity.addTag("player");
