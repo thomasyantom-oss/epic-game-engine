@@ -106,18 +106,90 @@
 - 逃跑/战斗结束正确回到大地图
 - 刷新页面保持 POI 状态和战斗状态
 
+## 2026-05-22 ~ 2026-05-23
+
+### 引擎重构：事件驱动微内核
+
+完全推倒重写引擎。从硬编码 Java 架构改为事件驱动微内核，所有游戏规则由 JS 模块实现。
+
+**Engine Core（Java）：**
+- EventBus — fire/on/cancel/priority 事件总线
+- Entity + Component — ECS 实体组件系统
+- ModifierChain — 效果叠加/撤销（priority 排序，base state 快照恢复）
+- TagIndex + EntityStore — 标签索引 O(1) 查询
+- ScriptRuntime — GraalJS 沙箱，暴露 engine/store API 给 JS
+- ModuleLoader — 发现 mods 目录，加载 JS handlers
+- SchemaRegistry — 加载/校验 main/sub schema YAML
+- HotReloader — 文件监听，JS handler 修改后自动重载无需重启
+- PersistenceService — persistent 标签实体存 H2 数据库
+- GeneratorService — schema-driven 实体生成器
+
+**模块系统：**
+- 所有游戏规则在 `mods/base-rules/handlers/*.js`
+- 战斗：combat_flow / initiative / damage_calc / death_check / combat_log / start_combat
+- 地图：movement（地形通行检查）/ pathfinding（A* 跳过不可通行）
+- UI：status_bars / actions（动态生成可用操作）
+- 世界：bootstrap（从 YAML 加载地图+地形+颜色）
+- 角色：select（创建/选择/登出，schema 驱动表单）
+
+**前端架构：**
+- 无状态快照渲染器 — 一个 snapshot JSON 驱动全部 UI
+- 单一 API：POST /api/action + GET /api/snapshot
+- Session token（localStorage）+ 可配置超时
+- 角色选择（卡片式）→ 角色创建（schema 驱动表单）→ 游戏中
+
+### 角色系统
+
+- 多存档（可配置槽位数）
+- Session token 持久化 — 重启后端角色不丢失
+- 角色 = Object（Main: Character + Sub: Class）
+- 创建时表单由 schema 动态生成（required_subs 决定必选项）
+- 职业选择影响属性（modifiers 定义加成）
+- 战斗死亡满血复活
+
+### UI 系统
+
+- 4 面板 tab 布局恢复（地图+地图信息分割栏 | 人物/设置 | 事件/战斗日志 | 快捷操作）
+- 统一 ActionLink 组件 — 所有可交互元素用 `▸前缀` + 链接色，不用按钮
+- 颜色系统模块化 — `colors.yaml` 定义语义色，snapshot 传给前端动态应用 CSS 变量
+- 战斗指令后端驱动 — 模块控制可用操作，前端不硬编码
+- 错误 toast — API 失败时顶部红色提示 5s 消失
+- 设置面板 — 字体大小/背景/文字/边框/链接颜色/地图大小，纯前端 localStorage
+
+### 战斗系统
+
+- H 形布局恢复：左右状态栏 + 中间 3×3 格子 + 底部指令栏三等分
+- 回合数顶部 banner 显示
+- 战斗日志：当前回合可见，历史回合可折叠，染色（我方/敌方/伤害语义色）
+- 逃跑直接结束战斗
+- 玩家/怪物对称设计 — 相同 Object 结构，只是控制方式不同
+
+### 地图系统
+
+- 10×10 彩色网格恢复，地形数据从 YAML 加载
+- 键盘 WASD/方向键移动
+- 点击自动寻路（逐步 200ms/步，可中断）
+- 地形通行检查（水需要 swim，山需要 fly）
+- 地图信息面板（分割栏显示地名/坐标/地形/POI）
+- POI 交互触发战斗
+
+### 设计原则
+
+- **众生平等** — 玩家和怪物完全对称结构，地点也是属性对象
+- **不 hardcode** — 颜色走 CSS 变量（模块定义），文本/数据走模块/schema
+- **每种颜色唯一语义** — 不滥用，交互统一链接色
+- **前端是纯渲染器** — 不含游戏知识，所有逻辑在后端模块
+
 ### 待做
 
-- NPC 在地图上移动（圆形+身份汉字标记）
-- 区域地图 / 地城随机生成
-- 移动事件 / 随机遭遇触发
-- 迷雾 / 战争迷雾 / 探索可见性
-- 地形移动消耗影响动画速度
 - 技能系统（技能定义、MP/资源消耗、多种范围）
 - 联动系统：状态标签 / 资源累积 / 技能链
 - 高级 AI（行为模式、按遭遇战配置）
-- 战斗中使用道具
+- 装备系统 + 物品品质颜色
 - 多角色队伍
-- 属性/数值框架
-- 装备系统
-- 职业系统
+- NPC 在地图上移动
+- 区域地图 / 地城随机生成
+- 随机遭遇触发
+- 迷雾 / 战争迷雾
+- 打造系统 / Web 编辑器
+- 血魔法等机制改写模块验证
