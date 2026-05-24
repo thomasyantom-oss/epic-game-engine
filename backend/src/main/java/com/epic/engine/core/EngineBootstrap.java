@@ -4,9 +4,11 @@ import com.epic.engine.module.ModuleLoader;
 import com.epic.engine.module.ModuleDescriptor;
 import com.epic.engine.module.SchemaRegistry;
 import com.epic.engine.persistence.PersistenceService;
+import com.epic.engine.script.HotReloader;
 import com.epic.engine.script.ScriptRuntime;
 import com.epic.engine.session.SessionService;
 import jakarta.annotation.PostConstruct;
+import jakarta.annotation.PreDestroy;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -25,6 +27,7 @@ public class EngineBootstrap {
     private final ScriptRuntime scriptRuntime;
     private final PersistenceService persistenceService;
     private final SessionService sessionService;
+    private HotReloader hotReloader;
 
     public EngineBootstrap(ModuleLoader moduleLoader, SchemaRegistry schemaRegistry,
                            EventBus eventBus, EntityStore entityStore, Path modsPath,
@@ -62,5 +65,16 @@ public class EngineBootstrap {
 
         eventBus.fire("world.init", new GameEvent("world.init"));
         log.info("世界初始化完成，实体数: {}", entityStore.all().size());
+
+        // Start JS hot reloader
+        hotReloader = new HotReloader(scriptRuntime, eventBus);
+        hotReloader.startWatching(modsPath);
+    }
+
+    @PreDestroy
+    public void shutdown() {
+        if (hotReloader != null) {
+            hotReloader.stop();
+        }
     }
 }

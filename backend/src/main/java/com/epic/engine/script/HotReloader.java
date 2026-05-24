@@ -1,15 +1,24 @@
 package com.epic.engine.script;
 
 import com.epic.engine.core.EventBus;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
+import java.io.IOException;
+import java.nio.file.*;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.stream.Stream;
 
 public class HotReloader {
+
+    private static final Logger log = LoggerFactory.getLogger(HotReloader.class);
 
     private final ScriptRuntime runtime;
     private final EventBus bus;
     private final Map<String, String> loadedScripts = new ConcurrentHashMap<>();
+    private volatile boolean running = false;
+    private Thread watchThread;
 
     public HotReloader(ScriptRuntime runtime, EventBus bus) {
         this.runtime = runtime;
@@ -29,7 +38,97 @@ public class HotReloader {
         loadedScripts.put(sourceName, script);
     }
 
+    public void startWatching(Path modsPath) {
+        running = true;
+        watchThread = new Thread(() -> {
+            try (WatchService watcher = FileSystems.getDefault().newWatchService()) {
+                registerRecursive(modsPath, watcher);
+                log.info("JS 热加载已启动，监听: {}", modsPath);
+
+                while (running) {
+                    WatchKey key;
+                    try {
+                        key = watcher.poll(1, java.util.concurrent.TimeUnit.SECONDS);
+                    } catch (InterruptedException e) {
+                        break;
+                    }
+                    if (key == null) continue;
+
+                    boolean needsReload = false;
+                    for (WatchEvent<?> event : key.pollEvents()) {
+                        Path changed = ((Path) key.watchable()).resolve((Path) event.context());
+                        if (changed.toString().endsWith(".js")) {
+                            log.info("检测到 JS 变更: {}", changed.getFileName());
+                            needsReload = true;
+                        }
+                    }
+                    key.reset();
+
+                    if (needsReload) {
+                        reloadAll(modsPath);
+                    }
+                }
+            } catch (IOException e) {
+                log.error("文件监听失败", e);
+            }
+        }, "js-hot-reloader");
+        watchThread.setDaemon(true);
+        watchThread.start();
+    }
+
+    private void reloadAll(Path modsPath) {
+        log.info("重新加载所有 JS handlers...");
+        bus.clear();
+        loadedScripts.clear();
+
+        try (Stream<Path> dirs = Files.walk(modsPath)) {
+            dirs.filter(p -> p.toString().endsWith(".js"))
+                .sorted()
+                .forEach(jsFile -> {
+                    try {
+                        String script = Files.readString(jsFile);
+                        String name = modsPath.relativize(jsFile).toString();
+                        loadedScripts.put(name, script);
+
+                        Path modDir = jsFile;
+                        while (modDir != null && !modDir.equals(modsPath)) {
+                            if (Files.exists(modDir.resolve("mod.yaml"))) {
+                                runtime.setModuleContext(modDir);
+                                break;
+                            }
+                            modDir = modDir.getParent();
+                        }
+
+                        runtime.execute(script, name);
+                    } catch (IOException e) {
+                        log.error("加载失败: {}", jsFile, e);
+                    }
+                });
+        } catch (IOException e) {
+            log.error("扫描 JS 文件失败", e);
+        }
+        log.info("JS handlers 重新加载完成，共 {} 个脚本", loadedScripts.size());
+    }
+
+    private void registerRecursive(Path root, WatchService watcher) throws IOException {
+        try (Stream<Path> dirs = Files.walk(root)) {
+            dirs.filter(Files::isDirectory).forEach(dir -> {
+                try {
+                    dir.register(watcher,
+                            StandardWatchEventKinds.ENTRY_MODIFY,
+                            StandardWatchEventKinds.ENTRY_CREATE,
+                            StandardWatchEventKinds.ENTRY_DELETE);
+                } catch (IOException e) {
+                    log.warn("无法监听目录: {}", dir);
+                }
+            });
+        }
+    }
+
     public void stop() {
-        // Placeholder for file watcher shutdown
+        running = false;
+        if (watchThread != null) {
+            watchThread.interrupt();
+        }
     }
 }
