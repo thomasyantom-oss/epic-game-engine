@@ -71,7 +71,7 @@ engine.on("ui.render_actions", 100, function(event) {
         }
 
         // Logout
-        actions.add(engine.newActionOptionStyled("logout", "退出角色", engine.newMap(), "text", "instant"));
+        actions.add(engine.newActionOptionStyled("logout", "退出角色", engine.newMap(), null, "instant"));
     }
 });
 
