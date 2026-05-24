@@ -171,6 +171,7 @@ const historyRounds = computed(() => {
 const isAnimating = ref(false)
 const battleGridRef = ref(null)
 const animEventIndex = ref(-1)
+const animatedRound = ref(-1)
 
 watch(() => props.snapshot?.combat?.events, async (events) => {
   if (!events || events.length === 0) {
@@ -179,7 +180,7 @@ watch(() => props.snapshot?.combat?.events, async (events) => {
     return
   }
 
-  // Set these synchronously BEFORE any await so computed picks them up immediately
+  const round = props.snapshot?.combat?.round || 0
   isAnimating.value = true
   animEventIndex.value = -1
 
@@ -191,6 +192,7 @@ watch(() => props.snapshot?.combat?.events, async (events) => {
     })
   }
   isAnimating.value = false
+  animatedRound.value = round
 }, { immediate: true })
 
 // Calculate pre-animation HP by reversing all effects from current events
@@ -220,8 +222,9 @@ const displayCombat = computed(() => {
   const events = combat.events || []
   if (events.length === 0) return combat
 
-  // If all events have been played through, show final state
-  if (animEventIndex.value >= events.length - 1) return combat
+  // If this round's animation already finished, show final state
+  const currentRound = combat.round || 0
+  if (animatedRound.value >= currentRound) return combat
 
   // Progressive: calculate pre-animation HP then apply played events
   const preHp = calcPreAnimHp()
