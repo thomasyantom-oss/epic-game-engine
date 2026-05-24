@@ -26,7 +26,7 @@ public class SnapshotService {
     public WorldSnapshot buildSnapshot(String token) {
         SessionData session = sessionService.getSession(token);
         if (session == null) {
-            return WorldSnapshot.characterSelect(token, List.of(), sessionService.getMaxSlots());
+            return WorldSnapshot.characterSelect(token, List.of(), sessionService.getMaxSlots(), buildColorMap());
         }
 
         if (session.activeCharacterId() != null && sessionService.isTimedOut(token)) {
@@ -51,7 +51,7 @@ public class SnapshotService {
         List<WorldSnapshot.CharacterInfo> characters = event.get("characters");
 
         return WorldSnapshot.characterSelect(token, characters != null ? characters : List.of(),
-                sessionService.getMaxSlots());
+                sessionService.getMaxSlots(), buildColorMap());
     }
 
     private WorldSnapshot buildInGameSnapshot(String token, String playerId) {
@@ -87,7 +87,17 @@ public class SnapshotService {
                 buildMapSnapshot(player),
                 buildCombatSnapshot(playerId),
                 actions != null ? actions : List.of(),
-                buildCombatLog(playerId));
+                buildCombatLog(playerId),
+                buildColorMap());
+    }
+
+    public Map<String, String> buildColorMap() {
+        Entity config = entityStore.get("_config");
+        if (config == null || !config.hasComponent("Colors")) return Map.of();
+        Component colors = config.getComponent("Colors");
+        Map<String, String> colorMap = new LinkedHashMap<>();
+        colors.getAll().forEach((k, v) -> colorMap.put(k, v.toString()));
+        return colorMap;
     }
 
     @SuppressWarnings("unchecked")

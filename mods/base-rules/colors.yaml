@@ -1,0 +1,6 @@
+colors:
+  player: "#4ecdc4"
+  enemy: "#e94560"
+  damage: "#ffd93d"
+  highlight: "#ffd93d"
+  text: "#ffffff"

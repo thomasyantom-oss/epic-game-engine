@@ -10,7 +10,7 @@
     --font-size: 16px;
     --font-family: "LXGW WenKai", "Noto Serif SC", serif;
 
-    /* Semantic color roles */
+    /* Semantic color roles — defaults, overridden by module-provided colors from snapshot */
     --color-player: #4ecdc4;
     --color-enemy: #e94560;
     --color-damage: #ffd93d;

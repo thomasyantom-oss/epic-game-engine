@@ -18,7 +18,7 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted } from 'vue'
+import { ref, computed, onMounted, watch } from 'vue'
 import CharacterSelect from './components/CharacterSelect.vue'
 import CharacterCreate from './components/CharacterCreate.vue'
 import SnapshotRenderer from './components/SnapshotRenderer.vue'
@@ -89,6 +89,15 @@ async function handlePathfind(params) {
     }
     pathfindingActive = false
 }
+
+watch(snapshot, (snap) => {
+    if (snap?.colors) {
+        const root = document.documentElement
+        Object.entries(snap.colors).forEach(([name, hex]) => {
+            root.style.setProperty(`--color-${name}`, hex)
+        })
+    }
+}, { immediate: true })
 
 onMounted(async () => {
     snapshot.value = await getSnapshot()
