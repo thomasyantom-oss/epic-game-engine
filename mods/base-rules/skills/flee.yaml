@@ -1,0 +1,6 @@
+id: flee
+name: "逃跑"
+category: action
+silenceable: false
+targeting:
+  steps: []

@@ -1,0 +1,6 @@
+id: burning
+name: "灼烧"
+stacking: refresh
+indicator:
+  corner: bottom-right
+  color: "#ff4400"

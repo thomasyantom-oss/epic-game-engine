@@ -1,0 +1,11 @@
+id: defend
+name: "防御"
+category: skill
+silenceable: true
+targeting:
+  steps: []
+animation:
+  - type: buff_up
+    target: actor
+    color: "#66bb6a"
+    intensity: normal
