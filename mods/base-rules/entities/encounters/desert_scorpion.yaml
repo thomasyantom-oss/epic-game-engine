@@ -1,0 +1,19 @@
+id: desert_scorpion
+name: "沙漠蝎子遭遇战"
+enemies:
+  - id: scorpion1
+    name: "巨蝎"
+    row: FRONT
+    slot: 0
+    hp: 25
+    attack: 8
+    defense: 4
+    speed: 2
+  - id: scorpion2
+    name: "沙蝎"
+    row: FRONT
+    slot: 1
+    hp: 18
+    attack: 6
+    defense: 3
+    speed: 4

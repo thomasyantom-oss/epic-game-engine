@@ -1,0 +1,27 @@
+id: mountain_bandit
+name: "山贼伏击"
+enemies:
+  - id: bandit1
+    name: "山贼头目"
+    row: BACK
+    slot: 1
+    hp: 35
+    attack: 10
+    defense: 3
+    speed: 4
+  - id: bandit2
+    name: "山贼"
+    row: FRONT
+    slot: 0
+    hp: 20
+    attack: 6
+    defense: 2
+    speed: 5
+  - id: bandit3
+    name: "山贼"
+    row: FRONT
+    slot: 2
+    hp: 20
+    attack: 6
+    defense: 2
+    speed: 5
