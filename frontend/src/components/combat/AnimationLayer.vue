@@ -434,11 +434,10 @@ function formatValue(value) {
 }
 
 @keyframes damage-pop {
-  0% { transform: translateX(-50%) translateY(4px) scale(0.8); opacity: 0; }
-  15% { transform: translateX(-50%) translateY(0) scale(1.1); opacity: 1; }
-  30% { transform: translateX(-50%) translateY(0) scale(1); opacity: 1; }
-  70% { transform: translateX(-50%) translateY(0); opacity: 1; }
-  100% { transform: translateX(-50%) translateY(-8px); opacity: 0; }
+  0% { transform: translateX(-50%) translateY(0); opacity: 0; }
+  12% { transform: translateX(-50%) translateY(0); opacity: 1; }
+  65% { transform: translateX(-50%) translateY(-4px); opacity: 1; }
+  100% { transform: translateX(-50%) translateY(-10px); opacity: 0; }
 }
 
 /* ========== Buff Up ========== */
