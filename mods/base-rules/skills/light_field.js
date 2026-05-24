@@ -64,77 +64,59 @@ engine.on("combat.unit_action", 80, function(event) {
         engine.fire("combat.damage_dealt", dealEvent);
     }
 
-    var combat = store.get(combatId);
-    if (combat !== null && combat.hasComponent("CombatEvents")) {
-        var queue = combat.getComponent("CombatEvents").get("queue");
-        var log = combat.hasComponent("CombatLog") ? combat.getComponent("CombatLog").get("entries") : null;
-
-        var evt = engine.newMap();
-
-        // Effects: flat structure (no nested data)
-        var effects = engine.newList();
-        for (var e = 0; e < targets.length; e++) {
-            var eff = engine.newMap();
-            eff.put("target", targets[e]);
-            eff.put("type", "hp_change");
-            eff.put("amount", -damage);
-            eff.put("hp", store.get(targets[e]).getComponent("Health").getInt("hp"));
-            eff.put("maxHp", store.get(targets[e]).getComponent("Health").getInt("maxHp"));
-            effects.add(eff);
-        }
-        evt.put("effects", effects);
-
-        // Segments: first target's line (for event display)
-        var segments = engine.newList();
-        var tName = store.get(targets[0]).hasComponent("Name") ? store.get(targets[0]).getComponent("Name").getString("value") : targets[0];
-        var s1 = engine.newMap(); s1.put("text", casterName); s1.put("color", casterSide); segments.add(s1);
-        var s2 = engine.newMap(); s2.put("text", " 对 "); s2.put("color", "text"); segments.add(s2);
-        var s3 = engine.newMap(); s3.put("text", tName); s3.put("color", "enemy"); segments.add(s3);
-        var s4 = engine.newMap(); s4.put("text", " 造成 "); s4.put("color", "text"); segments.add(s4);
-        var s5 = engine.newMap(); s5.put("text", "" + damage); s5.put("color", "damage"); segments.add(s5);
-        var s6 = engine.newMap(); s6.put("text", " 点伤害"); s6.put("color", "text"); segments.add(s6);
-        evt.put("segments", segments);
-
-        // Log entries for CombatLog: one per target
-        if (log !== null) {
-            for (var l = 0; l < targets.length; l++) {
-                var logEntry = engine.newList();
-                var targetName = store.get(targets[l]).hasComponent("Name") ? store.get(targets[l]).getComponent("Name").getString("value") : targets[l];
-                var ls1 = engine.newMap(); ls1.put("text", casterName); ls1.put("color", casterSide); logEntry.add(ls1);
-                var ls2 = engine.newMap(); ls2.put("text", " 对 "); ls2.put("color", "text"); logEntry.add(ls2);
-                var ls3 = engine.newMap(); ls3.put("text", targetName); ls3.put("color", "enemy"); logEntry.add(ls3);
-                var ls4 = engine.newMap(); ls4.put("text", " 造成 "); ls4.put("color", "text"); logEntry.add(ls4);
-                var ls5 = engine.newMap(); ls5.put("text", "" + damage); ls5.put("color", "damage"); logEntry.add(ls5);
-                var ls6 = engine.newMap(); ls6.put("text", " 点伤害"); ls6.put("color", "text"); logEntry.add(ls6);
-                log.add(logEntry);
-            }
-        }
-        evt.put("logCount", targets.length);
-
-        // Animation
-        var animation = engine.newList();
-        for (var t = 0; t < targets.length; t++) {
-            var impactAnim = engine.newMap();
-            impactAnim.put("type", "impact");
-            impactAnim.put("target", targets[t]);
-            impactAnim.put("color", "#ffee58");
-            animation.add(impactAnim);
-
-            var shakeAnim = engine.newMap();
-            shakeAnim.put("type", "shake");
-            shakeAnim.put("target", targets[t]);
-            shakeAnim.put("intensity", "normal");
-            animation.add(shakeAnim);
-
-            var dmgAnim = engine.newMap();
-            dmgAnim.put("type", "damage_number");
-            dmgAnim.put("target", targets[t]);
-            dmgAnim.put("value", -damage);
-            dmgAnim.put("color", "damage");
-            animation.add(dmgAnim);
-        }
-        evt.put("animation", animation);
-
-        queue.add(evt);
+    // Build log entries (one per target)
+    var logEntries = engine.newList();
+    for (var l = 0; l < targets.length; l++) {
+        var logEntry = engine.newList();
+        var targetName = store.get(targets[l]).hasComponent("Name") ? store.get(targets[l]).getComponent("Name").getString("value") : targets[l];
+        var ls1 = engine.newMap(); ls1.put("text", casterName); ls1.put("color", casterSide); logEntry.add(ls1);
+        var ls2 = engine.newMap(); ls2.put("text", " 对 "); ls2.put("color", "text"); logEntry.add(ls2);
+        var ls3 = engine.newMap(); ls3.put("text", targetName); ls3.put("color", "enemy"); logEntry.add(ls3);
+        var ls4 = engine.newMap(); ls4.put("text", " 造成 "); ls4.put("color", "text"); logEntry.add(ls4);
+        var ls5 = engine.newMap(); ls5.put("text", "" + damage); ls5.put("color", "damage"); logEntry.add(ls5);
+        var ls6 = engine.newMap(); ls6.put("text", " 点伤害"); ls6.put("color", "text"); logEntry.add(ls6);
+        logEntries.add(logEntry);
     }
+
+    // Build effects
+    var effects = engine.newList();
+    for (var e = 0; e < targets.length; e++) {
+        var eff = engine.newMap();
+        eff.put("target", targets[e]);
+        eff.put("type", "hp_change");
+        eff.put("amount", -damage);
+        eff.put("hp", store.get(targets[e]).getComponent("Health").getInt("hp"));
+        eff.put("maxHp", store.get(targets[e]).getComponent("Health").getInt("maxHp"));
+        effects.add(eff);
+    }
+
+    // Build animation
+    var animation = engine.newList();
+    for (var t = 0; t < targets.length; t++) {
+        var impactAnim = engine.newMap();
+        impactAnim.put("type", "impact");
+        impactAnim.put("target", targets[t]);
+        impactAnim.put("color", "#ffee58");
+        animation.add(impactAnim);
+
+        var shakeAnim = engine.newMap();
+        shakeAnim.put("type", "shake");
+        shakeAnim.put("target", targets[t]);
+        shakeAnim.put("intensity", "normal");
+        animation.add(shakeAnim);
+
+        var dmgAnim = engine.newMap();
+        dmgAnim.put("type", "damage_number");
+        dmgAnim.put("target", targets[t]);
+        dmgAnim.put("value", -damage);
+        dmgAnim.put("color", "damage");
+        animation.add(dmgAnim);
+    }
+
+    // Emit combat event via helper
+    var eventData = engine.newMap();
+    eventData.put("log", logEntries);
+    eventData.put("effects", effects);
+    eventData.put("animation", animation);
+    engine.combatEvent(combatId, eventData);
 });

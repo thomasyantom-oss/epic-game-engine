@@ -159,5 +159,43 @@ public class ScriptRuntime implements AutoCloseable {
         public long now() {
             return System.currentTimeMillis();
         }
+
+        @HostAccess.Export
+        @SuppressWarnings("unchecked")
+        public void combatEvent(String combatId, Map<String, Object> data) {
+            Entity combat = store.get(combatId);
+            if (combat == null) return;
+
+            // Write to CombatEvents queue
+            if (combat.hasComponent("CombatEvents")) {
+                List<Object> queue = (List<Object>) combat.getComponent("CombatEvents").get("queue");
+                Map<String, Object> evt = new HashMap<>();
+
+                // segments: first log entry (for single-target compat)
+                List<Object> log = (List<Object>) data.get("log");
+                if (log != null && !log.isEmpty()) {
+                    evt.put("segments", log.get(0));
+                    evt.put("logCount", log.size());
+                } else {
+                    evt.put("segments", new ArrayList<>());
+                    evt.put("logCount", 0);
+                }
+
+                evt.put("effects", data.getOrDefault("effects", new ArrayList<>()));
+                evt.put("animation", data.getOrDefault("animation", new ArrayList<>()));
+                queue.add(evt);
+            }
+
+            // Write to CombatLog
+            if (combat.hasComponent("CombatLog")) {
+                List<Object> entries = (List<Object>) combat.getComponent("CombatLog").get("entries");
+                List<Object> log = (List<Object>) data.get("log");
+                if (log != null) {
+                    for (Object entry : log) {
+                        entries.add(entry);
+                    }
+                }
+            }
+        }
     }
 }
