@@ -33,21 +33,24 @@ export function useAnimationPlayer() {
 
     const event = queue.shift()
     const anims = event.animation || []
-
-    playedEventIndex.value = eventIndex++
-    if (onEventCallback) onEventCallback(playedEventIndex.value)
+    const currentIdx = eventIndex++
 
     if (anims.length === 0) {
+      playedEventIndex.value = currentIdx
+      if (onEventCallback) onEventCallback(currentIdx)
       setTimeout(playNext, 400)
       return
     }
 
-    playAnimationSequence(anims)
+    playAnimationSequence(anims, () => {
+      playedEventIndex.value = currentIdx
+      if (onEventCallback) onEventCallback(currentIdx)
+    })
   }
 
   let animIdCounter = 0
 
-  function playAnimationSequence(anims) {
+  function playAnimationSequence(anims, doneCallback) {
     let delay = 0
     const active = []
 
@@ -67,6 +70,7 @@ export function useAnimationPlayer() {
     const totalDuration = Math.max(...active.map(a => a.startDelay + a.duration))
 
     setTimeout(() => {
+      if (doneCallback) doneCallback()
       activeAnimations.value = []
       setTimeout(playNext, 100)
     }, totalDuration)
