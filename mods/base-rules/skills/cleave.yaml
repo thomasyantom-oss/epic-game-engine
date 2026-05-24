@@ -3,7 +3,8 @@ name: "顺劈斩"
 category: skill
 silenceable: true
 targeting:
-  aoe_offsets: [[-1,0],[0,0],[1,0]]
+  aoe_offsets: [[-2,0],[-1,0],[0,0],[1,0],[2,0]]
+  allow_empty: true
   steps:
     - prompt: "选择一排中的任意目标"
       filter: enemy
@@ -13,7 +14,7 @@ animation:
     target: actor
     side: actor_side
   - type: slash
-    targets: all
+    area: all
     color: "#ffffff"
   - type: shake
     target: target

@@ -47,6 +47,10 @@ engine.on("ui.render_actions", 100, function(event) {
                 if (aoeOffsets !== null) {
                     params.put("aoeOffsets", aoeOffsets);
                 }
+                var allowEmpty = targeting !== null && targeting.get("allow_empty") !== null && targeting.get("allow_empty");
+                if (allowEmpty) {
+                    params.put("allowEmpty", true);
+                }
                 var style = needsTarget ? "requires_target" : "instant";
                 if (!usable) {
                     actions.add(engine.newActionOptionStyled("combat_command", name, params, "text", "disabled"));

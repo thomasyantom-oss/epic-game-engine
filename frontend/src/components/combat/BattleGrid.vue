@@ -311,8 +311,15 @@ function currentAoeOffsets() {
   return cmd?.params?.aoeOffsets || null
 }
 
+function currentAllowEmpty() {
+  if (!selectedCommand.value) return false
+  const cmd = props.commands.find(c => c.params?.command === selectedCommand.value)
+  return cmd?.params?.allowEmpty || false
+}
+
 function isValidTarget(cell) {
   if (!selectingTarget.value) return false
+  if (currentAllowEmpty()) return true
   if (!cell.marker || !cell.marker.alive) return false
   return true
 }
@@ -320,7 +327,7 @@ function isValidTarget(cell) {
 function isInAoeZone(cell) {
   if (step.value !== 'target' || !hoveredCell.value) return false
   const hovered = hoveredCell.value
-  if (!hovered.marker || !hovered.marker.alive) return false
+  if (!currentAllowEmpty() && (!hovered.marker || !hovered.marker.alive)) return false
 
   const offsets = currentAoeOffsets()
   if (!offsets) {
@@ -331,18 +338,23 @@ function isInAoeZone(cell) {
     const o = offsets[i]
     const dr = o[0] !== undefined ? o[0] : (o.get ? o.get(0) : 0)
     const dc = o[1] !== undefined ? o[1] : (o.get ? o.get(1) : 0)
-    if (cell.row === hovered.row + dr && cell.col === hovered.col + dc) return true
+    const targetRow = hovered.row + dr
+    const targetCol = hovered.col + dc
+    if (targetRow < 0 || targetRow > 2 || targetCol < 0 || targetCol > 2) continue
+    if (cell.row === targetRow && cell.col === targetCol) return true
   }
   return false
 }
 
 function onCellClick(cell) {
   if (step.value !== 'target') return
-  if (!cell.marker || !cell.marker.alive) return
+  if (!currentAllowEmpty() && (!cell.marker || !cell.marker.alive)) return
   stopTimer()
-  emit('command', { type: 'combat_command', params: { command: selectedCommand.value, targetId: cell.marker.id } })
+  var targetId = cell.marker?.id || null
+  emit('command', { type: 'combat_command', params: { command: selectedCommand.value, targetId: targetId, targetRow: cell.row, targetCol: cell.col } })
   step.value = 'command'
   selectedCommand.value = null
+  showSkills.value = false
 }
 
 function cancelSelect() {
