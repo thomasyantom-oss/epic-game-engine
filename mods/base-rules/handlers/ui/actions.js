@@ -46,8 +46,18 @@ engine.on("ui.render_actions", 100, function(event) {
         }
     }
 
-    // Logout always available
-    actions.add(engine.newActionOption("logout", "退出角色", engine.newMap()));
+    // Logout available only when not in combat
+    var inCombat = false;
+    var tags = entity.getTags().toArray();
+    for (var i = 0; i < tags.length; i++) {
+        if (tags[i].toString().indexOf("combat:") === 0) {
+            inCombat = true;
+            break;
+        }
+    }
+    if (!inCombat) {
+        actions.add(engine.newActionOption("logout", "退出角色", engine.newMap()));
+    }
 });
 
 // Handle map_move action — delegate to map.move event
