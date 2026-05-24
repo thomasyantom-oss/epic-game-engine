@@ -414,7 +414,8 @@ function formatValue(value) {
   font-size: 1.1em;
   font-weight: 900;
   white-space: nowrap;
-  animation: damage-pop 500ms ease-out forwards;
+  opacity: 0;
+  animation: damage-pop 500ms ease-out both;
 }
 
 .anim-damage-number.damage {
