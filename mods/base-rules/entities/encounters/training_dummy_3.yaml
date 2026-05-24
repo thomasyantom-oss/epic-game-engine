@@ -2,13 +2,13 @@ id: training_dummy_3
 name: "训练假人 x3"
 enemies:
   - id: dummy1
-    name: "木桩假人"
+    name: "快速假人"
     row: FRONT
     slot: 0
     hp: 999
-    attack: 0
+    attack: 1
     defense: 0
-    speed: 1
+    speed: 99
   - id: dummy2
     name: "木桩假人"
     row: FRONT

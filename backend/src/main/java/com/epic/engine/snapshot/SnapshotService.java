@@ -292,7 +292,8 @@ public class SnapshotService {
                                     animation.add((Map<String, Object>) animObj);
                                 }
                             }
-                            events.add(new WorldSnapshot.CombatEvent(segments, effects, animation));
+                            int logCount = evt.containsKey("logCount") ? ((Number) evt.get("logCount")).intValue() : 1;
+                            events.add(new WorldSnapshot.CombatEvent(segments, effects, animation, logCount));
                         }
                     }
                 }

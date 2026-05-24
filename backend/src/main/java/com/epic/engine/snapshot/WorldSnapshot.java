@@ -36,7 +36,7 @@ public record WorldSnapshot(
                                      List<CombatantInfo> combatants, List<CombatEvent> events) {}
     public record CombatantInfo(String id, String name, String side, int hp, int maxHp, boolean alive, List<BuffInfo> buffs, String row, int slot) {}
     public record BuffInfo(String id, int stacks, String color) {}
-    public record CombatEvent(List<TextSegment> segments, List<Effect> effects, List<Map<String, Object>> animation) {}
+    public record CombatEvent(List<TextSegment> segments, List<Effect> effects, List<Map<String, Object>> animation, int logCount) {}
     public record Effect(String target, String type, Map<String, Object> data) {}
     public record ActionOption(String type, String label, Map<String, Object> params, String color, String style) {
         public ActionOption(String type, String label, Map<String, Object> params) {
