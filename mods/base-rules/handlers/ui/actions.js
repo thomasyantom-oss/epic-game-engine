@@ -42,6 +42,12 @@ engine.on("ui.render_actions", 100, function(event) {
                 params.put("command", skillId);
                 params.put("category", category);
 
+                // Target prompt for frontend
+                if (needsTarget) {
+                    var prompt = steps.get(0).get("prompt");
+                    if (prompt !== null) params.put("prompt", prompt);
+                }
+
                 // AOE offsets for frontend range indicator
                 var aoeOffsets = targeting !== null ? targeting.get("aoe_offsets") : null;
                 if (aoeOffsets !== null) {

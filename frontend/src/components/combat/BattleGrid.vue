@@ -76,15 +76,15 @@
                 @click="showSkills = true">▸ 技能</span>
         </div>
         <div class="cmd-col cmd-sub" v-if="currentActor && phase === 'COMMAND' && !animating">
-          <template v-if="showSkills">
+          <template v-if="step === 'target'">
+            <span class="cmd-item target-hint">{{ targetPrompt }}</span>
+            <span class="cmd-item cancel-item" @click="cancelSelect">▸ 取消</span>
+          </template>
+          <template v-else-if="showSkills">
             <ActionLink v-for="cmd in skillActions" :key="cmd.params?.command"
                         :action="cmd"
                         @action="selectCommand(cmd)" />
             <span class="cmd-item cancel-item" @click="cancelSub">▸ 取消</span>
-          </template>
-          <template v-if="step === 'target'">
-            <span class="cmd-item target-hint">选择目标...</span>
-            <span class="cmd-item cancel-item" @click="cancelSelect">▸ 取消</span>
           </template>
         </div>
       </div>
@@ -352,6 +352,12 @@ function selectCommand(action) {
   selectedCommand.value = cmd
   step.value = 'target'
 }
+
+const targetPrompt = computed(() => {
+  if (!selectedCommand.value) return '选择目标...'
+  const cmd = props.commands.find(c => c.params?.command === selectedCommand.value)
+  return cmd?.params?.prompt || '选择目标...'
+})
 
 function cancelSub() {
   showSkills.value = false

@@ -43,7 +43,7 @@
           </div>
         </template>
         <template #combat-log v-if="hasLog">
-          <div class="log-scroll">
+          <div class="log-scroll" ref="logScrollRef">
             <div v-if="historyEntries.length > 0" class="history-toggle" @click="showHistory = !showHistory">
               {{ showHistory ? '▼ 收起历史' : '▶ 查看历史 (' + historyRounds + '回合)' }}
             </div>
@@ -88,6 +88,15 @@ const props = defineProps({ snapshot: Object })
 const emit = defineEmits(['action'])
 const { settings } = useSettings()
 const showHistory = ref(false)
+const logScrollRef = ref(null)
+
+watch(visibleCurrentEntries, () => {
+  nextTick(() => {
+    if (logScrollRef.value) {
+      logScrollRef.value.scrollTop = logScrollRef.value.scrollHeight
+    }
+  })
+})
 
 const mainTabs = computed(() => {
   if (props.snapshot?.combat) {
