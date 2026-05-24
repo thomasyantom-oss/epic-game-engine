@@ -272,3 +272,47 @@
 - 迷雾 / 战争迷雾
 - 打造系统 / Web 编辑器
 - 血魔法等机制改写模块验证
+
+## 2026-05-24
+
+### v0.3.0 — Buff/技能系统 + AOE + 动画完善
+
+**Buff 系统：**
+- BuffService (Java) — applyBuff/removeBuff API + 生命周期事件 (apply/applied/remove/removed) + 4 种叠加策略
+- 防御改造为 Buff_defending，回合结算时自动移除
+- 中毒/灼烧 buff 实现，每回合 tick 扣血到期自动移除
+- buff 角标可视化 — 格子四角彩色三角，颜色由 mod 传入
+
+**技能系统：**
+- Skills 组件 + 角色创建时按职业赋予技能
+- 所有战斗指令从 Skills 动态生成，移除硬编码 ATTACK/DEFEND/FLEE
+- 技能 YAML 定义元数据 + 动画序列，JS 定义条件/效果逻辑
+- canUse 条件检查（MP 不足置灰）
+- combat_events.js 从技能 YAML 读 animation，解析 actor/target 占位符
+- 指令栏三栏布局：头像(1)|行动(2)|子行动(3)，技能展开在子行动栏
+
+**AOE 系统：**
+- aoe_offsets 偏移列表定义技能范围（任意形状）
+- 两层指示：黄框=有单位可选，红框=AOE范围边界，红染色=实际命中
+- allow_empty 控制能否选空地释放
+- 全范围 AOE（顺劈斩打整排，贯穿射线打整列）
+- 落点 AOE（十字爆裂需选目标，光击阵可选空地）
+- AOE 技能合并 combat event，所有目标同时播放动画
+
+**动画完善：**
+- 全部 12 原语前端实现完成
+- 技能动画从 YAML 定义读取，不再硬编码
+- slash 覆盖整个 AOE 区域（大月牙贯穿多格）
+- beam 从目标行起点到终点展开，不从施法者出发
+- getDelayContribution — 命中动画在投射物到达时触发
+- animation-fill-mode: both 修复 delay 期间闪烁
+- buff/debuff 三角底边=格子宽度
+
+**其他：**
+- 删除存档功能
+- YAML 热加载（地图/地形/颜色修改自动生效）
+- 主题切换（夜间/摸鱼/亮色/多巴胺）
+- ModuleLoader 扫描 handlers/skills/buffs 三个目录
+- CombatPosition 组件 + 十字阵型假人
+- 训练假人 POI（x1/x3/十字）
+- 法师 12 个测试技能覆盖所有动画原语和 AOE 模式
