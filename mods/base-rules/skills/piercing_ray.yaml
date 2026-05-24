@@ -1,22 +1,23 @@
-id: cleave
-name: "顺劈斩"
+id: piercing_ray
+name: "贯穿射线"
 category: skill
 silenceable: true
 targeting:
   steps:
-    - prompt: "选择一排中的任意目标"
+    - prompt: "选择一列中的任意目标"
       filter: enemy
       count: 1
 animation:
-  - type: lunge
-    target: actor
-    side: actor_side
-  - type: slash
+  - type: beam
+    from: actor
+    to: target
+    color: "#81d4fa"
+  - type: impact
     target: target
-    color: "#ffffff"
+    color: "#81d4fa"
   - type: shake
     target: target
-    intensity: heavy
+    intensity: normal
   - type: damage_number
     target: target
     color: damage

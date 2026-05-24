@@ -30,12 +30,17 @@ engine.on("combat.unit_action", 80, function(event) {
         evt.put("effects", engine.newList());
 
         var animation = engine.newList();
-        var debuffAnim = engine.newMap();
-        debuffAnim.put("type", "debuff_down");
-        debuffAnim.put("target", "field");
-        debuffAnim.put("scope", "field");
-        debuffAnim.put("color", "#e57373");
-        animation.add(debuffAnim);
+        var allEnemies = store.getByTagAsList("combat:" + combatId);
+        for (var k = 0; k < allEnemies.size(); k++) {
+            var en = allEnemies.get(k);
+            if (en.hasTag("enemy") && en.getComponent("Health").getInt("hp") > 0) {
+                var debuffAnim = engine.newMap();
+                debuffAnim.put("type", "debuff_down");
+                debuffAnim.put("target", en.getId());
+                debuffAnim.put("color", "#e57373");
+                animation.add(debuffAnim);
+            }
+        }
         evt.put("animation", animation);
 
         combat.getComponent("CombatEvents").get("queue").add(evt);

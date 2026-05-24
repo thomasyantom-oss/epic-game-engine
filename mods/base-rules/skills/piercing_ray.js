@@ -1,30 +1,30 @@
 engine.on("combat.unit_action", 80, function(event) {
     var cmd = event.get("command");
-    if (cmd.get("type") !== "cleave") return;
+    if (cmd.get("type") !== "piercing_ray") return;
     var actorId = event.get("actorId");
     var combatId = event.get("combatId");
     var targetId = cmd.get("targetId");
     if (!targetId) return;
 
-    // Find the row of the selected target
+    // Find the slot (column) of the selected target
     var selectedTarget = store.get(targetId);
     if (selectedTarget === null) return;
     var targetPos = selectedTarget.hasComponent("CombatPosition") ? selectedTarget.getComponent("CombatPosition") : null;
-    var targetRow = targetPos !== null ? targetPos.getString("row") : "FRONT";
+    var targetSlot = targetPos !== null ? targetPos.getInt("slot") : 0;
 
     var caster = store.get(actorId);
     var attack = caster.hasComponent("CombatStats") ? caster.getComponent("CombatStats").getInt("attack") : 5;
-    var damage = attack + 5;
+    var damage = attack + 6;
 
-    // Hit all enemies in that row
+    // Hit all enemies in that column (same slot, any row)
     var combatants = store.getByTagAsList("combat:" + combatId);
     for (var i = 0; i < combatants.size(); i++) {
         var entity = combatants.get(i);
         if (!entity.hasTag("enemy")) continue;
         if (!entity.hasComponent("Health") || entity.getComponent("Health").getInt("hp") <= 0) continue;
         var pos = entity.hasComponent("CombatPosition") ? entity.getComponent("CombatPosition") : null;
-        var row = pos !== null ? pos.getString("row") : "FRONT";
-        if (row !== targetRow) continue;
+        var slot = pos !== null ? pos.getInt("slot") : 0;
+        if (slot !== targetSlot) continue;
 
         var health = entity.getComponent("Health");
         health.set("hp", Math.max(0, health.getInt("hp") - damage));
@@ -34,7 +34,7 @@ engine.on("combat.unit_action", 80, function(event) {
         dealEvent.set("targetId", entity.getId());
         dealEvent.set("damage", damage);
         dealEvent.set("combatId", combatId);
-        dealEvent.set("skillId", "cleave");
+        dealEvent.set("skillId", "piercing_ray");
         engine.fire("combat.damage_dealt", dealEvent);
     }
 });

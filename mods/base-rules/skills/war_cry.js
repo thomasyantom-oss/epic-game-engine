@@ -29,12 +29,17 @@ engine.on("combat.unit_action", 80, function(event) {
         evt.put("effects", engine.newList());
 
         var animation = engine.newList();
-        var buffAnim = engine.newMap();
-        buffAnim.put("type", "buff_up");
-        buffAnim.put("target", "field");
-        buffAnim.put("scope", "field");
-        buffAnim.put("color", "#ffab40");
-        animation.add(buffAnim);
+        var allAllies = store.getByTagAsList("combat:" + combatId);
+        for (var k = 0; k < allAllies.size(); k++) {
+            var ally = allAllies.get(k);
+            if (ally.hasTag("player") && ally.getComponent("Health").getInt("hp") > 0) {
+                var buffAnim = engine.newMap();
+                buffAnim.put("type", "buff_up");
+                buffAnim.put("target", ally.getId());
+                buffAnim.put("color", "#ffab40");
+                animation.add(buffAnim);
+            }
+        }
         evt.put("animation", animation);
 
         combat.getComponent("CombatEvents").get("queue").add(evt);
