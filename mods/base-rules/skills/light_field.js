@@ -48,20 +48,12 @@ engine.on("combat.unit_action", 80, function(event) {
         }
     }
 
+    // Phase 1: deal damage to all targets (no death check yet)
     for (var t = 0; t < targets.length; t++) {
         var tid = targets[t];
         var target = store.get(tid);
         var health = target.getComponent("Health");
         health.set("hp", Math.max(0, health.getInt("hp") - damage));
-
-        var dealEvent = engine.newEvent("combat.damage_dealt");
-        dealEvent.set("attackerId", actorId);
-        dealEvent.set("targetId", tid);
-        dealEvent.set("damage", damage);
-        dealEvent.set("combatId", combatId);
-        dealEvent.set("skillId", "light_field");
-        dealEvent.set("skipLog", true);
-        engine.fire("combat.damage_dealt", dealEvent);
     }
 
     // Build log entries (one per target)
@@ -113,10 +105,22 @@ engine.on("combat.unit_action", 80, function(event) {
         animation.add(dmgAnim);
     }
 
-    // Emit combat event via helper
+    // Emit combat event via helper (before death checks so it appears first in queue)
     var eventData = engine.newMap();
     eventData.put("log", logEntries);
     eventData.put("effects", effects);
     eventData.put("animation", animation);
     engine.combatEvent(combatId, eventData);
+
+    // Phase 2: fire damage_dealt for death detection (after combat event is queued)
+    for (var t = 0; t < targets.length; t++) {
+        var dealEvent = engine.newEvent("combat.damage_dealt");
+        dealEvent.set("attackerId", actorId);
+        dealEvent.set("targetId", targets[t]);
+        dealEvent.set("damage", damage);
+        dealEvent.set("combatId", combatId);
+        dealEvent.set("skillId", "light_field");
+        dealEvent.set("skipLog", true);
+        engine.fire("combat.damage_dealt", dealEvent);
+    }
 });
