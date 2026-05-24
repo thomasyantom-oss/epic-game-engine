@@ -107,6 +107,8 @@ engine.on("action.combat_command", 100, function(event) {
     var playerCmd = engine.newMap();
     playerCmd.put("type", command);
     if (targetId) playerCmd.put("targetId", targetId);
+    if (event.has("targetRow")) playerCmd.put("targetRow", event.get("targetRow"));
+    if (event.has("targetCol")) playerCmd.put("targetCol", event.get("targetCol"));
     commands.put(playerId, playerCmd);
 
     // Enemy AI
