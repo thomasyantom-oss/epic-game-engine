@@ -19,15 +19,15 @@ engine.on("ui.render_actions", 100, function(event) {
         // Combat actions — dynamic based on entity's abilities
         var atkParams = engine.newMap();
         atkParams.put("command", "ATTACK");
-        actions.add(engine.newActionOptionStyled("combat_command", "攻击", atkParams, "enemy", "requires_target"));
+        actions.add(engine.newActionOptionStyled("combat_command", "攻击", atkParams, null, "requires_target"));
 
         var defParams = engine.newMap();
         defParams.put("command", "DEFEND");
-        actions.add(engine.newActionOptionStyled("combat_command", "防御", defParams, "player", "instant"));
+        actions.add(engine.newActionOptionStyled("combat_command", "防御", defParams, null, "instant"));
 
         var fleeParams = engine.newMap();
         fleeParams.put("command", "FLEE");
-        actions.add(engine.newActionOptionStyled("combat_command", "逃跑", fleeParams, "highlight", "instant"));
+        actions.add(engine.newActionOptionStyled("combat_command", "逃跑", fleeParams, null, "instant"));
     } else {
         // Map movement (hidden from panel, used by keyboard)
         if (entity.hasComponent("Position")) {

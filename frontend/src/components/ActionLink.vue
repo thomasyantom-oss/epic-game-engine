@@ -7,7 +7,7 @@ defineProps({ action: Object })
 defineEmits(['action'])
 
 function resolveColor(color) {
-    if (!color) return 'var(--color-text)'
+    if (!color) return 'var(--link-color)'
     if (color.startsWith('#')) return color
     return `var(--color-${color})`
 }
