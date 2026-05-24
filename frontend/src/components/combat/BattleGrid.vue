@@ -229,10 +229,11 @@ function mapUnitsToGrid(units, side) {
 
 function selectCommand(action) {
   if (!currentActor.value) return
-  var cmd = action.params?.command
   var style = action.style
+  if (style === 'disabled') return
+  var cmd = action.params?.command
 
-  if (style === 'instant' || cmd === 'FLEE' || cmd === 'DEFEND') {
+  if (style === 'instant') {
     stopTimer()
     emit('command', { type: 'combat_command', params: { command: cmd, targetId: null } })
     return

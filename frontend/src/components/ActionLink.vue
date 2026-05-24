@@ -1,5 +1,5 @@
 <template>
-  <span class="action-link" :style="{ color: resolveColor(action.color) }" @click="$emit('action', action)">▸{{ action.label }}</span>
+  <span class="action-link" :class="{ disabled: action.style === 'disabled' }" :style="{ color: resolveColor(action.color) }" @click="$emit('action', action)">▸{{ action.label }}</span>
 </template>
 
 <script setup>
@@ -22,5 +22,10 @@ function resolveColor(color) {
 }
 .action-link:hover {
   opacity: 0.7;
+}
+.action-link.disabled {
+  opacity: 0.35;
+  cursor: not-allowed;
+  pointer-events: none;
 }
 </style>
