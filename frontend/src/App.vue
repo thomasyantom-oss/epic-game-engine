@@ -53,7 +53,8 @@ async function handleAction(action) {
         await handlePathfind(action.params)
     } else {
         pathfindingActive = false
-        snapshot.value = await performAction(action.type, action.params || {})
+        const result = await performAction(action.type, action.params || {})
+        if (result) snapshot.value = result
     }
 }
 

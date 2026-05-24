@@ -24,6 +24,10 @@ export async function performAction(type, params = {}) {
         body: JSON.stringify({ type, params })
     })
     const data = await response.json()
+    if (!response.ok || !data.phase) {
+        console.error('Action failed:', type, data)
+        return null
+    }
     saveToken(data)
     return data
 }
