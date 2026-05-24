@@ -93,7 +93,7 @@ engine.on("combat.unit_action", 200, function(event) {
     var cmdType = cmd.get("type");
     var cmdTypeStr = (typeof cmdType === "string") ? cmdType : cmdType.toString();
 
-    if (cmdTypeStr === "DEFEND") {
+    if (cmdTypeStr === "defend") {
         var combat = store.get(combatId);
         if (combat === null || !combat.hasComponent("CombatEvents")) return;
 

@@ -87,8 +87,8 @@ engine.on("action.combat_command", 100, function(event) {
     if (combatId === null) return;
 
     // Handle FLEE — exit combat immediately
-    if (command === "FLEE") {
-        endCombat(player, combatId, false);
+    if (command === "flee") {
+        endCombat(player, combatId, "FLEE");
         return;
     }
 
@@ -123,11 +123,11 @@ engine.on("action.combat_command", 100, function(event) {
     var state = combat.getComponent("CombatState");
     var phase = state.getString("phase");
     if (phase === "VICTORY" || phase === "DEFEAT") {
-        endCombat(player, combatId, phase === "DEFEAT");
+        endCombat(player, combatId, phase);
     }
 });
 
-function endCombat(player, combatId, isDefeat) {
+function endCombat(player, combatId, result) {
     var combat = store.get(combatId);
 
     // Save combat log to player for post-battle viewing
@@ -135,8 +135,10 @@ function endCombat(player, combatId, isDefeat) {
         var log = combat.getComponent("CombatLog");
         var resultSegments = engine.newList();
         var rs = engine.newMap();
-        rs.put("text", isDefeat ? "— 战斗失败 —" : "— 战斗胜利 —");
-        rs.put("color", isDefeat ? "enemy" : "player");
+        var textMap = { "DEFEAT": "— 战斗失败 —", "VICTORY": "— 战斗胜利 —", "FLEE": "— 逃跑成功 —" };
+        var colorMap = { "DEFEAT": "enemy", "VICTORY": "player", "FLEE": "highlight" };
+        rs.put("text", textMap[result] || "— 战斗结束 —");
+        rs.put("color", colorMap[result] || "highlight");
         resultSegments.add(rs);
         log.get("entries").add(resultSegments);
 
@@ -158,7 +160,7 @@ function endCombat(player, combatId, isDefeat) {
     store.remove(combatId);
 
     // On defeat, respawn with full stats
-    if (isDefeat) {
+    if (result === "DEFEAT") {
         var health = player.getComponent("Health");
         if (health !== null) {
             health.set("hp", health.getInt("maxHp"));

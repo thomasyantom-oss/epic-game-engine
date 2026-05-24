@@ -16,18 +16,37 @@ engine.on("ui.render_actions", 100, function(event) {
     }
 
     if (inCombat) {
-        // Combat actions — dynamic based on entity's abilities
-        var atkParams = engine.newMap();
-        atkParams.put("command", "ATTACK");
-        actions.add(engine.newActionOptionStyled("combat_command", "攻击", atkParams, null, "requires_target"));
+        var skills = entity.hasComponent("Skills") ? entity.getComponent("Skills").get("list") : null;
+        if (skills !== null) {
+            for (var j = 0; j < skills.size(); j++) {
+                var sk = skills.get(j);
+                var skillId = sk.get("id");
+                var skillDef = engine.loadYaml("skills/" + skillId + ".yaml");
+                if (skillDef === null) continue;
 
-        var defParams = engine.newMap();
-        defParams.put("command", "DEFEND");
-        actions.add(engine.newActionOptionStyled("combat_command", "防御", defParams, null, "instant"));
+                var name = skillDef.get("name");
+                var targeting = skillDef.get("targeting");
+                var steps = targeting !== null ? targeting.get("steps") : null;
+                var needsTarget = steps !== null && steps.size() > 0;
 
-        var fleeParams = engine.newMap();
-        fleeParams.put("command", "FLEE");
-        actions.add(engine.newActionOptionStyled("combat_command", "逃跑", fleeParams, null, "instant"));
+                var canUseEvent = engine.newEvent("skill.can_use");
+                canUseEvent.set("entityId", entityId);
+                canUseEvent.set("skillId", skillId);
+                canUseEvent.set("usable", true);
+                engine.fire("skill.can_use", canUseEvent);
+
+                var usable = canUseEvent.get("usable");
+
+                var params = engine.newMap();
+                params.put("command", skillId);
+                var style = needsTarget ? "requires_target" : "instant";
+                if (!usable) {
+                    actions.add(engine.newActionOptionStyled("combat_command", name, params, "text", "disabled"));
+                } else {
+                    actions.add(engine.newActionOptionStyled("combat_command", name, params, null, style));
+                }
+            }
+        }
     } else {
         // Map movement (hidden from panel, used by keyboard)
         if (entity.hasComponent("Position")) {
