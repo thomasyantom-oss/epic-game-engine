@@ -71,24 +71,25 @@
             <div class="actor-name">{{ currentActor.name }}</div>
           </template>
         </div>
-        <div class="cmd-col cmd-actions" v-if="currentActor && phase === 'COMMAND' && !animating">
-          <template v-if="!showSkills">
-            <ActionLink v-for="cmd in baseActions" :key="cmd.params?.command"
-                        :action="cmd"
-                        :class="{ active: selectedCommand === cmd.params?.command }"
-                        @action="selectCommand(cmd)" />
-            <span v-if="skillActions.length > 0" class="cmd-item skill-btn"
-                  @click="showSkills = true">▸ 技能</span>
-          </template>
-          <template v-else>
+        <div class="cmd-col cmd-actions" v-if="currentActor && phase === 'COMMAND' && !animating" :class="{ locked: showSkills || step === 'target' }">
+          <ActionLink v-for="cmd in baseActions" :key="cmd.params?.command"
+                      :action="cmd"
+                      @action="selectCommand(cmd)" />
+          <span v-if="skillActions.length > 0" class="cmd-item skill-btn"
+                :class="{ active: showSkills }"
+                @click="showSkills = true">▸ 技能</span>
+        </div>
+        <div class="cmd-col cmd-sub" v-if="currentActor && phase === 'COMMAND' && !animating">
+          <template v-if="showSkills">
             <ActionLink v-for="cmd in skillActions" :key="cmd.params?.command"
                         :action="cmd"
                         @action="selectCommand(cmd)" />
-            <span class="cmd-item cancel-item" @click="showSkills = false">▸ 返回</span>
+            <span class="cmd-item cancel-item" @click="cancelSub">▸ 取消</span>
           </template>
-          <span v-if="step === 'target'" class="cmd-item cancel-item" @click="cancelSelect">▸ 取消</span>
-        </div>
-        <div class="cmd-col cmd-detail">
+          <template v-if="step === 'target'">
+            <span class="cmd-item target-hint">选择目标...</span>
+            <span class="cmd-item cancel-item" @click="cancelSelect">▸ 取消</span>
+          </template>
         </div>
       </div>
     </div>
@@ -256,18 +257,27 @@ function mapUnitsToGrid(units, side) {
 
 function selectCommand(action) {
   if (!currentActor.value) return
+  if (showSkills.value && action.params?.category !== 'skill') return
+  if (step.value === 'target') return
   var style = action.style
   if (style === 'disabled') return
   var cmd = action.params?.command
 
   if (style === 'instant') {
     stopTimer()
+    showSkills.value = false
     emit('command', { type: 'combat_command', params: { command: cmd, targetId: null } })
     return
   }
   // requires_target
   selectedCommand.value = cmd
   step.value = 'target'
+}
+
+function cancelSub() {
+  showSkills.value = false
+  step.value = 'command'
+  selectedCommand.value = null
 }
 
 function onCellClick(cell) {
@@ -510,7 +520,7 @@ onUnmounted(() => stopTimer())
 .command-row {
   border-top: 2px solid var(--panel-border-color);
   display: grid;
-  grid-template-columns: 1fr 1fr 1fr;
+  grid-template-columns: 1fr 2fr 3fr;
   height: 100%;
 }
 
@@ -573,11 +583,26 @@ onUnmounted(() => stopTimer())
   color: var(--color-highlight);
 }
 
-.cmd-detail {
+.target-hint {
+  color: var(--color-text);
+  opacity: 0.5;
+  font-size: 0.85em;
+  cursor: default;
+}
+
+.cmd-actions.locked {
+  opacity: 0.35;
+  pointer-events: none;
+}
+
+.cmd-sub {
+  border-left: 1px solid var(--panel-border-color);
   overflow-y: auto;
-  display: flex;
-  flex-direction: column;
-  gap: 0.1rem;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.3rem;
+  align-items: center;
+  justify-items: center;
   padding: 0.3rem;
 }
 
