@@ -21,6 +21,7 @@ engine.on("combat.resolve_round", 200, function(event) {
 
 // Log damage dealt - store as pre-formatted TextSegment arrays with semantic roles
 engine.on("combat.damage_dealt", 50, function(event) {
+    if (event.has("skipLog")) return;
     var combatId = event.get("combatId");
     var combat = store.get(combatId);
     if (combat === null || !combat.hasComponent("CombatLog")) return;
