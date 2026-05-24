@@ -125,6 +125,39 @@ const { playing, activeAnimations, playedEventIndex, play } = useAnimationPlayer
 
 const gridAreaRef = ref(null)
 const cellPositions = ref({})
+const prevCombatants = ref(null)
+const displayHp = ref({})
+
+// When combat prop changes with events, cache the "before" state
+watch(() => props.combat, (combat, oldCombat) => {
+  if (!combat) return
+  const events = combat.events || []
+  if (events.length > 0 && oldCombat && oldCombat.combatants) {
+    // Cache old HP values as pre-animation state
+    const hp = {}
+    for (const c of oldCombat.combatants) {
+      hp[c.id] = c.hp
+    }
+    prevCombatants.value = oldCombat.combatants
+    displayHp.value = hp
+  } else if (events.length > 0) {
+    // First render with events — reverse-engineer pre-animation HP
+    const hp = {}
+    for (const c of combat.combatants) {
+      hp[c.id] = c.hp
+    }
+    for (let i = events.length - 1; i >= 0; i--) {
+      const effs = events[i].effects || []
+      for (const eff of effs) {
+        if (eff.type === 'hp_change' && eff.target) {
+          const amount = eff.data?.amount ?? eff.amount ?? 0
+          hp[eff.target] = (hp[eff.target] || 0) - amount
+        }
+      }
+    }
+    displayHp.value = hp
+  }
+}, { flush: 'sync' })
 
 function updateCellPositions() {
   if (!gridAreaRef.value) return
@@ -186,10 +219,28 @@ const cellBgStyle = computed(() => {
 })
 
 function playWithCallback(events, onEvent) {
-  return play(events, onEvent)
+  return play(events, (idx) => {
+    // Apply this event's effects to displayHp
+    const event = events[idx]
+    if (event && event.effects) {
+      const hp = { ...displayHp.value }
+      for (const eff of event.effects) {
+        if (eff.type === 'hp_change' && eff.target) {
+          const amount = eff.data?.amount ?? eff.amount ?? 0
+          hp[eff.target] = (hp[eff.target] || 0) + amount
+        }
+      }
+      displayHp.value = hp
+    }
+    if (onEvent) onEvent(idx)
+  })
 }
 
-defineExpose({ play: playWithCallback, updateCellPositions })
+function animationDone() {
+  displayHp.value = {}
+}
+
+defineExpose({ play: playWithCallback, updateCellPositions, animationDone })
 
 const step = ref('command')
 const selectedCommand = ref(null)
@@ -204,12 +255,24 @@ const skillActions = computed(() =>
 
 const phase = computed(() => props.combat?.phase || 'COMMAND')
 
+const displayCombatants = computed(() => {
+  const combatants = props.combat?.combatants || []
+  if (Object.keys(displayHp.value).length === 0) return combatants
+  return combatants.map(c => {
+    const hp = displayHp.value[c.id]
+    if (hp !== undefined) {
+      return { ...c, hp: Math.max(0, hp), alive: hp > 0 }
+    }
+    return c
+  })
+})
+
 const playerUnits = computed(() =>
-  (props.combat?.combatants || []).filter(c => c.side === 'PLAYER')
+  displayCombatants.value.filter(c => c.side === 'PLAYER')
 )
 
 const enemyUnits = computed(() =>
-  (props.combat?.combatants || []).filter(c => c.side === 'ENEMY')
+  displayCombatants.value.filter(c => c.side === 'ENEMY')
 )
 
 const currentActorId = computed(() => {

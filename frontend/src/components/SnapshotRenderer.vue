@@ -11,7 +11,7 @@
           </div>
         </template>
         <template #battle v-if="snapshot.combat">
-          <BattleGrid ref="battleGridRef" :combat="displayCombat" :player-id="snapshot.playerId"
+          <BattleGrid ref="battleGridRef" :combat="snapshot.combat" :player-id="snapshot.playerId"
                       :commands="combatActions" :animating="isAnimating"
                       :terrain-color="currentTerrainColor"
                       @command="$emit('action', $event)" />
@@ -22,7 +22,7 @@
     <div class="panel-func">
       <TabPanel :tabs="funcTabs" default-tab="status">
         <template #status>
-          <StatusBars :bars="displayStatusBars" />
+          <StatusBars :bars="snapshot.statusBars" />
           <div class="buffs" v-if="snapshot.buffs && snapshot.buffs.length">
             <div v-for="buff in snapshot.buffs" :key="buff.id" class="buff-item">
               {{ buff.name }} ({{ buff.remaining }})
@@ -170,53 +170,7 @@ const historyRounds = computed(() => {
 // Animate combat events — delegate to BattleGrid's animation player
 const isAnimating = ref(false)
 const battleGridRef = ref(null)
-const displayCombat = ref(null)
 const playedCount = ref(0)
-
-function buildProgressiveCombat(combat, events, upToIdx) {
-  const hpState = {}
-  for (const c of combat.combatants) {
-    hpState[c.id] = c.hp
-  }
-  // Reverse all effects to get pre-animation state
-  for (let i = events.length - 1; i >= 0; i--) {
-    const effs = events[i].effects || []
-    for (const eff of effs) {
-      if (eff.type === 'hp_change' && eff.target) {
-        const amount = eff.data?.amount ?? eff.amount ?? 0
-        hpState[eff.target] = (hpState[eff.target] || 0) - amount
-      }
-    }
-  }
-  // Apply effects up to upToIdx
-  for (let i = 0; i <= upToIdx && i < events.length; i++) {
-    const effs = events[i].effects || []
-    for (const eff of effs) {
-      if (eff.type === 'hp_change' && eff.target) {
-        const amount = eff.data?.amount ?? eff.amount ?? 0
-        hpState[eff.target] = (hpState[eff.target] || 0) + amount
-      }
-    }
-  }
-  const updatedCombatants = combat.combatants.map(c => ({
-    ...c,
-    hp: hpState[c.id] !== undefined ? Math.max(0, hpState[c.id]) : c.hp,
-    alive: (hpState[c.id] !== undefined ? hpState[c.id] : c.hp) > 0
-  }))
-  return { ...combat, combatants: updatedCombatants }
-}
-
-watch(() => props.snapshot?.combat, (combat) => {
-  if (!combat) { displayCombat.value = null; return }
-  const events = combat.events || []
-  if (events.length === 0) {
-    displayCombat.value = combat
-    return
-  }
-  // Immediately show pre-animation state (no effects applied yet)
-  playedCount.value = 0
-  displayCombat.value = buildProgressiveCombat(combat, events, -1)
-}, { immediate: true })
 
 watch(() => props.snapshot?.combat?.events, async (events) => {
   if (!events || events.length === 0) {
@@ -231,31 +185,13 @@ watch(() => props.snapshot?.combat?.events, async (events) => {
     battleGridRef.value.updateCellPositions()
     await battleGridRef.value.play(events, (idx) => {
       playedCount.value = idx + 1
-      const combat = props.snapshot?.combat
-      if (combat) {
-        displayCombat.value = buildProgressiveCombat(combat, events, idx)
-      }
     })
+    battleGridRef.value.animationDone()
   }
-  // Animation done — show final state
-  displayCombat.value = props.snapshot?.combat
   playedCount.value = events.length
   isAnimating.value = false
 }, { immediate: true })
 
-// StatusBars adjusted during animation (player HP/MP)
-const displayStatusBars = computed(() => {
-  const bars = props.snapshot?.statusBars || []
-  const dc = displayCombat.value
-  if (!dc || !dc.combatants) return bars
-  const playerId = props.snapshot?.playerId
-  const playerUnit = dc.combatants.find(c => c.id === playerId)
-  if (!playerUnit) return bars
-  return bars.map(bar => {
-    if (bar.id === 'hp') return { ...bar, current: playerUnit.hp }
-    return bar
-  })
-})
 
 // Visible current round entries — show all completed (not animated anymore)
 const visibleCurrentEntries = computed(() => {
