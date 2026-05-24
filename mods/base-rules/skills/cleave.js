@@ -11,6 +11,10 @@ engine.on("combat.unit_action", 80, function(event) {
     var targetPos = selectedTarget.hasComponent("CombatPosition") ? selectedTarget.getComponent("CombatPosition") : null;
     var targetRow = targetPos !== null ? targetPos.getString("row") : "FRONT";
 
+    // Grid mapping: enemy FRONT=col0, MID=col1, BACK=col2
+    var rowToCol = { "FRONT": 0, "MID": 1, "BACK": 2 };
+    var gridCol = rowToCol[targetRow] || 0;
+
     var caster = store.get(actorId);
     var casterName = caster.hasComponent("Name") ? caster.getComponent("Name").getString("value") : actorId;
     var casterSide = caster.hasTag("player") ? "player" : "enemy";
@@ -30,7 +34,6 @@ engine.on("combat.unit_action", 80, function(event) {
         targets.push(entity.getId());
     }
 
-    // Deal damage to all targets
     for (var t = 0; t < targets.length; t++) {
         var tid = targets[t];
         var target = store.get(tid);
@@ -47,11 +50,9 @@ engine.on("combat.unit_action", 80, function(event) {
         engine.fire("combat.damage_dealt", dealEvent);
     }
 
-    // Build one combined combat event with all targets
     var combat = store.get(combatId);
     if (combat !== null && combat.hasComponent("CombatEvents")) {
         var evt = engine.newMap();
-
         var segments = engine.newList();
         var s1 = engine.newMap(); s1.put("text", casterName); s1.put("color", casterSide); segments.add(s1);
         var s2 = engine.newMap(); s2.put("text", " 的顺劈斩命中 " + targets.length + " 个目标，各造成 "); s2.put("color", "text"); segments.add(s2);
@@ -67,10 +68,14 @@ engine.on("combat.unit_action", 80, function(event) {
         lungeAnim.put("side", casterSide);
         animation.add(lungeAnim);
 
-        // One big slash covering all targets in the row
+        // Slash covering the entire column (3 cells)
+        var areaCells = engine.newList();
+        areaCells.add("cell_0_" + gridCol);
+        areaCells.add("cell_1_" + gridCol);
+        areaCells.add("cell_2_" + gridCol);
         var slashAnim = engine.newMap();
         slashAnim.put("type", "slash");
-        slashAnim.put("targets", targets);
+        slashAnim.put("area", areaCells);
         slashAnim.put("color", "#ffffff");
         animation.add(slashAnim);
 

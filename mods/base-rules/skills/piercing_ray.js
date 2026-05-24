@@ -59,8 +59,8 @@ engine.on("combat.unit_action", 80, function(event) {
         var animation = engine.newList();
         var beamAnim = engine.newMap();
         beamAnim.put("type", "beam");
-        beamAnim.put("from", actorId);
-        beamAnim.put("to", targets[0]);
+        beamAnim.put("from", "cell_" + targetSlot + "_0");
+        beamAnim.put("to", "cell_" + targetSlot + "_2");
         beamAnim.put("color", "#81d4fa");
         animation.add(beamAnim);
 

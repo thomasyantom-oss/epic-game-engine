@@ -147,6 +147,22 @@ function updateCellPositions() {
       h: rect.height
     }
   })
+  // Also index enemy grid cells by coordinate
+  const enemyGridEl = gridAreaRef.value.querySelector('.enemy-grid')
+  if (enemyGridEl) {
+    const allCells = enemyGridEl.querySelectorAll('.terrain-cell')
+    allCells.forEach((el, idx) => {
+      const row = Math.floor(idx / 3)
+      const col = idx % 3
+      const rect = el.getBoundingClientRect()
+      positions['cell_' + row + '_' + col] = {
+        x: rect.left - gridRect.left,
+        y: rect.top - gridRect.top,
+        w: rect.width,
+        h: rect.height
+      }
+    })
+  }
   cellPositions.value = positions
 }
 

@@ -22,10 +22,10 @@
            class="anim-beam"
            :style="beamStyle(anim)" />
 
-      <!-- Slash: crescent arc on target cell -->
+      <!-- Slash: crescent arc covering area -->
       <div v-if="anim.type === 'slash'"
            class="anim-slash"
-           :style="slashStyle(anim)">
+           :style="areaStyle(anim)">
         <svg viewBox="0 0 40 40" width="100%" height="100%" preserveAspectRatio="none">
           <path class="slash-path" d="M 0,0 Q 40,20 0,40" fill="none" :stroke="anim.color || '#fff'" stroke-width="3" stroke-linecap="round"/>
         </svg>
@@ -164,31 +164,25 @@ function beamStyle(anim) {
   }
 }
 
-function slashStyle(anim) {
-  if (anim.targets && anim.targets.length > 0) {
-    let minX = Infinity, minY = Infinity, maxX = 0, maxY = 0
-    for (const tid of anim.targets) {
-      const p = getCellPos(tid)
-      minX = Math.min(minX, p.x)
-      minY = Math.min(minY, p.y)
-      maxX = Math.max(maxX, p.x + p.w)
-      maxY = Math.max(maxY, p.y + p.h)
-    }
-    return {
-      left: minX + 'px',
-      top: minY + 'px',
-      width: (maxX - minX) + 'px',
-      height: (maxY - minY) + 'px',
-      animationDelay: anim.startDelay + 'ms',
-      animationDuration: anim.duration + 'ms'
-    }
+function areaStyle(anim) {
+  const keys = anim.area || (anim.target ? [anim.target] : [])
+  let minX = Infinity, minY = Infinity, maxX = 0, maxY = 0
+  for (const key of keys) {
+    const p = getCellPos(key)
+    minX = Math.min(minX, p.x)
+    minY = Math.min(minY, p.y)
+    maxX = Math.max(maxX, p.x + p.w)
+    maxY = Math.max(maxY, p.y + p.h)
   }
-  const pos = getCellPos(anim.target)
+  if (minX === Infinity) {
+    const pos = getCellPos(anim.target)
+    minX = pos.x; minY = pos.y; maxX = pos.x + pos.w; maxY = pos.y + pos.h
+  }
   return {
-    left: pos.x + 'px',
-    top: pos.y + 'px',
-    width: pos.w + 'px',
-    height: pos.h + 'px',
+    left: minX + 'px',
+    top: minY + 'px',
+    width: (maxX - minX) + 'px',
+    height: (maxY - minY) + 'px',
     animationDelay: anim.startDelay + 'ms',
     animationDuration: anim.duration + 'ms'
   }
