@@ -18,12 +18,14 @@
     </div>
 
     <div class="center-col">
-      <div class="grid-area">
+      <div class="grid-area" ref="gridAreaRef">
         <div class="player-grid">
           <div
             v-for="(cell, idx) in playerCells"
             :key="'p'+idx"
             class="terrain-cell"
+            :class="{ 'shaking': isShaking(cell.marker?.id) }"
+            :data-unit-id="cell.marker?.id"
           >
             <span v-if="cell.marker && cell.marker.alive" class="marker player">
               P{{ cell.marker.index }}
@@ -39,7 +41,8 @@
             v-for="(cell, idx) in enemyCells"
             :key="'e'+idx"
             class="terrain-cell"
-            :class="{ 'target-cell': selectingTarget && cell.marker && cell.marker.alive }"
+            :class="{ 'target-cell': selectingTarget && cell.marker && cell.marker.alive, 'shaking': isShaking(cell.marker?.id) }"
+            :data-unit-id="cell.marker?.id"
             @click="onCellClick(cell)"
           >
             <span v-if="cell.marker && cell.marker.alive" class="marker enemy">
@@ -50,6 +53,7 @@
             </span>
           </div>
         </div>
+        <AnimationLayer :animations="activeAnimations" :cell-positions="cellPositions" />
       </div>
 
       <div class="command-row">
@@ -89,6 +93,8 @@
 <script setup>
 import { computed, ref, watch, onMounted, onUnmounted } from 'vue'
 import ActionLink from '../ActionLink.vue'
+import AnimationLayer from './AnimationLayer.vue'
+import { useAnimationPlayer } from '../../composables/useAnimationPlayer.js'
 
 const props = defineProps({
   combat: { type: Object, required: true },
@@ -98,6 +104,36 @@ const props = defineProps({
 })
 
 const emit = defineEmits(['command'])
+
+const { playing, activeAnimations, play } = useAnimationPlayer()
+
+const gridAreaRef = ref(null)
+const cellPositions = ref({})
+
+function updateCellPositions() {
+  if (!gridAreaRef.value) return
+  const gridRect = gridAreaRef.value.getBoundingClientRect()
+  const positions = {}
+  const cells = gridAreaRef.value.querySelectorAll('[data-unit-id]')
+  cells.forEach(el => {
+    const id = el.dataset.unitId
+    const rect = el.getBoundingClientRect()
+    positions[id] = {
+      x: rect.left - gridRect.left,
+      y: rect.top - gridRect.top,
+      w: rect.width,
+      h: rect.height
+    }
+  })
+  cellPositions.value = positions
+}
+
+function isShaking(unitId) {
+  if (!unitId) return false
+  return activeAnimations.value.some(a => a.type === 'shake' && a.target === unitId)
+}
+
+defineExpose({ play, updateCellPositions })
 
 const step = ref('command')
 const selectedCommand = ref(null)
@@ -341,6 +377,7 @@ onUnmounted(() => stopTimer())
 }
 
 .grid-area {
+  position: relative;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -462,5 +499,17 @@ onUnmounted(() => stopTimer())
 
 .cancel-item {
   color: var(--color-enemy);
+}
+
+.terrain-cell.shaking {
+  animation: cell-shake 250ms ease-in-out;
+}
+
+@keyframes cell-shake {
+  0%, 100% { transform: translateX(0); }
+  20% { transform: translateX(-3px); }
+  40% { transform: translateX(3px); }
+  60% { transform: translateX(-2px); }
+  80% { transform: translateX(2px); }
 }
 </style>

@@ -11,7 +11,7 @@
           </div>
         </template>
         <template #battle v-if="snapshot.combat">
-          <BattleGrid :combat="snapshot.combat" :player-id="snapshot.playerId"
+          <BattleGrid ref="battleGridRef" :combat="snapshot.combat" :player-id="snapshot.playerId"
                       :commands="combatActions" :animating="isAnimating"
                       @command="$emit('action', $event)" />
         </template>
@@ -72,7 +72,7 @@
 </template>
 
 <script setup>
-import { computed, ref, watch } from 'vue'
+import { computed, ref, watch, nextTick } from 'vue'
 import TabPanel from './TabPanel.vue'
 import TextRenderer from './TextRenderer.vue'
 import StatusBars from './StatusBars.vue'
@@ -166,32 +166,22 @@ const historyRounds = computed(() => {
   return currentIdx
 })
 
-// Animate combat events — play through event queue one by one
+// Animate combat events — delegate to BattleGrid's animation player
 const isAnimating = ref(false)
-const playedEvents = ref([])
-let animTimer = null
+const battleGridRef = ref(null)
 
-watch(() => props.snapshot?.combat?.events, (events) => {
+watch(() => props.snapshot?.combat?.events, async (events) => {
   if (!events || events.length === 0) {
     isAnimating.value = false
     return
   }
-  // New events to play
-  if (animTimer) clearInterval(animTimer)
-  playedEvents.value = []
   isAnimating.value = true
-  let idx = 0
-  animTimer = setInterval(() => {
-    if (idx < events.length) {
-      playedEvents.value = [...playedEvents.value, events[idx]]
-      idx++
-    }
-    if (idx >= events.length) {
-      clearInterval(animTimer)
-      animTimer = null
-      isAnimating.value = false
-    }
-  }, 600)
+  await nextTick()
+  if (battleGridRef.value) {
+    battleGridRef.value.updateCellPositions()
+    await battleGridRef.value.play(events)
+  }
+  isAnimating.value = false
 }, { immediate: true })
 
 // Visible current round entries — show all completed (not animated anymore)
