@@ -1,5 +1,13 @@
 <template>
   <div class="character-select">
+    <div class="theme-bar">
+      <span v-for="theme in themeList" :key="theme.id"
+            class="theme-chip"
+            :class="{ active: settings.theme === theme.id }"
+            @click="applyTheme(theme.id)">
+        {{ theme.label }}
+      </span>
+    </div>
     <h2>选择角色</h2>
     <div class="card-grid">
       <div v-for="char in characters" :key="char.id"
@@ -28,6 +36,10 @@
 
 <script setup>
 import { computed, ref } from 'vue'
+import { useSettings } from '../composables/useSettings.js'
+
+const { settings, themes, applyTheme } = useSettings()
+const themeList = computed(() => Object.values(themes))
 
 const props = defineProps({ characters: Array, maxSlots: Number })
 const emit = defineEmits(['select', 'create', 'delete'])
@@ -91,4 +103,17 @@ h2 { color: var(--text-color); margin-bottom: 1.5rem; }
 .confirm-btn.yes:hover { text-decoration: underline; }
 .confirm-btn.no { color: var(--text-color); opacity: 0.7; }
 .confirm-btn.no:hover { opacity: 1; }
+.theme-bar { display: flex; gap: 0.5rem; margin-bottom: 1rem; }
+.theme-chip {
+  padding: 0.2rem 0.6rem;
+  border: 1px solid var(--panel-border-color);
+  border-radius: 3px;
+  cursor: pointer;
+  font-size: 0.8em;
+  color: var(--text-color);
+  opacity: 0.6;
+  transition: opacity 0.2s, border-color 0.2s;
+}
+.theme-chip:hover { opacity: 0.9; }
+.theme-chip.active { opacity: 1; border-color: var(--link-color); color: var(--link-color); }
 </style>
