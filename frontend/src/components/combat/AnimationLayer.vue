@@ -435,9 +435,9 @@ function formatValue(value) {
 
 @keyframes damage-pop {
   0% { transform: translateX(-50%) translateY(0); opacity: 0; }
-  12% { transform: translateX(-50%) translateY(0); opacity: 1; }
-  65% { transform: translateX(-50%) translateY(-4px); opacity: 1; }
-  100% { transform: translateX(-50%) translateY(-10px); opacity: 0; }
+  20% { transform: translateX(-50%) translateY(-2px); opacity: 1; }
+  70% { transform: translateX(-50%) translateY(-6px); opacity: 1; }
+  100% { transform: translateX(-50%) translateY(-12px); opacity: 0; }
 }
 
 /* ========== Buff Up ========== */

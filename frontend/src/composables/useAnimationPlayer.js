@@ -88,7 +88,7 @@ export function useAnimationPlayer() {
         return Math.floor(total * 0.7)
       }
       case 'beam': return 120
-      case 'slash': return 200
+      case 'slash': return 350
       default: return getAnimDuration(anim)
     }
   }
