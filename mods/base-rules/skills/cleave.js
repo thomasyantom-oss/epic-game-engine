@@ -67,13 +67,14 @@ engine.on("combat.unit_action", 80, function(event) {
         lungeAnim.put("side", casterSide);
         animation.add(lungeAnim);
 
-        for (var t = 0; t < targets.length; t++) {
-            var slashAnim = engine.newMap();
-            slashAnim.put("type", "slash");
-            slashAnim.put("target", targets[t]);
-            slashAnim.put("color", "#ffffff");
-            animation.add(slashAnim);
+        // One big slash covering all targets in the row
+        var slashAnim = engine.newMap();
+        slashAnim.put("type", "slash");
+        slashAnim.put("targets", targets);
+        slashAnim.put("color", "#ffffff");
+        animation.add(slashAnim);
 
+        for (var t = 0; t < targets.length; t++) {
             var shakeAnim = engine.newMap();
             shakeAnim.put("type", "shake");
             shakeAnim.put("target", targets[t]);

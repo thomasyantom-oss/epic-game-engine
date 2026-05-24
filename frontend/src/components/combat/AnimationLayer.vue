@@ -1,6 +1,6 @@
 <template>
   <div class="animation-layer">
-    <template v-for="(anim, idx) in animations" :key="idx">
+    <template v-for="anim in animations" :key="anim._id">
       <!-- Pulse: expanding ring from actor cell -->
       <div v-if="anim.type === 'pulse'"
            class="anim-pulse"
@@ -165,6 +165,24 @@ function beamStyle(anim) {
 }
 
 function slashStyle(anim) {
+  if (anim.targets && anim.targets.length > 0) {
+    let minX = Infinity, minY = Infinity, maxX = 0, maxY = 0
+    for (const tid of anim.targets) {
+      const p = getCellPos(tid)
+      minX = Math.min(minX, p.x)
+      minY = Math.min(minY, p.y)
+      maxX = Math.max(maxX, p.x + p.w)
+      maxY = Math.max(maxY, p.y + p.h)
+    }
+    return {
+      left: minX + 'px',
+      top: minY + 'px',
+      width: (maxX - minX) + 'px',
+      height: (maxY - minY) + 'px',
+      animationDelay: anim.startDelay + 'ms',
+      animationDuration: anim.duration + 'ms'
+    }
+  }
   const pos = getCellPos(anim.target)
   return {
     left: pos.x + 'px',

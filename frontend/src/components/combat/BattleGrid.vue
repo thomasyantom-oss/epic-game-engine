@@ -45,10 +45,12 @@
             v-for="(cell, idx) in enemyCells"
             :key="'e'+idx"
             class="terrain-cell"
-            :class="{ 'target-cell': selectingTarget && cell.marker && cell.marker.alive }"
+            :class="{ 'target-cell': selectingTarget && cell.marker && cell.marker.alive, 'hover-highlight': isHoverHighlighted(cell) }"
             :style="cellBgStyle"
             :data-unit-id="cell.marker?.id"
             @click="onCellClick(cell)"
+            @mouseenter="onCellHover(cell)"
+            @mouseleave="hoveredCell = null"
           >
             <span v-if="cell.marker && cell.marker.alive" class="marker enemy"
                   :class="[{ 'shaking': isShaking(cell.marker?.id) }, lungingClass(cell.marker?.id)]">
@@ -235,7 +237,7 @@ const enemyCells = computed(() => {
   for (let row = 0; row < 3; row++) {
     for (let col = 0; col < 3; col++) {
       const marker = positions.find(p => p.col === col && p.row === row)
-      cells.push({ marker })
+      cells.push({ marker, row, col })
     }
   }
   return cells
@@ -250,7 +252,7 @@ function mapUnitsToGrid(units, side) {
     const unitRow = unit.row || 'FRONT'
     const col = side === 'player' ? (playerColMap[unitRow] ?? 2) : (enemyColMap[unitRow] ?? 0)
     const row = unit.slot ?? idx % 3
-    markers.push({ col, row, side, index: idx + 1, alive: unit.alive, id: unit.id, hp: unit.hp, maxHp: unit.maxHp, buffs: unit.buffs || [] })
+    markers.push({ col, row, side, index: idx + 1, alive: unit.alive, id: unit.id, hp: unit.hp, maxHp: unit.maxHp, buffs: unit.buffs || [], unitRow: unitRow, slot: unit.slot ?? idx % 3 })
   })
   return markers
 }
@@ -278,6 +280,29 @@ function cancelSub() {
   showSkills.value = false
   step.value = 'command'
   selectedCommand.value = null
+}
+
+const hoveredCell = ref(null)
+
+function onCellHover(cell) {
+  if (step.value !== 'target') return
+  hoveredCell.value = cell
+}
+
+function currentHighlightMode() {
+  if (!selectedCommand.value) return 'single'
+  const cmd = props.commands.find(c => c.params?.command === selectedCommand.value)
+  return cmd?.params?.highlight || 'single'
+}
+
+function isHoverHighlighted(cell) {
+  if (step.value !== 'target' || !hoveredCell.value || !hoveredCell.value.marker) return false
+  const mode = currentHighlightMode()
+  const hovered = hoveredCell.value
+  if (mode === 'single') return cell.marker && cell.marker.id === hovered.marker.id
+  if (mode === 'row') return cell.col === hovered.col
+  if (mode === 'column') return cell.row === hovered.row
+  return false
 }
 
 function onCellClick(cell) {
@@ -588,6 +613,11 @@ onUnmounted(() => stopTimer())
   opacity: 0.5;
   font-size: 0.85em;
   cursor: default;
+}
+
+.terrain-cell.hover-highlight {
+  background-color: rgba(255, 152, 0, 0.15) !important;
+  border-color: var(--color-highlight);
 }
 
 .cmd-actions.locked {

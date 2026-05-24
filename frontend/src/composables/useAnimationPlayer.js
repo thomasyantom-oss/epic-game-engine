@@ -34,13 +34,15 @@ export function useAnimationPlayer() {
     playAnimationSequence(anims)
   }
 
+  let animIdCounter = 0
+
   function playAnimationSequence(anims) {
     let delay = 0
     const active = []
 
     for (const anim of anims) {
       const duration = getAnimDuration(anim)
-      active.push({ ...anim, startDelay: delay, duration })
+      active.push({ ...anim, startDelay: delay, duration, _id: ++animIdCounter })
 
       const parallel = ['impact', 'shake', 'damage_number', 'buff_up', 'debuff_down', 'mark_dead', 'indicator_add']
       if (parallel.includes(anim.type)) {
