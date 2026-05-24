@@ -43,6 +43,7 @@ function resolveSkillAnimation(skillId, actorId, targetId) {
 
 // Record attack events
 engine.on("combat.damage_dealt", 60, function(event) {
+    if (event.has("skipLog") && event.get("skipLog")) return;
     var combatId = event.get("combatId");
     var combat = store.get(combatId);
     if (combat === null || !combat.hasComponent("CombatEvents")) return;
