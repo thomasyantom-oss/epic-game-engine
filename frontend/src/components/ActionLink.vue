@@ -1,7 +1,5 @@
 <template>
-  <span class="action-link" :style="{ color: resolveColor(action.color) }" @click="$emit('action', action)">
-    <span class="action-prefix">▸</span>{{ action.label }}
-  </span>
+  <span class="action-link" :style="{ color: resolveColor(action.color) }" @click="$emit('action', action)">▸{{ action.label }}</span>
 </template>
 
 <script setup>
@@ -24,8 +22,5 @@ function resolveColor(color) {
 }
 .action-link:hover {
   opacity: 0.7;
-}
-.action-prefix {
-  margin-right: 0.3em;
 }
 </style>
