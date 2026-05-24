@@ -6,7 +6,6 @@ engine.on("combat.damage_calc", 100, function(event) {
 
     if (attacker === null || target === null) {
         event.set("damage", 0);
-        event.set("error", "attacker=" + attackerId + "(" + (attacker !== null) + ") target=" + targetId + "(" + (target !== null) + ")");
         return;
     }
 
