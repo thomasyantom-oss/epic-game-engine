@@ -215,11 +215,46 @@
 - 战斗日志战斗结束后保留，新战斗清空
 - JS 热加载 — 文件监听自动重载 handler，不用重启
 
+## 2026-05-23（续）
+
+### 战斗动画系统
+
+设计 + 实现第一批。参考 Into the Breach 风格，原语组合系统。
+
+**设计成果（spec: `docs/superpowers/specs/2026-05-23-combat-animation-design.md`）：**
+- 12 个动画原语：pulse / flash_sequence / projectile / beam / slash / impact / shake / damage_number / buff_up / debuff_down / mark_dead / indicator_add
+- 架构：引擎实现原语播放器，Mod 在技能 YAML 中组合原语定义动画序列
+- 约束：所有动画严格在格子/3x3 边界内，投射物中心到中心，到达后才触发受击
+- 月牙斩：端点从左上/左下角出发，弧边不超右边框，随角度旋转
+- Buff/Debuff：单体双三角（底边=格子宽）在格子内上升/下沉，全场大三角重叠在3x3内
+
+**实现（第一批原语）：**
+- BattleGrid ITB 视觉改造 — 深色底 `#1a1a2e`、粗 3px 边框、P1/E1 token 彩色背景、角标 HP、选中目标 4px 橙框 + glow
+- useAnimationPlayer composable — 动画队列管理，按事件逐个播放，命中类并行触发
+- AnimationLayer 组件 — 绝对定位图层渲染 impact 白闪 + damage_number 数字弹出
+- 后端 combat_events.js 生成 animation 序列，SnapshotService 传递到前端
+- 已实现原语：lunge（攻击者前顿）、impact（白闪）、shake（颤抖）、damage_number
+- 动画只动 token 不动格子（地形不该抖）
+- 倒计时移到两个格子中间放大显示，去掉 `s` 后缀
+- 战场格子染上当前地形颜色（30% 透明度）
+
+### Bug 修复
+
+- 逃跑后显示"战斗胜利" → 改为"逃跑成功"（endCombat 改用 result 字符串）
+- GraalJS 多线程错误 → ScriptRuntime.execute 和 handler 回调加 synchronized
+- 寻路中点击其他地点 → 停止当前寻路，不重新寻路
+
+### 新功能
+
+- **删除存档** — 角色选择界面角色卡右上角 `x` 按钮，确认对话框后删除
+- **YAML 热加载** — HotReloader 监听 .yaml 变更，重新触发 world.init（幂等），改地图/地形/颜色不用重启
+- **主题切换** — 夜间模式 / 摸鱼模式 / 亮色 / 多巴胺 四套预设，角色选择页+设置面板可切
+- 新增三处遭遇战 POI 用于测试不同地形战斗底色
+
 ### 待做
 
-- **动画系统**（重中之重，Into the Breach 风格，单独迭代）
-  - 位移（近战冲击）、投射（远程法术）、格子闪光、数字弹出、状态标记
-  - 与战报系统 effects 数据对接
+- **动画系统后续** — projectile / beam / slash / buff_up / debuff_down / mark_dead 等剩余原语
+- Mod 动画手册（YAML 格式、参数说明、示例）
 - 技能系统（技能定义、MP/资源消耗、多种范围）
 - 联动系统：状态标签 / 资源累积 / 技能链
 - 高级 AI（行为模式、按遭遇战配置）
