@@ -44,20 +44,30 @@
         {{ formatValue(anim.value) }}
       </div>
 
-      <!-- Buff up: two full-width triangles rising -->
+      <!-- Buff up: triangles rising (2 for single, 4 for field) -->
       <div v-if="anim.type === 'buff_up'"
            class="anim-buff-up"
+           :class="{ 'field-scope': anim.target === 'field' || anim.scope === 'field' }"
            :style="buffStyle(anim)">
         <span class="buff-tri" :style="{ color: anim.color || '#66bb6a' }"></span>
         <span class="buff-tri t2" :style="{ color: anim.color || '#66bb6a' }"></span>
+        <template v-if="anim.target === 'field' || anim.scope === 'field'">
+          <span class="buff-tri t3" :style="{ color: anim.color || '#66bb6a' }"></span>
+          <span class="buff-tri t4" :style="{ color: anim.color || '#66bb6a' }"></span>
+        </template>
       </div>
 
-      <!-- Debuff down: two full-width triangles sinking -->
+      <!-- Debuff down: triangles sinking (2 for single, 4 for field) -->
       <div v-if="anim.type === 'debuff_down'"
            class="anim-debuff-down"
+           :class="{ 'field-scope': anim.target === 'field' || anim.scope === 'field' }"
            :style="buffStyle(anim)">
         <span class="debuff-tri" :style="{ color: anim.color || '#e57373' }"></span>
         <span class="debuff-tri t2" :style="{ color: anim.color || '#e57373' }"></span>
+        <template v-if="anim.target === 'field' || anim.scope === 'field'">
+          <span class="debuff-tri t3" :style="{ color: anim.color || '#e57373' }"></span>
+          <span class="debuff-tri t4" :style="{ color: anim.color || '#e57373' }"></span>
+        </template>
       </div>
 
       <!-- Mark dead: X overlay -->
@@ -189,6 +199,16 @@ function damageStyle(anim) {
 }
 
 function buffStyle(anim) {
+  if (anim.target === 'field' || anim.scope === 'field') {
+    return {
+      left: '0',
+      top: '0',
+      width: '100%',
+      height: '100%',
+      '--cell-w': '80px',
+      animationDelay: anim.startDelay + 'ms'
+    }
+  }
   const pos = getCellPos(anim.target)
   return {
     left: pos.x + 'px',
@@ -435,6 +455,19 @@ function formatValue(value) {
   animation-delay: 80ms;
 }
 
+.anim-buff-up.field-scope {
+  flex-direction: row;
+  flex-wrap: wrap;
+  justify-content: space-around;
+  align-items: flex-end;
+}
+
+.field-scope .buff-tri {
+  animation-duration: 700ms;
+}
+.field-scope .buff-tri.t3 { animation-delay: 150ms; }
+.field-scope .buff-tri.t4 { animation-delay: 250ms; }
+
 @keyframes buff-rise {
   0% { transform: translateY(4px); opacity: 0; }
   15% { opacity: 1; }
@@ -466,6 +499,19 @@ function formatValue(value) {
   margin-top: -6px;
   animation-delay: 80ms;
 }
+
+.anim-debuff-down.field-scope {
+  flex-direction: row;
+  flex-wrap: wrap;
+  justify-content: space-around;
+  align-items: flex-start;
+}
+
+.field-scope .debuff-tri {
+  animation-duration: 700ms;
+}
+.field-scope .debuff-tri.t3 { animation-delay: 150ms; }
+.field-scope .debuff-tri.t4 { animation-delay: 250ms; }
 
 @keyframes debuff-sink {
   0% { transform: translateY(-4px); opacity: 0; }

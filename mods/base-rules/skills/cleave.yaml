@@ -1,0 +1,19 @@
+id: cleave
+name: "顺劈斩"
+category: skill
+silenceable: true
+targeting:
+  steps: []
+animation:
+  - type: lunge
+    target: actor
+    side: actor_side
+  - type: slash
+    target: target
+    color: "#ffffff"
+  - type: shake
+    target: target
+    intensity: heavy
+  - type: damage_number
+    target: target
+    color: damage

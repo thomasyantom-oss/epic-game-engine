@@ -72,21 +72,23 @@
           </template>
         </div>
         <div class="cmd-col cmd-actions" v-if="currentActor && phase === 'COMMAND' && !animating">
-          <ActionLink v-for="cmd in baseActions" :key="cmd.params?.command"
-                      :action="cmd"
-                      :class="{ active: selectedCommand === cmd.params?.command }"
-                      @action="selectCommand(cmd)" />
-          <span v-if="skillActions.length > 0" class="cmd-item skill-btn"
-                :class="{ active: showSkills }"
-                @click="showSkills = !showSkills">▸ 技能</span>
-          <span v-if="step === 'target'" class="cmd-item cancel-item" @click="cancelSelect">▸ 取消</span>
-        </div>
-        <div class="cmd-col cmd-detail">
-          <template v-if="showSkills && !selectingTarget">
+          <template v-if="!showSkills">
+            <ActionLink v-for="cmd in baseActions" :key="cmd.params?.command"
+                        :action="cmd"
+                        :class="{ active: selectedCommand === cmd.params?.command }"
+                        @action="selectCommand(cmd)" />
+            <span v-if="skillActions.length > 0" class="cmd-item skill-btn"
+                  @click="showSkills = true">▸ 技能</span>
+          </template>
+          <template v-else>
             <ActionLink v-for="cmd in skillActions" :key="cmd.params?.command"
                         :action="cmd"
                         @action="selectCommand(cmd)" />
+            <span class="cmd-item cancel-item" @click="showSkills = false">▸ 返回</span>
           </template>
+          <span v-if="step === 'target'" class="cmd-item cancel-item" @click="cancelSelect">▸ 取消</span>
+        </div>
+        <div class="cmd-col cmd-detail">
         </div>
       </div>
     </div>

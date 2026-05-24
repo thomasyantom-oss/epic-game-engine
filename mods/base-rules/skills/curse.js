@@ -32,7 +32,8 @@ engine.on("combat.unit_action", 80, function(event) {
         var animation = engine.newList();
         var debuffAnim = engine.newMap();
         debuffAnim.put("type", "debuff_down");
-        debuffAnim.put("target", actorId);
+        debuffAnim.put("target", "field");
+        debuffAnim.put("scope", "field");
         debuffAnim.put("color", "#e57373");
         animation.add(debuffAnim);
         evt.put("animation", animation);

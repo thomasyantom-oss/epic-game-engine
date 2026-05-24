@@ -31,7 +31,8 @@ engine.on("combat.unit_action", 80, function(event) {
         var animation = engine.newList();
         var buffAnim = engine.newMap();
         buffAnim.put("type", "buff_up");
-        buffAnim.put("target", actorId);
+        buffAnim.put("target", "field");
+        buffAnim.put("scope", "field");
         buffAnim.put("color", "#ffab40");
         animation.add(buffAnim);
         evt.put("animation", animation);
