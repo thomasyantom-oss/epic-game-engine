@@ -84,7 +84,8 @@ function cellStyle(cell) {
   return {
     backgroundColor: info?.color || '#333',
     color: info?.textColor || '#fff',
-    border: '1px solid #333',
+    border: '2px solid #333',
+    borderRadius: '2px',
     display: 'flex',
     alignItems: 'center',
     justifyContent: 'center',
