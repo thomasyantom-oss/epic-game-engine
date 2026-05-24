@@ -67,7 +67,19 @@ engine.on("combat.unit_action", 80, function(event) {
         var s3 = engine.newMap(); s3.put("text", "" + damage); s3.put("color", "damage"); segments.add(s3);
         var s4 = engine.newMap(); s4.put("text", " 点伤害"); s4.put("color", "text"); segments.add(s4);
         evt.put("segments", segments);
-        evt.put("effects", engine.newList());
+        var effects = engine.newList();
+        for (var e = 0; e < targets.length; e++) {
+            var eff = engine.newMap();
+            eff.put("target", targets[e]);
+            eff.put("type", "hp_change");
+            var effData = engine.newMap();
+            effData.put("amount", -damage);
+            effData.put("hp", store.get(targets[e]).getComponent("Health").getInt("hp"));
+            effData.put("maxHp", store.get(targets[e]).getComponent("Health").getInt("maxHp"));
+            eff.put("data", effData);
+            effects.add(eff);
+        }
+        evt.put("effects", effects);
 
         var animation = engine.newList();
         var pulseAnim = engine.newMap();

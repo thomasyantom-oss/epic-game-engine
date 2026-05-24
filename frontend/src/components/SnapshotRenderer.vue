@@ -214,6 +214,7 @@ watch(() => props.snapshot?.combat, (combat) => {
     return
   }
   // Immediately show pre-animation state (no effects applied yet)
+  playedCount.value = 0
   displayCombat.value = buildProgressiveCombat(combat, events, -1)
 }, { immediate: true })
 
