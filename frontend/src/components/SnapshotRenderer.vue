@@ -110,42 +110,61 @@ const logTabs = computed(() => {
 })
 const navTabs = [{ id: 'actions', label: '快捷' }]
 
-const currentRoundEntries = computed(() => {
+// Split log into rounds: each round starts with a separator entry (round != null)
+const rounds = computed(() => {
   const log = props.snapshot?.log || []
-  if (log.length === 0) return []
-  // Find last round separator
-  let lastRoundIdx = -1
-  for (let i = log.length - 1; i >= 0; i--) {
-    if (log[i].round != null) {
-      lastRoundIdx = i
-      break
+  const result = []
+  let current = []
+  for (const entry of log) {
+    if (entry.round != null) {
+      if (current.length > 0) result.push(current)
+      current = [entry]
+    } else {
+      current.push(entry)
     }
   }
-  if (lastRoundIdx === -1) return log
-  return log.slice(lastRoundIdx)
+  if (current.length > 0) result.push(current)
+  return result
 })
 
-const historyEntries = computed(() => {
-  const log = props.snapshot?.log || []
-  if (log.length === 0) return []
-  let lastRoundIdx = -1
-  for (let i = log.length - 1; i >= 0; i--) {
-    if (log[i].round != null) {
-      lastRoundIdx = i
-      break
-    }
+// Current round = the last round that has action entries (not just a separator)
+const currentRoundEntries = computed(() => {
+  const r = rounds.value
+  if (r.length === 0) return []
+  // Last round with content beyond just the separator
+  for (let i = r.length - 1; i >= 0; i--) {
+    if (r[i].length > 1) return r[i]
   }
-  if (lastRoundIdx <= 0) return []
-  return log.slice(0, lastRoundIdx)
+  return []
+})
+
+// History = all rounds before the current one
+const historyEntries = computed(() => {
+  const r = rounds.value
+  if (r.length <= 1) return []
+  const currentIdx = (() => {
+    for (let i = r.length - 1; i >= 0; i--) {
+      if (r[i].length > 1) return i
+    }
+    return r.length - 1
+  })()
+  const entries = []
+  for (let i = 0; i < currentIdx; i++) {
+    entries.push(...r[i])
+  }
+  return entries
 })
 
 const historyRounds = computed(() => {
-  const log = props.snapshot?.log || []
-  let count = 0
-  for (let i = 0; i < log.length; i++) {
-    if (log[i].round != null) count++
-  }
-  return Math.max(0, count - 1)
+  const r = rounds.value
+  if (r.length <= 1) return 0
+  const currentIdx = (() => {
+    for (let i = r.length - 1; i >= 0; i--) {
+      if (r[i].length > 1) return i
+    }
+    return r.length - 1
+  })()
+  return currentIdx
 })
 
 // Filter out map_move actions (keyboard handles movement)
