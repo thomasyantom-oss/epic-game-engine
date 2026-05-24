@@ -3,9 +3,12 @@
     <div class="panel-main">
       <TabPanel :tabs="mainTabs" :default-tab="snapshot.combat ? 'battle' : 'map'">
         <template #map>
-          <MapGrid :map="snapshot.map" :map-size="settings.mapSize || 10"
-                   :disabled="!!snapshot.combat"
-                   @move="onMove" @moveTo="onMoveTo" @interrupt="onInterrupt" />
+          <div class="map-split">
+            <MapGrid :map="snapshot.map" :map-size="settings.mapSize || 10"
+                     :disabled="!!snapshot.combat"
+                     @move="onMove" @moveTo="onMoveTo" @interrupt="onInterrupt" />
+            <MapInfoPanel :map="snapshot.map" @poi-action="onPoiAction" />
+          </div>
         </template>
         <template #battle v-if="snapshot.combat">
           <BattleGrid :combat="snapshot.combat" :player-id="snapshot.playerId"
@@ -23,9 +26,6 @@
               {{ buff.name }} ({{ buff.remaining }})
             </div>
           </div>
-        </template>
-        <template #mapinfo v-if="snapshot.map">
-          <MapInfoPanel :map="snapshot.map" @poi-action="onPoiAction" />
         </template>
         <template #settings>
           <SettingsPanel />
@@ -66,6 +66,7 @@
         </template>
       </TabPanel>
     </div>
+
   </div>
 </template>
 
@@ -93,14 +94,7 @@ const mainTabs = computed(() => {
   return [{ id: 'map', label: '地图' }]
 })
 
-const funcTabs = computed(() => {
-  const tabs = [{ id: 'status', label: '人物' }]
-  if (props.snapshot?.map) {
-    tabs.push({ id: 'mapinfo', label: '地图' })
-  }
-  tabs.push({ id: 'settings', label: '设置' })
-  return tabs
-})
+const funcTabs = [{ id: 'status', label: '人物' }, { id: 'settings', label: '设置' }]
 
 const logTabs = computed(() => {
   if (props.snapshot?.combat) {
@@ -167,9 +161,9 @@ const historyRounds = computed(() => {
   return currentIdx
 })
 
-// Filter out map_move actions (keyboard handles movement)
+// Filter out actions handled by other UI elements
 const filteredActions = computed(() => {
-  return (props.snapshot?.actions || []).filter(a => a.type !== 'map_move')
+  return (props.snapshot?.actions || []).filter(a => a.type !== 'map_move' && a.type !== 'poi_interact')
 })
 
 function onMove(direction) {
@@ -198,6 +192,9 @@ function onPoiAction(poi) {
   height: 100%;
 }
 .panel-main { grid-column: 1; grid-row: 1; min-height: 0; overflow: hidden; }
+.map-split { display: flex; height: 100%; gap: 0.5rem; }
+.map-split > :first-child { flex: 1; min-width: 0; }
+.map-split > :last-child { width: 8rem; flex-shrink: 0; border-left: 1px solid var(--panel-border-color); }
 .panel-func { grid-column: 2; grid-row: 1; min-height: 0; }
 .panel-log { grid-column: 1; grid-row: 2; min-height: 0; }
 .panel-nav { grid-column: 2; grid-row: 2; min-height: 0; }
