@@ -106,13 +106,27 @@ engine.on("combat.damage_dealt", 60, function(event) {
         shakeAnim.put("intensity", "normal");
         animation.add(shakeAnim);
     }
-    // Always append damage_number
-    var dmgAnim = engine.newMap();
-    dmgAnim.put("type", "damage_number");
-    dmgAnim.put("target", targetId);
-    dmgAnim.put("value", -damage);
-    dmgAnim.put("color", "damage");
-    animation.add(dmgAnim);
+    // Append damage_number only if not already in animation
+    var hasDmgNum = false;
+    for (var a = 0; a < animation.size(); a++) {
+        if (animation.get(a).get("type") === "damage_number") { hasDmgNum = true; break; }
+    }
+    if (!hasDmgNum) {
+        var dmgAnim = engine.newMap();
+        dmgAnim.put("type", "damage_number");
+        dmgAnim.put("target", targetId);
+        dmgAnim.put("value", -damage);
+        dmgAnim.put("color", "damage");
+        animation.add(dmgAnim);
+    } else {
+        // Fill in value for existing damage_number entries
+        for (var a = 0; a < animation.size(); a++) {
+            var an = animation.get(a);
+            if (an.get("type") === "damage_number" && !an.containsKey("value")) {
+                an.put("value", -damage);
+            }
+        }
+    }
 
     evt.put("animation", animation);
 
