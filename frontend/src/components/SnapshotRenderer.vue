@@ -170,37 +170,16 @@ const historyRounds = computed(() => {
 // Animate combat events — delegate to BattleGrid's animation player
 const isAnimating = ref(false)
 const battleGridRef = ref(null)
-const preAnimHp = ref({})
-const currentEvents = ref([])
 const animEventIndex = ref(-1)
 
 watch(() => props.snapshot?.combat?.events, async (events) => {
   if (!events || events.length === 0) {
     isAnimating.value = false
-    preAnimHp.value = {}
-    currentEvents.value = []
     animEventIndex.value = -1
     return
   }
 
-  // Calculate pre-animation HP by reversing all effects
-  const hpState = {}
-  const combatants = props.snapshot?.combat?.combatants || []
-  for (const c of combatants) {
-    hpState[c.id] = c.hp
-  }
-  for (let i = events.length - 1; i >= 0; i--) {
-    const effs = events[i].effects || []
-    for (const eff of effs) {
-      if (eff.type === 'hp_change' && eff.target) {
-        hpState[eff.target] = (hpState[eff.target] || 0) - (eff.amount || 0)
-      }
-    }
-  }
-  preAnimHp.value = { ...hpState }
-  currentEvents.value = events
   animEventIndex.value = -1
-
   isAnimating.value = true
   await nextTick()
   if (battleGridRef.value) {
@@ -210,22 +189,44 @@ watch(() => props.snapshot?.combat?.events, async (events) => {
     })
   }
   isAnimating.value = false
-  preAnimHp.value = {}
-  currentEvents.value = []
   animEventIndex.value = -1
 }, { immediate: true })
+
+// Calculate pre-animation HP by reversing all effects from current events
+function calcPreAnimHp() {
+  const combat = props.snapshot?.combat
+  if (!combat || !combat.events || combat.events.length === 0) return null
+  const hpState = {}
+  for (const c of combat.combatants) {
+    hpState[c.id] = c.hp
+  }
+  for (let i = combat.events.length - 1; i >= 0; i--) {
+    const effs = combat.events[i].effects || []
+    for (const eff of effs) {
+      if (eff.type === 'hp_change' && eff.target) {
+        hpState[eff.target] = (hpState[eff.target] || 0) - (eff.amount || 0)
+      }
+    }
+  }
+  return hpState
+}
 
 // Progressive HP: start at pre-animation values, apply effects as events play
 const displayCombat = computed(() => {
   const combat = props.snapshot?.combat
   if (!combat) return null
-  if (!isAnimating.value || Object.keys(preAnimHp.value).length === 0) return combat
+
+  const events = combat.events || []
+  if (events.length === 0 || animEventIndex.value === -1 && !isAnimating.value) return combat
+
+  const preHp = calcPreAnimHp()
+  if (!preHp) return combat
 
   const eventIdx = animEventIndex.value
-  const hpState = { ...preAnimHp.value }
+  const hpState = { ...preHp }
 
-  for (let i = 0; i <= eventIdx && i < currentEvents.value.length; i++) {
-    const effs = currentEvents.value[i].effects || []
+  for (let i = 0; i <= eventIdx && i < events.length; i++) {
+    const effs = events[i].effects || []
     for (const eff of effs) {
       if (eff.type === 'hp_change' && eff.target) {
         hpState[eff.target] = (hpState[eff.target] || 0) + (eff.amount || 0)
@@ -245,7 +246,8 @@ const displayCombat = computed(() => {
 // Visible current round entries — show all completed (not animated anymore)
 const visibleCurrentEntries = computed(() => {
   const entries = currentRoundEntries.value
-  if (!isAnimating.value) return entries
+  const events = props.snapshot?.combat?.events || []
+  if (events.length === 0 || !isAnimating.value) return entries
   const eventIdx = animEventIndex.value
   if (eventIdx < 0) return entries.length > 0 ? [entries[0]] : []
   return entries.slice(0, eventIdx + 2)
