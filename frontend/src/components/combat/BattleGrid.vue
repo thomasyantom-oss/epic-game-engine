@@ -330,8 +330,7 @@ function isValidTarget(cell) {
 function isClickable(cell) {
   if (!selectingTarget.value) return false
   if (currentAllowEmpty()) return true
-  if (!cell.marker || !cell.marker.alive) return false
-  return true
+  return !!(cell.marker && cell.marker.alive)
 }
 
 function isInAoeZone(cell) {

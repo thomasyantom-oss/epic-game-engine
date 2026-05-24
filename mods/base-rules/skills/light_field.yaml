@@ -1,23 +1,23 @@
-id: cross_blast
-name: "十字爆裂"
+id: light_field
+name: "光击阵"
 category: skill
 silenceable: true
 targeting:
   aoe_offsets: [[0,0],[-1,0],[1,0],[0,-1],[0,1]]
+  allow_empty: true
   steps:
-    - prompt: "选择目标"
-      filter: enemy
+    - prompt: "选择落点"
+      filter: any
       count: 1
 animation:
-  - type: pulse
-    target: actor
-    color: "#ffee58"
+  - type: flash_sequence
+    target: target
   - type: impact
     target: target
     color: "#ffee58"
   - type: shake
     target: target
-    intensity: heavy
+    intensity: normal
   - type: damage_number
     target: target
     color: damage

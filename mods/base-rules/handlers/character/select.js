@@ -134,7 +134,7 @@ engine.on("action.confirm_character", 100, function(event) {
     skillList.add(fleeSkill);
 
     if (classId === "mage") {
-        var mageSkills = ["fireball", "ice_beam", "crescent_slash", "pulse_wave", "poison_dart", "heal", "war_cry", "curse", "cleave", "piercing_ray", "cross_blast"];
+        var mageSkills = ["fireball", "ice_beam", "crescent_slash", "pulse_wave", "poison_dart", "heal", "war_cry", "curse", "cleave", "piercing_ray", "cross_blast", "light_field"];
         for (var m = 0; m < mageSkills.length; m++) {
             var ms = engine.newMap();
             ms.put("id", mageSkills[m]);
