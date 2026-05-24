@@ -174,13 +174,6 @@ const animEventIndex = ref(-1)
 const animatedRound = ref(-1)
 const lastCombatId = ref(null)
 
-watch(() => props.snapshot?.combat?.combatId, (id) => {
-  if (id !== lastCombatId.value) {
-    lastCombatId.value = id
-    animatedRound.value = -1
-  }
-})
-
 watch(() => props.snapshot?.combat?.events, async (events) => {
   if (!events || events.length === 0) {
     isAnimating.value = false
@@ -189,6 +182,7 @@ watch(() => props.snapshot?.combat?.events, async (events) => {
   }
 
   const round = props.snapshot?.combat?.round || 0
+  console.log('[EVENTS]', JSON.stringify(events.map(e => ({ segs: e.segments?.map(s=>s.text).join(''), effects: e.effects }))))
   isAnimating.value = true
   animEventIndex.value = -1
 
@@ -215,7 +209,8 @@ function calcPreAnimHp() {
     const effs = combat.events[i].effects || []
     for (const eff of effs) {
       if (eff.type === 'hp_change' && eff.target) {
-        hpState[eff.target] = (hpState[eff.target] || 0) - (eff.amount || 0)
+        const amount = eff.data?.amount ?? eff.amount ?? 0
+        hpState[eff.target] = (hpState[eff.target] || 0) - amount
       }
     }
   }
@@ -230,13 +225,21 @@ const displayCombat = computed(() => {
   const events = combat.events || []
   if (events.length === 0) return combat
 
+  // Reset on new combat
+  if (combat.combatId !== lastCombatId.value) {
+    lastCombatId.value = combat.combatId
+    animatedRound.value = -1
+  }
+
   // If this round's animation already finished, show final state
   const currentRound = combat.round || 0
   if (animatedRound.value >= currentRound) return combat
 
-  // Progressive: calculate pre-animation HP then apply played events
   const preHp = calcPreAnimHp()
+  console.log('[displayCombat] round:', currentRound, 'eventIdx:', animEventIndex.value, 'preHp:', JSON.stringify(preHp), 'finalHp:', JSON.stringify(Object.fromEntries(combat.combatants.map(c=>[c.id,c.hp]))))
   if (!preHp) return combat
+
+  // Progressive: calculate pre-animation HP then apply played events
 
   const eventIdx = animEventIndex.value
   const hpState = { ...preHp }
@@ -245,7 +248,8 @@ const displayCombat = computed(() => {
     const effs = events[i].effects || []
     for (const eff of effs) {
       if (eff.type === 'hp_change' && eff.target) {
-        hpState[eff.target] = (hpState[eff.target] || 0) + (eff.amount || 0)
+        const amount = eff.data?.amount ?? eff.amount ?? 0
+        hpState[eff.target] = (hpState[eff.target] || 0) + amount
       }
     }
   }
