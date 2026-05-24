@@ -22,7 +22,7 @@
     <div class="panel-func">
       <TabPanel :tabs="funcTabs" default-tab="status">
         <template #status>
-          <StatusBars :bars="snapshot.statusBars" />
+          <StatusBars :bars="displayStatusBars" />
           <div class="buffs" v-if="snapshot.buffs && snapshot.buffs.length">
             <div v-for="buff in snapshot.buffs" :key="buff.id" class="buff-item">
               {{ buff.name }} ({{ buff.remaining }})
@@ -179,8 +179,10 @@ watch(() => props.snapshot?.combat?.events, async (events) => {
     return
   }
 
-  animEventIndex.value = -1
+  // Set these synchronously BEFORE any await so computed picks them up immediately
   isAnimating.value = true
+  animEventIndex.value = -1
+
   await nextTick()
   if (battleGridRef.value) {
     battleGridRef.value.updateCellPositions()
@@ -189,7 +191,6 @@ watch(() => props.snapshot?.combat?.events, async (events) => {
     })
   }
   isAnimating.value = false
-  animEventIndex.value = -1
 }, { immediate: true })
 
 // Calculate pre-animation HP by reversing all effects from current events
@@ -217,8 +218,12 @@ const displayCombat = computed(() => {
   if (!combat) return null
 
   const events = combat.events || []
-  if (events.length === 0 || animEventIndex.value === -1 && !isAnimating.value) return combat
+  if (events.length === 0) return combat
 
+  // If all events have been played through, show final state
+  if (animEventIndex.value >= events.length - 1) return combat
+
+  // Progressive: calculate pre-animation HP then apply played events
   const preHp = calcPreAnimHp()
   if (!preHp) return combat
 
@@ -241,6 +246,21 @@ const displayCombat = computed(() => {
   }))
 
   return { ...combat, combatants: updatedCombatants }
+})
+
+// StatusBars adjusted during animation (player HP/MP)
+const displayStatusBars = computed(() => {
+  const bars = props.snapshot?.statusBars || []
+  const dc = displayCombat.value
+  if (!dc || !props.snapshot?.combat?.events?.length) return bars
+  // Find player in displayCombat and override HP bar
+  const playerId = props.snapshot?.playerId
+  const playerUnit = dc.combatants?.find(c => c.id === playerId)
+  if (!playerUnit) return bars
+  return bars.map(bar => {
+    if (bar.id === 'hp') return { ...bar, current: playerUnit.hp }
+    return bar
+  })
 })
 
 // Visible current round entries — show all completed (not animated anymore)
