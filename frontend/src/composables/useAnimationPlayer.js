@@ -36,9 +36,11 @@ export function useAnimationPlayer() {
     const currentIdx = eventIndex++
 
     if (anims.length === 0) {
-      playedEventIndex.value = currentIdx
-      if (onEventCallback) onEventCallback(currentIdx)
-      setTimeout(playNext, 400)
+      setTimeout(() => {
+        playedEventIndex.value = currentIdx
+        if (onEventCallback) onEventCallback(currentIdx)
+        playNext()
+      }, 300)
       return
     }
 

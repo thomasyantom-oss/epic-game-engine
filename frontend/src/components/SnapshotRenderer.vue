@@ -182,7 +182,6 @@ watch(() => props.snapshot?.combat?.events, async (events) => {
   }
 
   const round = props.snapshot?.combat?.round || 0
-  console.log('[EVENTS]', JSON.stringify(events.map(e => ({ segs: e.segments?.map(s=>s.text).join(''), effects: e.effects }))))
   isAnimating.value = true
   animEventIndex.value = -1
 
@@ -236,7 +235,6 @@ const displayCombat = computed(() => {
   if (animatedRound.value >= currentRound) return combat
 
   const preHp = calcPreAnimHp()
-  console.log('[displayCombat] round:', currentRound, 'eventIdx:', animEventIndex.value, 'preHp:', JSON.stringify(preHp), 'finalHp:', JSON.stringify(Object.fromEntries(combat.combatants.map(c=>[c.id,c.hp]))))
   if (!preHp) return combat
 
   // Progressive: calculate pre-animation HP then apply played events
