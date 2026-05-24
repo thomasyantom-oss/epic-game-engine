@@ -13,6 +13,34 @@ engine.on("combat.resolve_round", 99, function(event) {
     combat.getComponent("CombatEvents").set("queue", engine.newList());
 });
 
+// Resolve animation from skill YAML — replace actor/target placeholders with real IDs
+function resolveSkillAnimation(skillId, actorId, targetId) {
+    var skillDef = engine.loadYaml("skills/" + skillId + ".yaml");
+    if (skillDef === null) return null;
+    var animDef = skillDef.get("animation");
+    if (animDef === null || animDef.size() === 0) return null;
+
+    var actor = store.get(actorId);
+    var actorSide = actor !== null && actor.hasTag("player") ? "player" : "enemy";
+
+    var resolved = engine.newList();
+    for (var i = 0; i < animDef.size(); i++) {
+        var step = animDef.get(i);
+        var anim = engine.newMap();
+        var keys = step.keySet().iterator();
+        while (keys.hasNext()) {
+            var key = keys.next();
+            var val = step.get(key);
+            if (val === "actor") val = actorId;
+            else if (val === "target") val = targetId;
+            else if (val === "actor_side") val = actorSide;
+            anim.put(key, val);
+        }
+        resolved.add(anim);
+    }
+    return resolved;
+}
+
 // Record attack events
 engine.on("combat.damage_dealt", 60, function(event) {
     var combatId = event.get("combatId");
@@ -22,6 +50,7 @@ engine.on("combat.damage_dealt", 60, function(event) {
     var attackerId = event.get("attackerId");
     var targetId = event.get("targetId");
     var damage = event.get("damage");
+    var skillId = event.has("skillId") ? event.get("skillId") : null;
 
     var attacker = store.get(attackerId);
     var target = store.get(targetId);
@@ -42,7 +71,7 @@ engine.on("combat.damage_dealt", 60, function(event) {
     var s6 = engine.newMap(); s6.put("text", " 点伤害"); s6.put("color", "text"); segments.add(s6);
     evt.put("segments", segments);
 
-    // Effects (for animation)
+    // Effects (for state tracking)
     var effects = engine.newList();
     var hpEffect = engine.newMap();
     hpEffect.put("target", targetId);
@@ -53,25 +82,30 @@ engine.on("combat.damage_dealt", 60, function(event) {
     effects.add(hpEffect);
     evt.put("effects", effects);
 
-    var animation = engine.newList();
-
-    var lungeAnim = engine.newMap();
-    lungeAnim.put("type", "lunge");
-    lungeAnim.put("target", attackerId);
-    lungeAnim.put("side", attackerSide);
-    animation.add(lungeAnim);
-
-    var impactAnim = engine.newMap();
-    impactAnim.put("type", "impact");
-    impactAnim.put("target", targetId);
-    animation.add(impactAnim);
-
-    var shakeAnim = engine.newMap();
-    shakeAnim.put("type", "shake");
-    shakeAnim.put("target", targetId);
-    shakeAnim.put("intensity", "normal");
-    animation.add(shakeAnim);
-
+    // Animation — read from skill YAML, fallback to default
+    var animation = null;
+    if (skillId !== null) {
+        animation = resolveSkillAnimation(skillId, attackerId, targetId);
+    }
+    if (animation === null) {
+        // Default fallback: lunge + impact + shake + damage_number
+        animation = engine.newList();
+        var lungeAnim = engine.newMap();
+        lungeAnim.put("type", "lunge");
+        lungeAnim.put("target", attackerId);
+        lungeAnim.put("side", attackerSide);
+        animation.add(lungeAnim);
+        var impactAnim = engine.newMap();
+        impactAnim.put("type", "impact");
+        impactAnim.put("target", targetId);
+        animation.add(impactAnim);
+        var shakeAnim = engine.newMap();
+        shakeAnim.put("type", "shake");
+        shakeAnim.put("target", targetId);
+        shakeAnim.put("intensity", "normal");
+        animation.add(shakeAnim);
+    }
+    // Always append damage_number
     var dmgAnim = engine.newMap();
     dmgAnim.put("type", "damage_number");
     dmgAnim.put("target", targetId);
@@ -108,6 +142,11 @@ engine.on("combat.unit_action", 200, function(event) {
         evt.put("segments", segments);
         evt.put("effects", engine.newList());
 
+        // Animation from skill YAML
+        var animation = resolveSkillAnimation("defend", actorId, actorId);
+        if (animation === null) animation = engine.newList();
+        evt.put("animation", animation);
+
         combat.getComponent("CombatEvents").get("queue").add(evt);
     }
 });
@@ -137,13 +176,11 @@ engine.on("combat.unit_death", 60, function(event) {
     evt.put("effects", effects);
 
     var animation = engine.newList();
-
     var shakeAnim = engine.newMap();
     shakeAnim.put("type", "shake");
     shakeAnim.put("target", deadId);
     shakeAnim.put("intensity", "heavy");
     animation.add(shakeAnim);
-
     evt.put("animation", animation);
 
     combat.getComponent("CombatEvents").get("queue").add(evt);

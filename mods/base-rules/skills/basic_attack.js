@@ -26,5 +26,6 @@ engine.on("combat.unit_action", 80, function(event) {
     dealEvent.set("targetId", targetId);
     dealEvent.set("damage", damage);
     dealEvent.set("combatId", combatId);
+    dealEvent.set("skillId", "basic_attack");
     engine.fire("combat.damage_dealt", dealEvent);
 });

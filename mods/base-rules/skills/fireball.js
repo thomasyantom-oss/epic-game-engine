@@ -38,6 +38,7 @@ engine.on("combat.unit_action", 80, function(event) {
     dealEvent.set("targetId", targetId);
     dealEvent.set("damage", damage);
     dealEvent.set("combatId", combatId);
+    dealEvent.set("skillId", "fireball");
     engine.fire("combat.damage_dealt", dealEvent);
 
     var burnData = engine.newMap();
