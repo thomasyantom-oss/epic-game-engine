@@ -90,14 +90,6 @@ const { settings } = useSettings()
 const showHistory = ref(false)
 const logScrollRef = ref(null)
 
-watch(visibleCurrentEntries, () => {
-  nextTick(() => {
-    if (logScrollRef.value) {
-      logScrollRef.value.scrollTop = logScrollRef.value.scrollHeight
-    }
-  })
-})
-
 const mainTabs = computed(() => {
   if (props.snapshot?.combat) {
     return [{ id: 'battle', label: '战场' }, { id: 'map', label: '地图' }]
@@ -215,6 +207,14 @@ const visibleCurrentEntries = computed(() => {
   if (!isAnimating.value) return entries
   // First entry is round separator, rest are log entries
   return entries.slice(0, visibleLogCount.value + 1)
+})
+
+watch(visibleCurrentEntries, () => {
+  nextTick(() => {
+    if (logScrollRef.value) {
+      logScrollRef.value.scrollTop = logScrollRef.value.scrollHeight
+    }
+  })
 })
 
 // Current terrain color for battle grid background tint
