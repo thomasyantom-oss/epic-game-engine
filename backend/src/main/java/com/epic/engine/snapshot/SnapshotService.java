@@ -245,10 +245,17 @@ public class SnapshotService {
                             buffList.add(new WorldSnapshot.BuffInfo(buffId, stacks, color));
                         }
                     }
+                    String row = "FRONT";
+                    int slot = 0;
+                    if (c.hasComponent("CombatPosition")) {
+                        Component pos = c.getComponent("CombatPosition");
+                        row = pos.has("row") ? pos.getString("row") : "FRONT";
+                        slot = pos.has("slot") ? pos.getInt("slot") : 0;
+                    }
                     combatants.add(new WorldSnapshot.CombatantInfo(
                             c.getId(), name, side,
                             health.getInt("hp"), health.getInt("maxHp"),
-                            health.getInt("hp") > 0, buffList));
+                            health.getInt("hp") > 0, buffList, row, slot));
                 }
 
                 // Read combat events (pending playback)

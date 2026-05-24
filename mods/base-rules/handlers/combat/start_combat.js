@@ -33,6 +33,10 @@ engine.on("combat.start_encounter", 100, function(event) {
     // Tag the player as in this combat, clear old combat log
     var player = store.get(playerId);
     player.removeComponent("LastCombatLog");
+    var playerPos = engine.newComponent("CombatPosition");
+    playerPos.set("row", "FRONT");
+    playerPos.set("slot", 1);
+    player.addComponent(playerPos);
     player.addTag("combat:" + combatId);
     store.reindexTags(player);
 
@@ -57,6 +61,11 @@ engine.on("combat.start_encounter", 100, function(event) {
         var nameComp = engine.newComponent("Name");
         nameComp.set("value", enemyDef.get("name"));
         enemy.addComponent(nameComp);
+
+        var combatPos = engine.newComponent("CombatPosition");
+        combatPos.set("row", enemyDef.get("row") || "FRONT");
+        combatPos.set("slot", enemyDef.get("slot") !== null ? enemyDef.get("slot") : i % 3);
+        enemy.addComponent(combatPos);
 
         enemy.addTag("enemy");
         enemy.addTag("combat:" + combatId);
@@ -150,6 +159,7 @@ function endCombat(player, combatId, result) {
 
     var combatants = store.getByTagAsList("combat:" + combatId);
     player.removeTag("combat:" + combatId);
+    player.removeComponent("CombatPosition");
     store.reindexTags(player);
     for (var j = 0; j < combatants.size(); j++) {
         var c = combatants.get(j);
