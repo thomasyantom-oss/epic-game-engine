@@ -43,22 +43,26 @@ public class ModuleLoader {
         }
     }
 
+    private static final String[] SCRIPT_DIRS = {"handlers", "skills", "buffs"};
+
     private void loadModule(ModuleDescriptor mod) throws IOException {
         runtime.setModuleContext(mod.path());
-        Path handlersDir = mod.path().resolve("handlers");
-        if (!Files.isDirectory(handlersDir)) return;
+        for (String dir : SCRIPT_DIRS) {
+            Path scriptDir = mod.path().resolve(dir);
+            if (!Files.isDirectory(scriptDir)) continue;
 
-        try (Stream<Path> files = Files.walk(handlersDir)) {
-            files.filter(p -> p.toString().endsWith(".js"))
-                 .sorted()
-                 .forEach(jsFile -> {
-                     try {
-                         String script = Files.readString(jsFile);
-                         runtime.execute(script, mod.id() + "/" + modsPath.relativize(jsFile));
-                     } catch (IOException e) {
-                         throw new RuntimeException("Failed to load handler: " + jsFile, e);
-                     }
-                 });
+            try (Stream<Path> files = Files.walk(scriptDir)) {
+                files.filter(p -> p.toString().endsWith(".js"))
+                     .sorted()
+                     .forEach(jsFile -> {
+                         try {
+                             String script = Files.readString(jsFile);
+                             runtime.execute(script, mod.id() + "/" + modsPath.relativize(jsFile));
+                         } catch (IOException e) {
+                             throw new RuntimeException("Failed to load handler: " + jsFile, e);
+                         }
+                     });
+            }
         }
     }
 
