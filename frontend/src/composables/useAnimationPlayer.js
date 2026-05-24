@@ -42,8 +42,9 @@ export function useAnimationPlayer() {
       const duration = getAnimDuration(anim)
       active.push({ ...anim, startDelay: delay, duration })
 
-      if (anim.type === 'impact' || anim.type === 'shake' || anim.type === 'damage_number') {
-        // Hit animations play in parallel, don't add to delay
+      const parallel = ['impact', 'shake', 'damage_number', 'buff_up', 'debuff_down', 'mark_dead', 'indicator_add']
+      if (parallel.includes(anim.type)) {
+        // These play in parallel with the preceding launch animation
       } else {
         delay += duration
       }
@@ -61,10 +62,18 @@ export function useAnimationPlayer() {
   function getAnimDuration(anim) {
     switch (anim.type) {
       case 'lunge': return 250
+      case 'pulse': return 350
+      case 'flash_sequence': return 400
       case 'projectile': return anim.speed === 'fast' ? 300 : anim.speed === 'slow' ? 600 : 400
+      case 'beam': return 300
+      case 'slash': return 400
       case 'impact': return 150
       case 'shake': return 250
       case 'damage_number': return 500
+      case 'buff_up': return 500
+      case 'debuff_down': return 500
+      case 'mark_dead': return 400
+      case 'indicator_add': return 300
       default: return 300
     }
   }
