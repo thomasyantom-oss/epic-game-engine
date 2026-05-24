@@ -48,6 +48,11 @@ public class PersistenceService {
                 .toList();
     }
 
+    public void delete(String entityId) {
+        repository.deleteById(entityId);
+        entityStore.remove(entityId);
+    }
+
     public void loadAllPersistent() {
         repository.findAll().forEach(data -> {
             Entity entity = deserialize(data);

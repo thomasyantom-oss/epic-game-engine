@@ -139,6 +139,21 @@ engine.on("action.select_character", 100, function(event) {
     }
 });
 
+// 删除角色
+engine.on("action.delete_character", 100, function(event) {
+    var token = event.get("sessionToken");
+    var characterId = event.get("characterId");
+
+    var entity = store.get(characterId);
+    if (entity === null) {
+        entity = persistence.load(characterId);
+    }
+    if (entity === null || !entity.hasTag("session:" + token)) return;
+
+    persistence.delete(characterId);
+    sessions.clearActiveCharacter(token);
+});
+
 // 登出
 engine.on("action.logout", 100, function(event) {
     var token = event.get("sessionToken");

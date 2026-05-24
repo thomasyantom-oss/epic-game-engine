@@ -5,7 +5,8 @@
       :characters="snapshot.characters"
       :max-slots="snapshot.maxSlots"
       @select="selectCharacter"
-      @create="createCharacter" />
+      @create="createCharacter"
+      @delete="deleteCharacter" />
     <CharacterCreate v-else-if="phase === 'character_create'"
       :form="snapshot.form"
       @confirm="confirmCharacter"
@@ -49,6 +50,10 @@ async function cancelCreate() {
     snapshot.value = await getSnapshot()
 }
 
+async function deleteCharacter(characterId) {
+    snapshot.value = await performAction('delete_character', { characterId })
+}
+
 let pathfindingActive = false
 
 async function handleAction(action) {
@@ -57,6 +62,10 @@ async function handleAction(action) {
         return
     }
     if (action.type === 'map_moveto') {
+        if (pathfindingActive) {
+            pathfindingActive = false
+            return
+        }
         await handlePathfind(action.params)
     } else {
         pathfindingActive = false
