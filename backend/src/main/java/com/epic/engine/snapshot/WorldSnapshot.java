@@ -33,7 +33,11 @@ public record WorldSnapshot(
     public record PoiInfo(String id, int x, int y, String type, String target, String label) {}
     public record CombatSnapshot(String combatId, String phase, int round, List<CombatantInfo> combatants) {}
     public record CombatantInfo(String id, String name, String side, int hp, int maxHp, boolean alive) {}
-    public record ActionOption(String type, String label, Map<String, Object> params) {}
+    public record ActionOption(String type, String label, Map<String, Object> params, String color, String style) {
+        public ActionOption(String type, String label, Map<String, Object> params) {
+            this(type, label, params, null, null);
+        }
+    }
     public record LogEntry(List<TextSegment> segments, Integer round) {
         public LogEntry(List<TextSegment> segments) { this(segments, null); }
     }

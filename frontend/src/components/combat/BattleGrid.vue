@@ -51,12 +51,11 @@
           </template>
         </div>
         <div class="cmd-col cmd-actions" v-if="currentActor && phase === 'COMMAND'">
-          <span class="cmd-item" :class="{ active: selectedCommand === 'ATTACK' }" @click="selectCommand('ATTACK')">攻击</span>
-          <span class="cmd-item" :class="{ active: selectedCommand === 'DEFEND' }" @click="selectCommand('DEFEND')">防御</span>
-          <span class="cmd-item" :class="{ active: selectedCommand === 'SKILL' }" @click="selectCommand('SKILL')">技能</span>
-          <span class="cmd-item" :class="{ active: selectedCommand === 'ITEM' }" @click="selectCommand('ITEM')">道具</span>
-          <span class="cmd-item" @click="selectCommand('FLEE')">逃跑</span>
-          <span v-if="step === 'target'" class="cmd-item cancel-item" @click="cancelSelect">取消</span>
+          <ActionLink v-for="cmd in commands" :key="cmd.params?.command"
+                      :action="cmd"
+                      :class="{ active: selectedCommand === cmd.params?.command }"
+                      @action="selectCommand(cmd)" />
+          <span v-if="step === 'target'" class="cmd-item cancel-item" @click="cancelSelect">▸ 取消</span>
         </div>
         <div class="cmd-col cmd-detail">
         </div>
@@ -80,10 +79,12 @@
 
 <script setup>
 import { computed, ref, watch } from 'vue'
+import ActionLink from '../ActionLink.vue'
 
 const props = defineProps({
   combat: { type: Object, required: true },
-  playerId: { type: String, default: '' }
+  playerId: { type: String, default: '' },
+  commands: { type: Array, default: () => [] }
 })
 
 const emit = defineEmits(['command'])
@@ -159,21 +160,16 @@ function mapUnitsToGrid(units, side) {
   return markers
 }
 
-function selectCommand(cmd) {
+function selectCommand(action) {
   if (!currentActor.value) return
-  if (cmd === 'FLEE') {
-    emit('command', { type: 'combat_command', params: { command: 'FLEE', targetId: null } })
+  var cmd = action.params?.command
+  var style = action.style
+
+  if (style === 'instant' || cmd === 'FLEE' || cmd === 'DEFEND') {
+    emit('command', { type: 'combat_command', params: { command: cmd, targetId: null } })
     return
   }
-  if (cmd === 'DEFEND') {
-    emit('command', { type: 'combat_command', params: { command: 'DEFEND', targetId: null } })
-    return
-  }
-  if (cmd === 'SKILL' || cmd === 'ITEM') {
-    selectedCommand.value = 'ATTACK'
-    step.value = 'target'
-    return
-  }
+  // requires_target
   selectedCommand.value = cmd
   step.value = 'target'
 }

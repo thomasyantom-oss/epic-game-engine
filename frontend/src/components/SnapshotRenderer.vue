@@ -12,6 +12,7 @@
         </template>
         <template #battle v-if="snapshot.combat">
           <BattleGrid :combat="snapshot.combat" :player-id="snapshot.playerId"
+                      :commands="combatActions"
                       @command="$emit('action', $event)" />
         </template>
       </TabPanel>
@@ -161,9 +162,14 @@ const historyRounds = computed(() => {
   return currentIdx
 })
 
+// Combat actions for BattleGrid
+const combatActions = computed(() => {
+  return (props.snapshot?.actions || []).filter(a => a.type === 'combat_command')
+})
+
 // Filter out actions handled by other UI elements
 const filteredActions = computed(() => {
-  return (props.snapshot?.actions || []).filter(a => a.type !== 'map_move' && a.type !== 'poi_interact')
+  return (props.snapshot?.actions || []).filter(a => a.type !== 'map_move' && a.type !== 'poi_interact' && a.type !== 'combat_command')
 })
 
 function onMove(direction) {

@@ -5,48 +5,7 @@ engine.on("ui.render_actions", 100, function(event) {
 
     var actions = event.get("actions");
 
-    // Movement actions if player has Position
-    if (entity.hasComponent("Position")) {
-        var directions = [
-            ["NORTH", "向北"],
-            ["SOUTH", "向南"],
-            ["WEST", "向西"],
-            ["EAST", "向东"]
-        ];
-        for (var i = 0; i < directions.length; i++) {
-            var params = engine.newMap();
-            params.put("direction", directions[i][0]);
-            params.put("entityId", entityId);
-            actions.add(engine.newActionOption("map_move", directions[i][1], params));
-        }
-
-        // POI actions if player is on a POI tile
-        var pos = entity.getComponent("Position");
-        var mapId = pos.getString("map");
-        var map = store.get(mapId);
-        if (map !== null && map.hasComponent("MapData")) {
-            var mapData = map.getComponent("MapData");
-            var pois = mapData.get("pois");
-            if (pois !== null) {
-                var px = pos.getInt("x");
-                var py = pos.getInt("y");
-                for (var j = 0; j < pois.size(); j++) {
-                    var poi = pois.get(j);
-                    var poiX = poi.get("x");
-                    var poiY = poi.get("y");
-                    if (poiX == px && poiY == py) {
-                        var poiParams = engine.newMap();
-                        poiParams.put("poiId", poi.get("id"));
-                        poiParams.put("poiType", poi.get("type"));
-                        poiParams.put("target", poi.get("target"));
-                        actions.add(engine.newActionOption("poi_interact", poi.get("label"), poiParams));
-                    }
-                }
-            }
-        }
-    }
-
-    // Logout available only when not in combat
+    // Check if in combat
     var inCombat = false;
     var tags = entity.getTags().toArray();
     for (var i = 0; i < tags.length; i++) {
@@ -55,8 +14,64 @@ engine.on("ui.render_actions", 100, function(event) {
             break;
         }
     }
-    if (!inCombat) {
-        actions.add(engine.newActionOption("logout", "退出角色", engine.newMap()));
+
+    if (inCombat) {
+        // Combat actions — dynamic based on entity's abilities
+        var atkParams = engine.newMap();
+        atkParams.put("command", "ATTACK");
+        actions.add(engine.newActionOptionStyled("combat_command", "攻击", atkParams, "enemy", "requires_target"));
+
+        var defParams = engine.newMap();
+        defParams.put("command", "DEFEND");
+        actions.add(engine.newActionOptionStyled("combat_command", "防御", defParams, "player", "instant"));
+
+        var fleeParams = engine.newMap();
+        fleeParams.put("command", "FLEE");
+        actions.add(engine.newActionOptionStyled("combat_command", "逃跑", fleeParams, "highlight", "instant"));
+    } else {
+        // Map movement (hidden from panel, used by keyboard)
+        if (entity.hasComponent("Position")) {
+            var directions = [
+                ["NORTH", "向北"],
+                ["SOUTH", "向南"],
+                ["WEST", "向西"],
+                ["EAST", "向东"]
+            ];
+            for (var i = 0; i < directions.length; i++) {
+                var params = engine.newMap();
+                params.put("direction", directions[i][0]);
+                params.put("entityId", entityId);
+                actions.add(engine.newActionOption("map_move", directions[i][1], params));
+            }
+
+            // POI actions if player is on a POI tile
+            var pos = entity.getComponent("Position");
+            var mapId = pos.getString("map");
+            var map = store.get(mapId);
+            if (map !== null && map.hasComponent("MapData")) {
+                var mapData = map.getComponent("MapData");
+                var pois = mapData.get("pois");
+                if (pois !== null) {
+                    var px = pos.getInt("x");
+                    var py = pos.getInt("y");
+                    for (var j = 0; j < pois.size(); j++) {
+                        var poi = pois.get(j);
+                        var poiX = poi.get("x");
+                        var poiY = poi.get("y");
+                        if (poiX == px && poiY == py) {
+                            var poiParams = engine.newMap();
+                            poiParams.put("poiId", poi.get("id"));
+                            poiParams.put("poiType", poi.get("type"));
+                            poiParams.put("target", poi.get("target"));
+                            actions.add(engine.newActionOptionStyled("poi_interact", poi.get("label"), poiParams, "highlight", "instant"));
+                        }
+                    }
+                }
+            }
+        }
+
+        // Logout
+        actions.add(engine.newActionOptionStyled("logout", "退出角色", engine.newMap(), "text", "instant"));
     }
 });
 
@@ -73,7 +88,7 @@ engine.on("action.map_move", 100, function(event) {
     engine.fire("map.move", moveEvent);
 });
 
-// Handle click-to-move: compute path and return it for frontend to step through
+// Handle click-to-move: compute path and execute one step
 engine.on("action.map_moveto", 100, function(event) {
     var playerId = event.get("playerId");
     var targetX = event.get("targetX");
@@ -89,7 +104,6 @@ engine.on("action.map_moveto", 100, function(event) {
 
     var found = pathEvent.get("found");
     if (found) {
-        // Just execute one step — frontend will call again for each step
         var path = pathEvent.get("path");
         if (path.length > 0) {
             var entity = store.get(entityId);
@@ -110,10 +124,7 @@ engine.on("action.map_moveto", 100, function(event) {
             moveEvent.set("direction", dir);
             engine.fire("map.move", moveEvent);
         }
-        // Set remaining path length so frontend knows if more steps needed
         event.set("pathRemaining", path.length - 1);
-        event.set("targetX", targetX);
-        event.set("targetY", targetY);
     } else {
         event.set("pathRemaining", 0);
     }
@@ -126,7 +137,6 @@ engine.on("action.poi_interact", 100, function(event) {
     var target = event.get("target");
 
     if (poiType === "combat") {
-        // Start combat with encounter template
         var combatEvent = engine.newEvent("combat.start_encounter");
         combatEvent.set("playerId", playerId);
         combatEvent.set("encounterId", target);
