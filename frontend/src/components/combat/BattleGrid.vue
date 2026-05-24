@@ -52,9 +52,6 @@
             <div class="actor-avatar"></div>
             <div class="actor-name">{{ currentActor.name }}</div>
           </template>
-          <template v-else-if="animating">
-            <div class="resolving-text">结算中...</div>
-          </template>
         </div>
         <div class="cmd-col cmd-actions" v-if="currentActor && phase === 'COMMAND' && !animating">
           <ActionLink v-for="cmd in commands" :key="cmd.params?.command"
@@ -430,16 +427,6 @@ onUnmounted(() => stopTimer())
 
 .actor-name {
   color: var(--color-player);
-}
-
-.resolving-text {
-  color: var(--color-highlight);
-  animation: pulse 1s infinite;
-}
-
-@keyframes pulse {
-  0%, 100% { opacity: 1; }
-  50% { opacity: 0.4; }
 }
 
 .cmd-item {
