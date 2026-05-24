@@ -1,0 +1,580 @@
+<!DOCTYPE html>
+<html>
+<head>
+<style>
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body { background: #0a0a14; color: #ccc; font-family: -apple-system, sans-serif; padding: 2rem; }
+h2 { color: #fff; margin-bottom: 0.3rem; }
+h3 { color: #fff; margin-top: 2rem; margin-bottom: 0.5rem; }
+.subtitle { color: #888; font-size: 0.85em; margin-bottom: 1rem; }
+.mockup { background: #12121e; border: 1px solid #333; border-radius: 6px; overflow: hidden; }
+.mockup-header { background: #1a1a2e; padding: 0.5rem 0.8rem; font-size: 0.8em; color: #aaa; border-bottom: 1px solid #333; }
+.mockup-body { padding: 1rem; }
+.cap { text-align: center; font-size: 0.7em; color: #888; margin-top: 0.6rem; line-height: 1.5; }
+</style>
+</head>
+<body>
+
+<h2>战斗动画 v5b：深色背景修正</h2>
+<p class="subtitle">箭头/投射物变体 + Buff/Debuff 动画</p>
+
+<!-- Arrow variants -->
+<h3>箭头/投射物方案变体</h3>
+
+<div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 1rem; margin-top: 0.5rem;">
+
+  <div class="mockup">
+    <div class="mockup-header">C1: 实心圆弹丸</div>
+    <div class="mockup-body">
+      <div style="display: flex; align-items: center; justify-content: center; height: 100px;">
+        <div class="c-src"><span class="tk p">P1</span></div>
+        <div class="proj-track">
+          <div class="proj-bullet"></div>
+        </div>
+        <div class="c-tgt hit-c"><span class="tk e shake-a">E1</span></div>
+      </div>
+      <p class="cap">圆形弹丸 + 拖尾光晕<br/>速度快、清晰可见</p>
+    </div>
+  </div>
+
+  <div class="mockup">
+    <div class="mockup-header">C2: 拖尾光线</div>
+    <div class="mockup-body">
+      <div style="display: flex; align-items: center; justify-content: center; height: 100px;">
+        <div class="c-src"><span class="tk p">P1</span></div>
+        <div class="proj-track">
+          <div class="proj-trail"></div>
+        </div>
+        <div class="c-tgt hit-c"><span class="tk e shake-a">E1</span></div>
+      </div>
+      <p class="cap">头部亮点 + 渐隐拖尾<br/>有速度感</p>
+    </div>
+  </div>
+
+  <div class="mockup">
+    <div class="mockup-header">C3: 菱形弹射</div>
+    <div class="mockup-body">
+      <div style="display: flex; align-items: center; justify-content: center; height: 100px;">
+        <div class="c-src"><span class="tk p">P1</span></div>
+        <div class="proj-track">
+          <div class="proj-diamond"></div>
+        </div>
+        <div class="c-tgt hit-c"><span class="tk e shake-a">E1</span></div>
+      </div>
+      <p class="cap">旋转菱形投射<br/>有质量感、物理攻击</p>
+    </div>
+  </div>
+
+  <div class="mockup">
+    <div class="mockup-header">C4: 斩击弧线</div>
+    <div class="mockup-body">
+      <div style="display: flex; align-items: center; justify-content: center; height: 100px;">
+        <div class="c-src"><span class="tk p">P1</span></div>
+        <div class="proj-track">
+          <div class="proj-slash"></div>
+        </div>
+        <div class="c-tgt hit-c"><span class="tk e shake-a">E1</span></div>
+      </div>
+      <p class="cap">弧形斩线闪现<br/>近战/利刃感</p>
+    </div>
+  </div>
+</div>
+
+<!-- Additional: colored projectiles -->
+<h3>投射物配色示例</h3>
+<div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 1rem; margin-top: 0.5rem;">
+  <div class="mockup">
+    <div class="mockup-header">火焰弹</div>
+    <div class="mockup-body">
+      <div style="display: flex; align-items: center; justify-content: center; height: 80px;">
+        <div class="c-src-sm"><span class="tk p" style="font-size:0.6em;">P1</span></div>
+        <div class="proj-track">
+          <div class="proj-bullet fire"></div>
+        </div>
+        <div class="c-tgt-sm hit-c"><span class="tk e" style="font-size:0.6em;">E1</span></div>
+      </div>
+    </div>
+  </div>
+  <div class="mockup">
+    <div class="mockup-header">冰霜箭</div>
+    <div class="mockup-body">
+      <div style="display: flex; align-items: center; justify-content: center; height: 80px;">
+        <div class="c-src-sm"><span class="tk p" style="font-size:0.6em;">P1</span></div>
+        <div class="proj-track">
+          <div class="proj-trail ice"></div>
+        </div>
+        <div class="c-tgt-sm hit-c-ice"><span class="tk e" style="font-size:0.6em;">E1</span></div>
+      </div>
+    </div>
+  </div>
+  <div class="mockup">
+    <div class="mockup-header">暗影斩</div>
+    <div class="mockup-body">
+      <div style="display: flex; align-items: center; justify-content: center; height: 80px;">
+        <div class="c-src-sm"><span class="tk p" style="font-size:0.6em;">P1</span></div>
+        <div class="proj-track">
+          <div class="proj-slash dark"></div>
+        </div>
+        <div class="c-tgt-sm hit-c-dark"><span class="tk e" style="font-size:0.6em;">E1</span></div>
+      </div>
+    </div>
+  </div>
+  <div class="mockup">
+    <div class="mockup-header">雷击</div>
+    <div class="mockup-body">
+      <div style="display: flex; align-items: center; justify-content: center; height: 80px;">
+        <div class="c-src-sm"><span class="tk p" style="font-size:0.6em;">P1</span></div>
+        <div class="proj-track">
+          <div class="proj-diamond lightning"></div>
+        </div>
+        <div class="c-tgt-sm hit-c-light"><span class="tk e" style="font-size:0.6em;">E1</span></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Projectile params -->
+<h3>投射物可调参数</h3>
+<div class="mockup" style="margin-top: 0.5rem;">
+  <div class="mockup-body" style="padding: 1.5rem;">
+    <table style="width: 100%; border-collapse: collapse; font-size: 0.8em;">
+      <tr style="border-bottom: 1px solid #444;">
+        <th style="text-align:left; padding: 0.5rem; color: #4fc3f7;">参数</th>
+        <th style="text-align:left; padding: 0.5rem; color: #4fc3f7;">可选值</th>
+        <th style="text-align:left; padding: 0.5rem; color: #4fc3f7;">效果</th>
+      </tr>
+      <tr style="border-bottom: 1px solid #333;">
+        <td style="padding: 0.5rem; color: #fff;">shape</td>
+        <td style="padding: 0.5rem; color: #ccc;">circle / diamond / slash / line</td>
+        <td style="padding: 0.5rem; color: #888;">投射物形状</td>
+      </tr>
+      <tr style="border-bottom: 1px solid #333;">
+        <td style="padding: 0.5rem; color: #fff;">trail</td>
+        <td style="padding: 0.5rem; color: #ccc;">none / fade / glow</td>
+        <td style="padding: 0.5rem; color: #888;">尾迹类型</td>
+      </tr>
+      <tr style="border-bottom: 1px solid #333;">
+        <td style="padding: 0.5rem; color: #fff;">speed</td>
+        <td style="padding: 0.5rem; color: #ccc;">fast(100ms) / normal(200ms) / slow(400ms)</td>
+        <td style="padding: 0.5rem; color: #888;">飞行时间</td>
+      </tr>
+      <tr style="border-bottom: 1px solid #333;">
+        <td style="padding: 0.5rem; color: #fff;">color</td>
+        <td style="padding: 0.5rem; color: #ccc;">hex 色值 / 语义色名</td>
+        <td style="padding: 0.5rem; color: #888;">颜色（含光晕）</td>
+      </tr>
+      <tr>
+        <td style="padding: 0.5rem; color: #fff;">size</td>
+        <td style="padding: 0.5rem; color: #ccc;">small / medium / large</td>
+        <td style="padding: 0.5rem; color: #888;">投射物尺寸</td>
+      </tr>
+    </table>
+  </div>
+</div>
+
+<!-- Buff/Debuff -->
+<h3>Buff / Debuff 状态变化动画</h3>
+<p class="subtitle">获得增益时双绿色三角上升，减益时双红色三角下沉</p>
+
+<div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem; margin-top: 1rem;">
+  <div class="mockup">
+    <div class="mockup-header">获得增益 (Buff)</div>
+    <div class="mockup-body" style="padding: 1.5rem;">
+      <div style="display: flex; align-items: center; justify-content: center; height: 140px; gap: 3rem;">
+        <div style="text-align: center;">
+          <div class="demo-cell">
+            <span class="tk p">P1</span>
+            <div class="buff-anim">
+              <div class="buff-tri t1">&#9650;</div>
+              <div class="buff-tri t2">&#9650;</div>
+            </div>
+          </div>
+          <div class="anim-label">播放中</div>
+        </div>
+        <div style="text-align: center;">
+          <div class="demo-cell">
+            <div class="corner-ind tl" style="background: #66bb6a;"></div>
+            <span class="tk p">P1</span>
+          </div>
+          <div class="anim-label">结束后</div>
+        </div>
+      </div>
+      <p class="cap">两个绿色三角从中心向上飘出，前后错开<br/>到顶部淡出 → 角标色块亮起</p>
+    </div>
+  </div>
+
+  <div class="mockup">
+    <div class="mockup-header">获得减益 (Debuff)</div>
+    <div class="mockup-body" style="padding: 1.5rem;">
+      <div style="display: flex; align-items: center; justify-content: center; height: 140px; gap: 3rem;">
+        <div style="text-align: center;">
+          <div class="demo-cell">
+            <span class="tk e">E1</span>
+            <div class="debuff-anim">
+              <div class="debuff-tri t1">&#9660;</div>
+              <div class="debuff-tri t2">&#9660;</div>
+            </div>
+          </div>
+          <div class="anim-label">播放中</div>
+        </div>
+        <div style="text-align: center;">
+          <div class="demo-cell">
+            <div class="corner-ind bl" style="background: #e57373;"></div>
+            <span class="tk e">E1</span>
+          </div>
+          <div class="anim-label">结束后</div>
+        </div>
+      </div>
+      <p class="cap">两个红色倒三角从中心向下沉<br/>到底部淡出 → 角标色块亮起</p>
+    </div>
+  </div>
+</div>
+
+<!-- Buff sizes -->
+<h3>Buff 动画强度变体</h3>
+<div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 1rem; margin-top: 0.5rem;">
+  <div class="mockup">
+    <div class="mockup-header">紧凑版（普通buff）</div>
+    <div class="mockup-body" style="display: flex; align-items: center; justify-content: center; height: 110px;">
+      <div class="demo-cell small-cell">
+        <span class="tk p" style="font-size: 0.6em;">P1</span>
+        <div class="buff-anim compact">
+          <div class="buff-tri t1 small-tri">&#9650;</div>
+          <div class="buff-tri t2 small-tri">&#9650;</div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="mockup">
+    <div class="mockup-header">标准版</div>
+    <div class="mockup-body" style="display: flex; align-items: center; justify-content: center; height: 110px;">
+      <div class="demo-cell">
+        <span class="tk p">P1</span>
+        <div class="buff-anim">
+          <div class="buff-tri t1">&#9650;</div>
+          <div class="buff-tri t2">&#9650;</div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="mockup">
+    <div class="mockup-header">强调版（大招buff）</div>
+    <div class="mockup-body" style="display: flex; align-items: center; justify-content: center; height: 110px;">
+      <div class="demo-cell">
+        <span class="tk p">P1</span>
+        <div class="buff-anim big">
+          <div class="buff-tri t1 big-tri">&#9650;</div>
+          <div class="buff-tri t2 big-tri">&#9650;</div>
+          <div class="buff-tri t3 big-tri">&#9650;</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Full list -->
+<h3>完整动画原语列表（Mod 可用）</h3>
+<div class="mockup" style="margin-top: 0.5rem;">
+  <div class="mockup-body" style="padding: 1.5rem;">
+    <table style="width: 100%; border-collapse: collapse; font-size: 0.8em;">
+      <tr style="border-bottom: 1px solid #444;">
+        <th style="text-align:left; padding: 0.4rem; color: #4fc3f7;">原语名称</th>
+        <th style="text-align:left; padding: 0.4rem; color: #4fc3f7;">类别</th>
+        <th style="text-align:left; padding: 0.4rem; color: #4fc3f7;">描述</th>
+      </tr>
+      <tr style="border-bottom: 1px solid #333;">
+        <td style="padding: 0.4rem; color: #fff;">pulse</td>
+        <td style="padding: 0.4rem; color: #ffab40;">发起</td>
+        <td style="padding: 0.4rem; color: #aaa;">攻击者格子扩散波纹</td>
+      </tr>
+      <tr style="border-bottom: 1px solid #333;">
+        <td style="padding: 0.4rem; color: #fff;">flash_sequence</td>
+        <td style="padding: 0.4rem; color: #ffab40;">发起</td>
+        <td style="padding: 0.4rem; color: #aaa;">沿路径逐格闪白</td>
+      </tr>
+      <tr style="border-bottom: 1px solid #333;">
+        <td style="padding: 0.4rem; color: #fff;">projectile</td>
+        <td style="padding: 0.4rem; color: #ffab40;">发起</td>
+        <td style="padding: 0.4rem; color: #aaa;">投射物飞行（shape/trail/speed/color/size）</td>
+      </tr>
+      <tr style="border-bottom: 1px solid #333;">
+        <td style="padding: 0.4rem; color: #fff;">impact</td>
+        <td style="padding: 0.4rem; color: #e57373;">命中</td>
+        <td style="padding: 0.4rem; color: #aaa;">目标格白闪</td>
+      </tr>
+      <tr style="border-bottom: 1px solid #333;">
+        <td style="padding: 0.4rem; color: #fff;">shake</td>
+        <td style="padding: 0.4rem; color: #e57373;">命中</td>
+        <td style="padding: 0.4rem; color: #aaa;">目标 token 抖动</td>
+      </tr>
+      <tr style="border-bottom: 1px solid #333;">
+        <td style="padding: 0.4rem; color: #fff;">damage_number</td>
+        <td style="padding: 0.4rem; color: #e57373;">命中</td>
+        <td style="padding: 0.4rem; color: #aaa;">伤害/治疗/miss 数字弹出（带描边）</td>
+      </tr>
+      <tr style="border-bottom: 1px solid #333;">
+        <td style="padding: 0.4rem; color: #fff;">buff_up</td>
+        <td style="padding: 0.4rem; color: #66bb6a;">状态</td>
+        <td style="padding: 0.4rem; color: #aaa;">绿色双三角上升（intensity: small/normal/big）</td>
+      </tr>
+      <tr style="border-bottom: 1px solid #333;">
+        <td style="padding: 0.4rem; color: #fff;">debuff_down</td>
+        <td style="padding: 0.4rem; color: #66bb6a;">状态</td>
+        <td style="padding: 0.4rem; color: #aaa;">红色双倒三角下沉（intensity: small/normal/big）</td>
+      </tr>
+      <tr style="border-bottom: 1px solid #333;">
+        <td style="padding: 0.4rem; color: #fff;">mark_dead</td>
+        <td style="padding: 0.4rem; color: #ce93d8;">结果</td>
+        <td style="padding: 0.4rem; color: #aaa;">X 标记 + token 暗淡</td>
+      </tr>
+      <tr>
+        <td style="padding: 0.4rem; color: #fff;">indicator_add</td>
+        <td style="padding: 0.4rem; color: #ce93d8;">结果</td>
+        <td style="padding: 0.4rem; color: #aaa;">角标色块亮起（corner + color）</td>
+      </tr>
+    </table>
+  </div>
+</div>
+
+<style>
+/* Tokens */
+.tk { font-size: 0.7em; font-weight: bold; padding: 2px 5px; border-radius: 3px; }
+.tk.p { color: #4fc3f7; background: rgba(79,195,247,0.15); }
+.tk.e { color: #e57373; background: rgba(229,115,115,0.15); }
+
+/* Cells */
+.c-src, .c-tgt {
+  width: 44px; height: 44px;
+  background: #1a1a2e;
+  border: 3px solid #555;
+  border-radius: 3px;
+  display: flex; align-items: center; justify-content: center;
+  position: relative;
+}
+.c-src { border-color: #4fc3f7; }
+.c-src-sm, .c-tgt-sm {
+  width: 36px; height: 36px;
+  background: #1a1a2e;
+  border: 3px solid #555;
+  border-radius: 3px;
+  display: flex; align-items: center; justify-content: center;
+  position: relative;
+}
+.c-src-sm { border-color: #4fc3f7; }
+
+/* Projectile track */
+.proj-track {
+  width: 70px;
+  height: 30px;
+  display: flex; align-items: center; justify-content: center;
+  position: relative;
+}
+
+/* C1: Bullet */
+.proj-bullet {
+  width: 10px; height: 10px;
+  border-radius: 50%;
+  background: #fff;
+  box-shadow: 0 0 8px #fff, 0 0 16px rgba(255,255,255,0.4), -12px 0 12px rgba(255,255,255,0.2);
+  animation: bullet-fly 0.9s ease-in-out infinite;
+}
+.proj-bullet.fire {
+  background: #ff6600;
+  box-shadow: 0 0 8px #ff6600, 0 0 16px rgba(255,100,0,0.5), -12px 0 12px rgba(255,60,0,0.3);
+}
+@keyframes bullet-fly {
+  0% { transform: translateX(-35px); opacity: 0; }
+  10% { opacity: 1; }
+  55% { transform: translateX(15px); opacity: 1; }
+  70% { transform: translateX(15px); opacity: 0; }
+  100% { transform: translateX(15px); opacity: 0; }
+}
+
+/* C2: Trail */
+.proj-trail {
+  width: 28px; height: 4px;
+  background: linear-gradient(to right, transparent, #4fc3f7 40%, #fff);
+  border-radius: 2px;
+  box-shadow: 0 0 8px #4fc3f7, 0 0 16px rgba(79,195,247,0.3);
+  animation: trail-fly 0.9s ease-in-out infinite;
+}
+.proj-trail.ice {
+  background: linear-gradient(to right, transparent, #81d4fa 40%, #e0f7fa);
+  box-shadow: 0 0 8px #81d4fa, 0 0 16px rgba(129,212,250,0.4);
+}
+@keyframes trail-fly {
+  0% { transform: translateX(-35px); opacity: 0; }
+  10% { opacity: 1; }
+  55% { transform: translateX(15px); opacity: 1; }
+  70% { transform: translateX(15px); opacity: 0; }
+  100% { transform: translateX(15px); opacity: 0; }
+}
+
+/* C3: Diamond */
+.proj-diamond {
+  width: 10px; height: 10px;
+  background: #fff;
+  transform: rotate(45deg);
+  box-shadow: 0 0 8px #fff, 0 0 14px rgba(255,255,255,0.4);
+  animation: diamond-fly 1s ease-in-out infinite;
+}
+.proj-diamond.lightning {
+  background: #ffee58;
+  box-shadow: 0 0 8px #ffee58, 0 0 16px rgba(255,238,88,0.5);
+}
+@keyframes diamond-fly {
+  0% { transform: translateX(-35px) rotate(45deg); opacity: 0; }
+  10% { opacity: 1; }
+  55% { transform: translateX(15px) rotate(225deg); opacity: 1; }
+  70% { transform: translateX(15px) rotate(225deg); opacity: 0; }
+  100% { transform: translateX(15px) rotate(225deg); opacity: 0; }
+}
+
+/* C4: Slash */
+.proj-slash {
+  width: 24px; height: 24px;
+  position: relative;
+}
+.proj-slash::before {
+  content: '';
+  position: absolute;
+  top: 50%; left: 0;
+  width: 100%; height: 3px;
+  background: #fff;
+  border-radius: 2px;
+  box-shadow: 0 0 8px #fff, 0 0 14px rgba(255,255,255,0.4);
+  transform: rotate(-30deg);
+  transform-origin: center;
+  animation: slash-appear 1s ease-out infinite;
+}
+.proj-slash.dark::before {
+  background: #ce93d8;
+  box-shadow: 0 0 8px #ce93d8, 0 0 14px rgba(206,147,216,0.5);
+}
+@keyframes slash-appear {
+  0% { clip-path: inset(0 100% 0 0); opacity: 1; }
+  25% { clip-path: inset(0 0 0 0); opacity: 1; }
+  50% { clip-path: inset(0 0 0 0); opacity: 0.6; }
+  60%,100% { opacity: 0; }
+}
+
+/* Hit effects */
+.hit-c { animation: hf 1.2s ease-out infinite; }
+@keyframes hf {
+  0% { background: rgba(255,255,255,0.3); box-shadow: inset 0 0 12px rgba(255,255,255,0.3); }
+  25% { background: #1a1a2e; box-shadow: none; }
+  100% { background: #1a1a2e; }
+}
+.hit-c-ice { animation: hf-ice 1.2s ease-out infinite; }
+@keyframes hf-ice {
+  0% { background: rgba(129,212,250,0.3); box-shadow: inset 0 0 12px rgba(129,212,250,0.3); }
+  25% { background: #1a1a2e; }
+  100% { background: #1a1a2e; }
+}
+.hit-c-dark { animation: hf-dark 1.2s ease-out infinite; }
+@keyframes hf-dark {
+  0% { background: rgba(206,147,216,0.3); box-shadow: inset 0 0 12px rgba(206,147,216,0.3); }
+  25% { background: #1a1a2e; }
+  100% { background: #1a1a2e; }
+}
+.hit-c-light { animation: hf-light 1.2s ease-out infinite; }
+@keyframes hf-light {
+  0% { background: rgba(255,238,88,0.3); box-shadow: inset 0 0 12px rgba(255,238,88,0.3); }
+  25% { background: #1a1a2e; }
+  100% { background: #1a1a2e; }
+}
+.shake-a { animation: sh 0.3s ease-in-out infinite; }
+@keyframes sh {
+  0%,100% { transform: translateX(0); }
+  25% { transform: translateX(-2px); }
+  75% { transform: translateX(2px); }
+}
+
+/* Demo cell */
+.demo-cell {
+  position: relative;
+  width: 64px; height: 64px;
+  background: #1a1a2e;
+  border: 3px solid #555;
+  border-radius: 3px;
+  display: flex; align-items: center; justify-content: center;
+  overflow: visible;
+}
+.demo-cell.small-cell { width: 48px; height: 48px; }
+.anim-label { text-align: center; font-size: 0.6em; color: #666; margin-top: 0.4rem; }
+
+/* Corner indicators */
+.corner-ind {
+  position: absolute;
+  width: 12px; height: 12px;
+}
+.corner-ind.tl { top: 0; left: 0; clip-path: polygon(0 0, 100% 0, 0 100%); }
+.corner-ind.bl { bottom: 0; left: 0; clip-path: polygon(0 0, 0 100%, 100% 100%); }
+
+/* Buff animation */
+.buff-anim {
+  position: absolute;
+  top: 0; left: 0; right: 0; bottom: 0;
+  pointer-events: none;
+}
+.buff-tri {
+  position: absolute;
+  color: #66bb6a;
+  font-size: 1em;
+  opacity: 0;
+  filter: drop-shadow(0 0 4px #66bb6a);
+}
+.buff-tri.t1 { animation: buff-rise 1.5s ease-out infinite; left: 30%; }
+.buff-tri.t2 { animation: buff-rise 1.5s ease-out infinite 0.2s; left: 55%; }
+.buff-tri.t3 { animation: buff-rise 1.5s ease-out infinite 0.35s; left: 42%; }
+@keyframes buff-rise {
+  0% { transform: translateY(10px) scale(0.6); opacity: 0; top: 50%; }
+  15% { transform: translateY(4px) scale(1); opacity: 1; }
+  60% { transform: translateY(-18px) scale(1); opacity: 0.8; }
+  100% { transform: translateY(-32px) scale(0.8); opacity: 0; }
+}
+.buff-anim.compact .buff-tri.t1 { animation: buff-rise-sm 1.2s ease-out infinite; }
+.buff-anim.compact .buff-tri.t2 { animation: buff-rise-sm 1.2s ease-out infinite 0.15s; }
+@keyframes buff-rise-sm {
+  0% { transform: translateY(6px) scale(0.5); opacity: 0; top: 50%; }
+  15% { transform: translateY(2px) scale(0.8); opacity: 1; }
+  60% { transform: translateY(-12px) scale(0.8); opacity: 0.7; }
+  100% { transform: translateY(-20px) scale(0.6); opacity: 0; }
+}
+.small-tri { font-size: 0.7em; }
+.buff-anim.big .buff-tri.t1 { animation: buff-rise-lg 1.8s ease-out infinite; }
+.buff-anim.big .buff-tri.t2 { animation: buff-rise-lg 1.8s ease-out infinite 0.2s; }
+.buff-anim.big .buff-tri.t3 { animation: buff-rise-lg 1.8s ease-out infinite 0.4s; }
+@keyframes buff-rise-lg {
+  0% { transform: translateY(12px) scale(0.7); opacity: 0; top: 50%; }
+  12% { transform: translateY(4px) scale(1.2); opacity: 1; }
+  50% { transform: translateY(-20px) scale(1.1); opacity: 0.9; }
+  100% { transform: translateY(-40px) scale(0.9); opacity: 0; }
+}
+.big-tri { font-size: 1.3em; }
+
+/* Debuff animation */
+.debuff-anim {
+  position: absolute;
+  top: 0; left: 0; right: 0; bottom: 0;
+  pointer-events: none;
+}
+.debuff-tri {
+  position: absolute;
+  color: #e57373;
+  font-size: 1em;
+  opacity: 0;
+  filter: drop-shadow(0 0 4px #e57373);
+}
+.debuff-tri.t1 { animation: debuff-sink 1.5s ease-out infinite; left: 30%; }
+.debuff-tri.t2 { animation: debuff-sink 1.5s ease-out infinite 0.2s; left: 55%; }
+@keyframes debuff-sink {
+  0% { transform: translateY(-10px) scale(0.6); opacity: 0; top: 40%; }
+  15% { transform: translateY(-4px) scale(1); opacity: 1; }
+  60% { transform: translateY(18px) scale(1); opacity: 0.8; }
+  100% { transform: translateY(32px) scale(0.8); opacity: 0; }
+}
+</style>
+
+</body>
+</html>

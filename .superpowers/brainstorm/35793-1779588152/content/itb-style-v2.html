@@ -1,0 +1,435 @@
+<h2>战斗动画 v2</h2>
+<p class="subtitle">保留格子风格，改进伤害显示、攻击动画、四角指示</p>
+
+<div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem; margin-top: 1.5rem;">
+
+  <!-- Cell anatomy -->
+  <div class="mockup">
+    <div class="mockup-header">格子结构：四角信息</div>
+    <div class="mockup-body" style="padding: 1.5rem;">
+      <div style="display: flex; align-items: center; justify-content: center; height: 200px;">
+        <div style="position: relative; width: 100px; height: 100px; background: #1a1a2e; border: 2px solid #4fc3f7; border-radius: 3px; display: flex; align-items: center; justify-content: center;">
+          <!-- Token center -->
+          <span style="color: #4fc3f7; font-weight: bold; font-size: 1.2em; background: rgba(79,195,247,0.15); padding: 4px 8px; border-radius: 3px;">P1</span>
+          <!-- Top-left: speed/order -->
+          <span style="position: absolute; top: 3px; left: 4px; font-size: 0.6em; color: #ffab40; font-weight: bold;">⚡3</span>
+          <!-- Top-right: status -->
+          <span style="position: absolute; top: 3px; right: 4px; font-size: 0.6em; color: #66bb6a;">🛡</span>
+          <!-- Bottom-left: buff count -->
+          <span style="position: absolute; bottom: 3px; left: 4px; font-size: 0.55em; color: #ce93d8;">⬆2</span>
+          <!-- Bottom-right: HP compact -->
+          <span style="position: absolute; bottom: 3px; right: 4px; font-size: 0.55em; color: #aaa;">12/15</span>
+
+          <!-- Labels pointing out -->
+          <div style="position: absolute; top: -22px; left: -10px; font-size: 0.6em; color: #ffab40;">行动序</div>
+          <div style="position: absolute; top: -22px; right: -10px; font-size: 0.6em; color: #66bb6a;">状态</div>
+          <div style="position: absolute; bottom: -20px; left: -5px; font-size: 0.6em; color: #ce93d8;">buff</div>
+          <div style="position: absolute; bottom: -20px; right: -5px; font-size: 0.6em; color: #aaa;">HP</div>
+        </div>
+      </div>
+      <p class="demo-caption">四角放常驻信息，中央是 token 标识<br/>速度序号代替伤害预告，一眼看出行动顺序</p>
+    </div>
+  </div>
+
+  <!-- Full battle view with indicators -->
+  <div class="mockup">
+    <div class="mockup-header">战场总览</div>
+    <div class="mockup-body" style="padding: 1.5rem;">
+      <div style="display: flex; align-items: center; justify-content: center; gap: 16px; height: 200px;">
+        <div class="itb-grid2">
+          <div class="itb-cell2"></div><div class="itb-cell2"></div><div class="itb-cell2"></div>
+          <div class="itb-cell2"></div><div class="itb-cell2"></div>
+          <div class="itb-cell2 active-cell">
+            <span class="corner tl order">⚡1</span>
+            <span class="corner tr status">🛡</span>
+            <span class="itb-tk player">P1</span>
+            <span class="corner bl buff"></span>
+            <span class="corner br hp">12/15</span>
+          </div>
+          <div class="itb-cell2"></div><div class="itb-cell2"></div><div class="itb-cell2"></div>
+        </div>
+        <div style="width: 20px;"></div>
+        <div class="itb-grid2">
+          <div class="itb-cell2">
+            <span class="corner tl order">⚡2</span>
+            <span class="itb-tk enemy">E1</span>
+            <span class="corner br hp">8/10</span>
+          </div>
+          <div class="itb-cell2"></div><div class="itb-cell2"></div>
+          <div class="itb-cell2">
+            <span class="corner tl order">⚡4</span>
+            <span class="corner tr status" style="color: #e57373;">🔥</span>
+            <span class="itb-tk enemy">E2</span>
+            <span class="corner br hp" style="color: #e57373;">3/10</span>
+          </div>
+          <div class="itb-cell2"></div><div class="itb-cell2"></div>
+          <div class="itb-cell2">
+            <span class="corner tl order">⚡3</span>
+            <span class="itb-tk enemy">E3</span>
+            <span class="corner br hp">10/10</span>
+          </div>
+          <div class="itb-cell2"></div><div class="itb-cell2"></div>
+        </div>
+      </div>
+      <p class="demo-caption">速度序号让玩家一眼知道谁先谁后<br/>状态图标/buff 不需要悬浮提示就能看到</p>
+    </div>
+  </div>
+</div>
+
+<!-- Attack animation -->
+<h3 style="margin-top: 2rem;">攻击动画：连接线 + 冲击波</h3>
+<div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 1rem; margin-top: 0.5rem;">
+
+  <div class="mockup">
+    <div class="mockup-header">Step 1: 蓄力高亮</div>
+    <div class="mockup-body" style="padding: 1rem;">
+      <div style="display: flex; align-items: center; justify-content: center; height: 140px; gap: 10px;">
+        <div class="itb-grid-s">
+          <div class="itb-cell-s2"></div><div class="itb-cell-s2"></div><div class="itb-cell-s2"></div>
+          <div class="itb-cell-s2"></div><div class="itb-cell-s2"></div>
+          <div class="itb-cell-s2 glow-cell"><span class="itb-tk player pulse">P1</span></div>
+          <div class="itb-cell-s2"></div><div class="itb-cell-s2"></div><div class="itb-cell-s2"></div>
+        </div>
+        <div style="width:12px;"></div>
+        <div class="itb-grid-s">
+          <div class="itb-cell-s2"></div><div class="itb-cell-s2"></div><div class="itb-cell-s2"></div>
+          <div class="itb-cell-s2"><span class="itb-tk enemy dim">E1</span></div><div class="itb-cell-s2"></div><div class="itb-cell-s2"></div>
+          <div class="itb-cell-s2"></div><div class="itb-cell-s2"></div><div class="itb-cell-s2"></div>
+        </div>
+      </div>
+      <p class="demo-caption">攻击者短暂亮起<br/>~150ms</p>
+    </div>
+  </div>
+
+  <div class="mockup">
+    <div class="mockup-header">Step 2: 连接线</div>
+    <div class="mockup-body" style="padding: 1rem;">
+      <div style="display: flex; align-items: center; justify-content: center; height: 140px; gap: 0px; position: relative;">
+        <div class="itb-grid-s">
+          <div class="itb-cell-s2"></div><div class="itb-cell-s2"></div><div class="itb-cell-s2"></div>
+          <div class="itb-cell-s2"></div><div class="itb-cell-s2"></div>
+          <div class="itb-cell-s2 glow-cell"><span class="itb-tk player">P1</span></div>
+          <div class="itb-cell-s2"></div><div class="itb-cell-s2"></div><div class="itb-cell-s2"></div>
+        </div>
+        <div class="connect-line-container">
+          <div class="connect-line"></div>
+        </div>
+        <div class="itb-grid-s">
+          <div class="itb-cell-s2"></div><div class="itb-cell-s2"></div><div class="itb-cell-s2"></div>
+          <div class="itb-cell-s2 target-cell"><span class="itb-tk enemy">E1</span></div><div class="itb-cell-s2"></div><div class="itb-cell-s2"></div>
+          <div class="itb-cell-s2"></div><div class="itb-cell-s2"></div><div class="itb-cell-s2"></div>
+        </div>
+      </div>
+      <p class="demo-caption">一条光线从攻击者射向目标<br/>~100ms，快速直线</p>
+    </div>
+  </div>
+
+  <div class="mockup">
+    <div class="mockup-header">Step 3: 命中反馈</div>
+    <div class="mockup-body" style="padding: 1rem;">
+      <div style="display: flex; align-items: center; justify-content: center; height: 140px; gap: 10px;">
+        <div class="itb-grid-s">
+          <div class="itb-cell-s2"></div><div class="itb-cell-s2"></div><div class="itb-cell-s2"></div>
+          <div class="itb-cell-s2"></div><div class="itb-cell-s2"></div>
+          <div class="itb-cell-s2"><span class="itb-tk player">P1</span></div>
+          <div class="itb-cell-s2"></div><div class="itb-cell-s2"></div><div class="itb-cell-s2"></div>
+        </div>
+        <div style="width:12px;"></div>
+        <div class="itb-grid-s">
+          <div class="itb-cell-s2"></div><div class="itb-cell-s2"></div><div class="itb-cell-s2"></div>
+          <div class="itb-cell-s2 hit-cell"><span class="itb-tk enemy shake-tk">E1</span><div class="big-dmg">-7</div></div><div class="itb-cell-s2"></div><div class="itb-cell-s2"></div>
+          <div class="itb-cell-s2"></div><div class="itb-cell-s2"></div><div class="itb-cell-s2"></div>
+        </div>
+      </div>
+      <p class="demo-caption">目标抖动 + 大号伤害数字<br/>~400ms，停留足够久</p>
+    </div>
+  </div>
+</div>
+
+<!-- Improved damage display -->
+<h3 style="margin-top: 2rem;">伤害数字改进：大、清晰、有层次</h3>
+<div class="mockup" style="margin-top: 0.5rem;">
+  <div class="mockup-body" style="padding: 1.5rem;">
+    <div style="display: flex; align-items: center; justify-content: center; gap: 3rem; height: 120px;">
+      <div style="text-align: center;">
+        <div style="position: relative; display: inline-block;">
+          <div class="itb-cell2" style="width: 56px; height: 56px;">
+            <span class="itb-tk enemy shake-tk">E1</span>
+            <div class="big-dmg" style="animation: none;">-3</div>
+          </div>
+        </div>
+        <div style="font-size: 0.7em; color: #888; margin-top: 0.5rem;">普通伤害</div>
+      </div>
+      <div style="text-align: center;">
+        <div style="position: relative; display: inline-block;">
+          <div class="itb-cell2" style="width: 56px; height: 56px;">
+            <span class="itb-tk enemy shake-tk">E1</span>
+            <div class="big-dmg crit-dmg" style="animation: none;">-12!</div>
+          </div>
+        </div>
+        <div style="font-size: 0.7em; color: #888; margin-top: 0.5rem;">暴击</div>
+      </div>
+      <div style="text-align: center;">
+        <div style="position: relative; display: inline-block;">
+          <div class="itb-cell2" style="width: 56px; height: 56px;">
+            <span class="itb-tk player">P1</span>
+            <div class="big-dmg heal-num" style="animation: none;">+5</div>
+          </div>
+        </div>
+        <div style="font-size: 0.7em; color: #888; margin-top: 0.5rem;">治疗</div>
+      </div>
+      <div style="text-align: center;">
+        <div style="position: relative; display: inline-block;">
+          <div class="itb-cell2" style="width: 56px; height: 56px;">
+            <span class="itb-tk player">P1</span>
+            <div class="big-dmg miss-num" style="animation: none;">MISS</div>
+          </div>
+        </div>
+        <div style="font-size: 0.7em; color: #888; margin-top: 0.5rem;">闪避</div>
+      </div>
+    </div>
+    <p class="demo-caption">数字大而清晰，出现在格子正上方<br/>带描边保证在任何背景下可读，停留 400ms 后淡出</p>
+  </div>
+</div>
+
+<!-- Turn order bar -->
+<h3 style="margin-top: 2rem;">行动顺序条（替代伤害预告）</h3>
+<div class="mockup" style="margin-top: 0.5rem;">
+  <div class="mockup-body" style="padding: 1.5rem;">
+    <div class="turn-bar">
+      <div class="turn-slot active-turn">
+        <span class="itb-tk player small-tk">P1</span>
+        <span class="turn-label">当前</span>
+      </div>
+      <div class="turn-slot">
+        <span class="itb-tk enemy small-tk">E1</span>
+        <span class="turn-speed">SPD 8</span>
+      </div>
+      <div class="turn-slot">
+        <span class="itb-tk enemy small-tk">E3</span>
+        <span class="turn-speed">SPD 6</span>
+      </div>
+      <div class="turn-slot">
+        <span class="itb-tk enemy small-tk">E2</span>
+        <span class="turn-speed">SPD 4</span>
+      </div>
+    </div>
+    <p class="demo-caption">顶部或底部显示本回合行动顺序<br/>当前行动者高亮，已行动的灰掉</p>
+  </div>
+</div>
+
+</div>
+
+<style>
+/* Grid v2 */
+.itb-grid2 {
+  display: grid;
+  grid-template-columns: repeat(3, 48px);
+  grid-template-rows: repeat(3, 48px);
+  gap: 2px;
+}
+.itb-cell2 {
+  background: #1a1a2e;
+  border: 1px solid #333;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+  border-radius: 2px;
+}
+.active-cell { border-color: #4fc3f7; }
+.itb-tk {
+  font-size: 0.8em;
+  font-weight: bold;
+  padding: 3px 6px;
+  border-radius: 3px;
+}
+.itb-tk.player { color: #4fc3f7; background: rgba(79,195,247,0.15); }
+.itb-tk.enemy { color: #e57373; background: rgba(229,115,115,0.15); }
+.itb-tk.dim { opacity: 0.5; }
+.itb-tk.small-tk { font-size: 0.7em; padding: 2px 5px; }
+
+/* Corners */
+.corner {
+  position: absolute;
+  font-size: 0.5em;
+  font-weight: bold;
+}
+.corner.tl { top: 2px; left: 3px; }
+.corner.tr { top: 2px; right: 3px; }
+.corner.bl { bottom: 2px; left: 3px; }
+.corner.br { bottom: 2px; right: 3px; }
+.corner.order { color: #ffab40; }
+.corner.status { color: #66bb6a; }
+.corner.buff { color: #ce93d8; }
+.corner.hp { color: #999; }
+
+/* Small grid */
+.itb-grid-s {
+  display: grid;
+  grid-template-columns: repeat(3, 36px);
+  grid-template-rows: repeat(3, 36px);
+  gap: 2px;
+}
+.itb-cell-s2 {
+  background: #1a1a2e;
+  border: 1px solid #333;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+  border-radius: 2px;
+}
+
+/* Glow */
+.glow-cell {
+  border-color: #4fc3f7;
+  box-shadow: 0 0 8px rgba(79,195,247,0.5);
+}
+.pulse {
+  animation: tk-pulse 0.8s ease-in-out infinite;
+}
+@keyframes tk-pulse {
+  0%, 100% { text-shadow: 0 0 4px rgba(79,195,247,0.3); }
+  50% { text-shadow: 0 0 12px rgba(79,195,247,0.8); }
+}
+
+/* Connect line */
+.connect-line-container {
+  width: 24px;
+  display: flex;
+  align-items: center;
+  overflow: hidden;
+}
+.connect-line {
+  width: 100%;
+  height: 3px;
+  background: linear-gradient(to right, #4fc3f7, #fff);
+  box-shadow: 0 0 6px #4fc3f7;
+  animation: line-shoot 0.8s ease-out infinite;
+  border-radius: 2px;
+}
+@keyframes line-shoot {
+  0% { transform: scaleX(0); transform-origin: left; opacity: 1; }
+  40% { transform: scaleX(1); transform-origin: left; opacity: 1; }
+  70% { transform: scaleX(1); opacity: 0.5; }
+  100% { transform: scaleX(1); opacity: 0; }
+}
+
+/* Target */
+.target-cell {
+  border-color: #ff9800;
+  box-shadow: 0 0 6px rgba(255,152,0,0.4);
+}
+
+/* Hit */
+.hit-cell {
+  animation: white-pop 0.6s ease-out infinite;
+}
+@keyframes white-pop {
+  0% { background: rgba(255,255,255,0.6); box-shadow: 0 0 12px rgba(255,255,255,0.5); }
+  100% { background: #1a1a2e; box-shadow: none; }
+}
+
+/* Shake */
+.shake-tk {
+  animation: tk-shake 0.3s ease-in-out infinite;
+}
+@keyframes tk-shake {
+  0%, 100% { transform: translateX(0); }
+  20% { transform: translateX(-3px); }
+  40% { transform: translateX(3px); }
+  60% { transform: translateX(-2px); }
+  80% { transform: translateX(2px); }
+}
+
+/* Big damage numbers */
+.big-dmg {
+  position: absolute;
+  top: -14px;
+  left: 50%;
+  transform: translateX(-50%);
+  font-size: 1.1em;
+  font-weight: 900;
+  color: #ff5252;
+  text-shadow:
+    -1px -1px 0 #000,
+    1px -1px 0 #000,
+    -1px 1px 0 #000,
+    1px 1px 0 #000,
+    0 0 6px rgba(255,82,82,0.5);
+  animation: dmg-appear 1.2s ease-out infinite;
+  white-space: nowrap;
+}
+@keyframes dmg-appear {
+  0% { transform: translateX(-50%) translateY(4px) scale(0.8); opacity: 0; }
+  15% { transform: translateX(-50%) translateY(0) scale(1.1); opacity: 1; }
+  30% { transform: translateX(-50%) translateY(0) scale(1); opacity: 1; }
+  70% { transform: translateX(-50%) translateY(0); opacity: 1; }
+  100% { transform: translateX(-50%) translateY(-6px); opacity: 0; }
+}
+.crit-dmg {
+  color: #ffab40;
+  font-size: 1.3em;
+  text-shadow:
+    -1px -1px 0 #000,
+    1px -1px 0 #000,
+    -1px 1px 0 #000,
+    1px 1px 0 #000,
+    0 0 8px rgba(255,171,64,0.6);
+}
+.heal-num {
+  color: #66bb6a;
+  text-shadow:
+    -1px -1px 0 #000,
+    1px -1px 0 #000,
+    -1px 1px 0 #000,
+    1px 1px 0 #000,
+    0 0 6px rgba(102,187,106,0.5);
+}
+.miss-num {
+  color: #999;
+  font-size: 0.9em;
+  text-shadow:
+    -1px -1px 0 #000,
+    1px -1px 0 #000,
+    -1px 1px 0 #000,
+    1px 1px 0 #000;
+}
+
+/* Turn order bar */
+.turn-bar {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 0.5rem;
+  background: #111;
+  border-radius: 4px;
+  border: 1px solid #333;
+}
+.turn-slot {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  padding: 0.4rem 0.8rem;
+  border-radius: 3px;
+  background: #1a1a2e;
+  border: 1px solid #333;
+}
+.turn-slot.active-turn {
+  border-color: #4fc3f7;
+  background: #1a2a3e;
+  box-shadow: 0 0 6px rgba(79,195,247,0.3);
+}
+.turn-label {
+  font-size: 0.6em;
+  color: #4fc3f7;
+}
+.turn-speed {
+  font-size: 0.55em;
+  color: #666;
+}
+
+.demo-caption { text-align: center; font-size: 0.75em; color: #888; margin-top: 0.8rem; line-height: 1.5; }
+</style>

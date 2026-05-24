@@ -1,0 +1,11 @@
+id: war_cry
+name: "战吼"
+category: skill
+silenceable: true
+targeting:
+  steps: []
+animation:
+  - type: buff_up
+    target: field
+    color: "#ffab40"
+    intensity: big

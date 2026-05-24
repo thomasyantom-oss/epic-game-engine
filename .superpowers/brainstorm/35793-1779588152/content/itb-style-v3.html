@@ -1,0 +1,404 @@
+<h2>战斗动画 v3</h2>
+<p class="subtitle">无 emoji、粗边框、色块指示、攻击动画多方案对比</p>
+
+<!-- Cell design options -->
+<h3 style="margin-top: 1.5rem;">格子四角指示：色块方案对比</h3>
+<p class="subtitle">用几何色块替代 emoji，更统一协调</p>
+
+<div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 1.5rem; margin-top: 1rem;">
+
+  <div class="mockup">
+    <div class="mockup-header">A: 角标三角</div>
+    <div class="mockup-body" style="padding: 1.5rem; display: flex; flex-direction: column; align-items: center; gap: 1rem;">
+      <div class="demo-cell" style="width: 72px; height: 72px;">
+        <!-- Top-left: speed order -->
+        <div class="tri-corner tl" style="border-color: transparent transparent #ffab40 transparent; border-width: 0 0 16px 16px; border-left-color: #ffab40;"><span class="tri-num tl-n">1</span></div>
+        <!-- Top-right: defending buff -->
+        <div class="tri-corner tr" style="border-color: transparent transparent transparent #66bb6a; border-width: 0 0 16px 16px; transform: rotate(90deg);"><span class="tri-num tr-n">D</span></div>
+        <!-- Bottom-left: debuff -->
+        <div class="tri-corner bl" style="border-color: #e57373 transparent transparent transparent; border-width: 16px 16px 0 0; border-right-color: #e57373;"><span class="tri-num bl-n">2</span></div>
+        <span class="cell-token player-tk">P1</span>
+        <span class="cell-hp">12/15</span>
+      </div>
+      <div style="font-size: 0.7em; color: #aaa; text-align: center; line-height: 1.5;">
+        三角贴角，颜色=类型<br/>
+        橙=序号 绿=增益 红=减益
+      </div>
+    </div>
+  </div>
+
+  <div class="mockup">
+    <div class="mockup-header">B: 边条色带</div>
+    <div class="mockup-body" style="padding: 1.5rem; display: flex; flex-direction: column; align-items: center; gap: 1rem;">
+      <div class="demo-cell" style="width: 72px; height: 72px;">
+        <!-- Top bar: order -->
+        <div class="bar-top" style="background: #ffab40;"><span class="bar-label">1</span></div>
+        <!-- Left bar: buff -->
+        <div class="bar-left" style="background: #66bb6a;"></div>
+        <span class="cell-token player-tk">P1</span>
+        <span class="cell-hp">12/15</span>
+      </div>
+      <div style="font-size: 0.7em; color: #aaa; text-align: center; line-height: 1.5;">
+        顶部=行动序，左侧=buff 色带<br/>
+        多个 buff 叠加色带段
+      </div>
+    </div>
+  </div>
+
+  <div class="mockup">
+    <div class="mockup-header">C: 圆点标记</div>
+    <div class="mockup-body" style="padding: 1.5rem; display: flex; flex-direction: column; align-items: center; gap: 1rem;">
+      <div class="demo-cell" style="width: 72px; height: 72px;">
+        <!-- Dots top-left -->
+        <div class="dot-row">
+          <span class="dot" style="background: #66bb6a;"></span>
+          <span class="dot" style="background: #ce93d8;"></span>
+        </div>
+        <!-- Order top-right -->
+        <span class="order-badge">1</span>
+        <span class="cell-token player-tk">P1</span>
+        <span class="cell-hp">12/15</span>
+      </div>
+      <div style="font-size: 0.7em; color: #aaa; text-align: center; line-height: 1.5;">
+        右上=序号徽章，左上=状态圆点<br/>
+        小但紧凑，适合格子密集时
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- More cell states with option A (triangle) detail -->
+<h3 style="margin-top: 2rem;">角标三角详细状态展示</h3>
+<div class="mockup" style="margin-top: 0.5rem;">
+  <div class="mockup-body" style="padding: 1.5rem;">
+    <div style="display: flex; align-items: center; justify-content: center; gap: 2rem; flex-wrap: wrap;">
+      <!-- Normal -->
+      <div style="text-align: center;">
+        <div class="demo-cell" style="width: 60px; height: 60px;">
+          <div class="tri-corner tl" style="border-color: transparent transparent #ffab40 transparent; border-width: 0 0 14px 14px; border-left-color: #ffab40;"><span class="tri-num tl-n" style="font-size:0.45em;">2</span></div>
+          <span class="cell-token player-tk" style="font-size:0.75em;">P1</span>
+          <span class="cell-hp" style="font-size:0.45em;">12/15</span>
+        </div>
+        <div class="state-label">普通</div>
+      </div>
+      <!-- Defending -->
+      <div style="text-align: center;">
+        <div class="demo-cell" style="width: 60px; height: 60px;">
+          <div class="tri-corner tl" style="border-color: transparent transparent #ffab40 transparent; border-width: 0 0 14px 14px; border-left-color: #ffab40;"><span class="tri-num tl-n" style="font-size:0.45em;">1</span></div>
+          <div class="tri-corner tr" style="border-color: transparent transparent transparent #66bb6a; border-width: 0 0 14px 14px; transform: rotate(90deg);"></div>
+          <span class="cell-token player-tk" style="font-size:0.75em;">P1</span>
+          <span class="cell-hp" style="font-size:0.45em;">12/15</span>
+        </div>
+        <div class="state-label">防御中</div>
+      </div>
+      <!-- Poisoned -->
+      <div style="text-align: center;">
+        <div class="demo-cell" style="width: 60px; height: 60px;">
+          <div class="tri-corner tl" style="border-color: transparent transparent #ffab40 transparent; border-width: 0 0 14px 14px; border-left-color: #ffab40;"><span class="tri-num tl-n" style="font-size:0.45em;">3</span></div>
+          <div class="tri-corner bl" style="border-color: #9c27b0 transparent transparent transparent; border-width: 14px 14px 0 0; border-right-color: #9c27b0;"></div>
+          <span class="cell-token enemy-tk" style="font-size:0.75em;">E1</span>
+          <span class="cell-hp" style="font-size:0.45em;">5/10</span>
+        </div>
+        <div class="state-label">中毒</div>
+      </div>
+      <!-- Low HP -->
+      <div style="text-align: center;">
+        <div class="demo-cell low-hp-cell" style="width: 60px; height: 60px;">
+          <div class="tri-corner tl" style="border-color: transparent transparent #ffab40 transparent; border-width: 0 0 14px 14px; border-left-color: #ffab40;"><span class="tri-num tl-n" style="font-size:0.45em;">4</span></div>
+          <span class="cell-token enemy-tk" style="font-size:0.75em;">E2</span>
+          <span class="cell-hp" style="font-size:0.45em; color: #e57373;">2/10</span>
+        </div>
+        <div class="state-label">濒死</div>
+      </div>
+      <!-- Dead -->
+      <div style="text-align: center;">
+        <div class="demo-cell dead-cell" style="width: 60px; height: 60px;">
+          <span class="cell-token enemy-tk" style="font-size:0.75em; opacity: 0.3;">E3</span>
+          <span class="dead-x">X</span>
+        </div>
+        <div class="state-label">死亡</div>
+      </div>
+      <!-- Selected target -->
+      <div style="text-align: center;">
+        <div class="demo-cell selected-target" style="width: 60px; height: 60px;">
+          <div class="tri-corner tl" style="border-color: transparent transparent #ffab40 transparent; border-width: 0 0 14px 14px; border-left-color: #ffab40;"><span class="tri-num tl-n" style="font-size:0.45em;">2</span></div>
+          <span class="cell-token enemy-tk" style="font-size:0.75em;">E1</span>
+          <span class="cell-hp" style="font-size:0.45em;">8/10</span>
+        </div>
+        <div class="state-label">选为目标</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Attack animation options -->
+<h3 style="margin-top: 2rem;">攻击动画方案对比</h3>
+<p class="subtitle">命中反馈（白闪+抖动+数字）已确定，以下是"攻击发起"阶段的对比</p>
+
+<div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 1.5rem; margin-top: 1rem;">
+
+  <div class="mockup">
+    <div class="mockup-header">A: 脉冲波纹</div>
+    <div class="mockup-body" style="padding: 1rem;">
+      <div style="display: flex; align-items: center; justify-content: center; height: 150px; gap: 6px;">
+        <div class="itb-grid-s">
+          <div class="s-cell"></div><div class="s-cell"></div><div class="s-cell"></div>
+          <div class="s-cell"></div><div class="s-cell"></div>
+          <div class="s-cell atk-source-a"><span class="cell-token player-tk" style="font-size:0.65em;">P1</span><div class="pulse-ring"></div><div class="pulse-ring r2"></div></div>
+          <div class="s-cell"></div><div class="s-cell"></div><div class="s-cell"></div>
+        </div>
+        <div style="width:8px;"></div>
+        <div class="itb-grid-s">
+          <div class="s-cell"></div><div class="s-cell"></div><div class="s-cell"></div>
+          <div class="s-cell hit-cell-s"><span class="cell-token enemy-tk" style="font-size:0.65em; animation: tk-shake2 0.3s infinite;">E1</span><div class="big-dmg-s">-7</div></div><div class="s-cell"></div><div class="s-cell"></div>
+          <div class="s-cell"></div><div class="s-cell"></div><div class="s-cell"></div>
+        </div>
+      </div>
+      <p class="demo-caption">攻击者格子发出扩散波纹<br/>→ 目标命中反馈<br/>不需要连接线</p>
+    </div>
+  </div>
+
+  <div class="mockup">
+    <div class="mockup-header">B: 格子闪白序列</div>
+    <div class="mockup-body" style="padding: 1rem;">
+      <div style="display: flex; align-items: center; justify-content: center; height: 150px; gap: 6px;">
+        <div class="itb-grid-s">
+          <div class="s-cell"></div><div class="s-cell"></div><div class="s-cell"></div>
+          <div class="s-cell"></div><div class="s-cell"></div>
+          <div class="s-cell flash-seq-1"><span class="cell-token player-tk" style="font-size:0.65em;">P1</span></div>
+          <div class="s-cell"></div><div class="s-cell"></div><div class="s-cell"></div>
+        </div>
+        <div class="s-cell flash-seq-2" style="width: 32px; height: 32px; margin: 0 2px;"></div>
+        <div class="itb-grid-s">
+          <div class="s-cell"></div><div class="s-cell"></div><div class="s-cell"></div>
+          <div class="s-cell flash-seq-3"><span class="cell-token enemy-tk" style="font-size:0.65em; animation: tk-shake2 0.3s infinite;">E1</span><div class="big-dmg-s">-7</div></div><div class="s-cell"></div><div class="s-cell"></div>
+          <div class="s-cell"></div><div class="s-cell"></div><div class="s-cell"></div>
+        </div>
+      </div>
+      <p class="demo-caption">攻击者亮 → 中间格亮 → 目标格亮<br/>光传递暗示方向，极简</p>
+    </div>
+  </div>
+
+  <div class="mockup">
+    <div class="mockup-header">C: 箭头弹射</div>
+    <div class="mockup-body" style="padding: 1rem;">
+      <div style="display: flex; align-items: center; justify-content: center; height: 150px; gap: 6px;">
+        <div class="itb-grid-s">
+          <div class="s-cell"></div><div class="s-cell"></div><div class="s-cell"></div>
+          <div class="s-cell"></div><div class="s-cell"></div>
+          <div class="s-cell" style="border-color: #4fc3f7;"><span class="cell-token player-tk" style="font-size:0.65em;">P1</span></div>
+          <div class="s-cell"></div><div class="s-cell"></div><div class="s-cell"></div>
+        </div>
+        <div class="arrow-projectile">
+          <div class="arrow-shape"></div>
+        </div>
+        <div class="itb-grid-s">
+          <div class="s-cell"></div><div class="s-cell"></div><div class="s-cell"></div>
+          <div class="s-cell hit-cell-s"><span class="cell-token enemy-tk" style="font-size:0.65em; animation: tk-shake2 0.3s infinite;">E1</span><div class="big-dmg-s">-7</div></div><div class="s-cell"></div><div class="s-cell"></div>
+          <div class="s-cell"></div><div class="s-cell"></div><div class="s-cell"></div>
+        </div>
+      </div>
+      <p class="demo-caption">一个实心箭头从攻击者射出<br/>快速飞到目标格后消失<br/>命中感强</p>
+    </div>
+  </div>
+</div>
+
+<style>
+/* Base cell */
+.demo-cell {
+  position: relative;
+  background: #1a1a2e;
+  border: 3px solid #555;
+  border-radius: 3px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.cell-token {
+  font-weight: bold;
+  padding: 3px 6px;
+  border-radius: 3px;
+  font-size: 0.85em;
+}
+.player-tk { color: #4fc3f7; background: rgba(79,195,247,0.15); }
+.enemy-tk { color: #e57373; background: rgba(229,115,115,0.15); }
+.cell-hp {
+  position: absolute;
+  bottom: 3px;
+  right: 4px;
+  font-size: 0.5em;
+  color: #999;
+  font-weight: bold;
+}
+
+/* Triangle corners */
+.tri-corner {
+  position: absolute;
+  width: 0; height: 0;
+  border-style: solid;
+}
+.tri-corner.tl { top: 0; left: 0; }
+.tri-corner.tr { top: 0; right: 0; }
+.tri-corner.bl { bottom: 0; left: 0; }
+.tri-num {
+  position: absolute;
+  font-size: 0.5em;
+  font-weight: bold;
+  color: #000;
+}
+.tl-n { top: -14px; left: 0px; color: #000; position: relative; top: -13px; left: 1px; }
+.tr-n { position: relative; top: -13px; right: -2px; color: #000; }
+.bl-n { position: relative; top: 1px; left: 1px; color: #000; }
+
+/* Bar style */
+.bar-top {
+  position: absolute;
+  top: 0; left: 0; right: 0;
+  height: 5px;
+  border-radius: 2px 2px 0 0;
+  display: flex; align-items: center; justify-content: center;
+}
+.bar-label { font-size: 0.35em; color: #000; font-weight: bold; }
+.bar-left {
+  position: absolute;
+  top: 5px; left: 0; bottom: 0;
+  width: 5px;
+  border-radius: 0 0 0 2px;
+}
+
+/* Dot style */
+.dot-row {
+  position: absolute;
+  top: 4px; left: 4px;
+  display: flex; gap: 2px;
+}
+.dot {
+  width: 6px; height: 6px;
+  border-radius: 50%;
+}
+.order-badge {
+  position: absolute;
+  top: 2px; right: 3px;
+  font-size: 0.55em;
+  font-weight: bold;
+  color: #000;
+  background: #ffab40;
+  width: 14px; height: 14px;
+  display: flex; align-items: center; justify-content: center;
+  border-radius: 2px;
+}
+
+/* Cell states */
+.low-hp-cell { border-color: #e57373; }
+.dead-cell { border-color: #333; background: #111; }
+.dead-x {
+  position: absolute;
+  font-size: 1.5em;
+  font-weight: bold;
+  color: #e57373;
+  opacity: 0.7;
+}
+.selected-target {
+  border: 4px solid #ff9800;
+  box-shadow: 0 0 10px rgba(255,152,0,0.4), inset 0 0 6px rgba(255,152,0,0.15);
+}
+.state-label { font-size: 0.65em; color: #888; margin-top: 0.4rem; }
+
+/* Small grids for attack demos */
+.itb-grid-s {
+  display: grid;
+  grid-template-columns: repeat(3, 32px);
+  grid-template-rows: repeat(3, 32px);
+  gap: 2px;
+}
+.s-cell {
+  background: #1a1a2e;
+  border: 2px solid #444;
+  display: flex; align-items: center; justify-content: center;
+  position: relative;
+  border-radius: 2px;
+}
+
+/* Attack A: Pulse rings */
+.atk-source-a {
+  border-color: #4fc3f7;
+}
+.pulse-ring {
+  position: absolute;
+  width: 100%; height: 100%;
+  border: 2px solid #4fc3f7;
+  border-radius: 3px;
+  animation: ring-expand 1.2s ease-out infinite;
+  opacity: 0;
+}
+.pulse-ring.r2 { animation-delay: 0.3s; }
+@keyframes ring-expand {
+  0% { transform: scale(1); opacity: 0.8; }
+  100% { transform: scale(2); opacity: 0; }
+}
+
+/* Attack B: Flash sequence */
+.flash-seq-1 { animation: seq-flash 1.5s ease-in-out infinite; }
+.flash-seq-2 { animation: seq-flash 1.5s ease-in-out infinite 0.2s; border: 2px solid #444; border-radius: 2px; background: #1a1a2e; }
+.flash-seq-3 { animation: seq-flash 1.5s ease-in-out infinite 0.4s; }
+@keyframes seq-flash {
+  0%, 20% { background: #1a1a2e; border-color: #444; }
+  10% { background: rgba(255,255,255,0.3); border-color: #fff; }
+  30%, 100% { background: #1a1a2e; border-color: #444; }
+}
+
+/* Attack C: Arrow */
+.arrow-projectile {
+  width: 30px;
+  display: flex; align-items: center; justify-content: center;
+  overflow: visible;
+}
+.arrow-shape {
+  width: 0; height: 0;
+  border-top: 6px solid transparent;
+  border-bottom: 6px solid transparent;
+  border-left: 12px solid #fff;
+  filter: drop-shadow(0 0 4px #fff);
+  animation: arrow-fly 0.8s ease-in-out infinite;
+}
+@keyframes arrow-fly {
+  0% { transform: translateX(-20px); opacity: 0; }
+  20% { opacity: 1; }
+  60% { transform: translateX(10px); opacity: 1; }
+  80% { transform: translateX(10px); opacity: 0; }
+  100% { transform: translateX(10px); opacity: 0; }
+}
+
+/* Hit effect (shared) */
+.hit-cell-s {
+  animation: hit-white 0.8s ease-out infinite;
+}
+@keyframes hit-white {
+  0% { background: rgba(255,255,255,0.5); }
+  30% { background: rgba(255,255,255,0.1); }
+  100% { background: #1a1a2e; }
+}
+@keyframes tk-shake2 {
+  0%, 100% { transform: translateX(0); }
+  20% { transform: translateX(-2px); }
+  40% { transform: translateX(2px); }
+  60% { transform: translateX(-1px); }
+  80% { transform: translateX(1px); }
+}
+.big-dmg-s {
+  position: absolute;
+  top: -12px;
+  left: 50%;
+  transform: translateX(-50%);
+  font-size: 0.9em;
+  font-weight: 900;
+  color: #ff5252;
+  text-shadow:
+    -1px -1px 0 #000, 1px -1px 0 #000,
+    -1px 1px 0 #000, 1px 1px 0 #000,
+    0 0 6px rgba(255,82,82,0.5);
+  white-space: nowrap;
+}
+
+.demo-caption { text-align: center; font-size: 0.75em; color: #888; margin-top: 0.8rem; line-height: 1.5; }
+</style>

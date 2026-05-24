@@ -52,7 +52,7 @@ public class ScriptRuntime implements AutoCloseable {
         context.getBindings("js").putMember(name, service);
     }
 
-    public void execute(String script, String sourceName) {
+    public synchronized void execute(String script, String sourceName) {
         try {
             Source source = Source.newBuilder("js", script, sourceName).build();
             context.eval(source);
@@ -69,7 +69,11 @@ public class ScriptRuntime implements AutoCloseable {
     public class EngineApi {
         @HostAccess.Export
         public void on(String eventType, int priority, Value handler) {
-            bus.on(eventType, priority, event -> handler.execute(event));
+            bus.on(eventType, priority, event -> {
+                synchronized (ScriptRuntime.this) {
+                    handler.execute(event);
+                }
+            });
         }
 
         @HostAccess.Export

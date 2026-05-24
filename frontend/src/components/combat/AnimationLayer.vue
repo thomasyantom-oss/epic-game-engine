@@ -44,20 +44,20 @@
         {{ formatValue(anim.value) }}
       </div>
 
-      <!-- Buff up: two green triangles rising -->
+      <!-- Buff up: two full-width triangles rising -->
       <div v-if="anim.type === 'buff_up'"
            class="anim-buff-up"
            :style="buffStyle(anim)">
-        <span class="buff-tri" :style="{ color: anim.color || '#66bb6a' }">&#9650;</span>
-        <span class="buff-tri t2" :style="{ color: anim.color || '#66bb6a' }">&#9650;</span>
+        <span class="buff-tri" :style="{ color: anim.color || '#66bb6a' }"></span>
+        <span class="buff-tri t2" :style="{ color: anim.color || '#66bb6a' }"></span>
       </div>
 
-      <!-- Debuff down: two red triangles sinking -->
+      <!-- Debuff down: two full-width triangles sinking -->
       <div v-if="anim.type === 'debuff_down'"
            class="anim-debuff-down"
            :style="buffStyle(anim)">
-        <span class="debuff-tri" :style="{ color: anim.color || '#e57373' }">&#9660;</span>
-        <span class="debuff-tri t2" :style="{ color: anim.color || '#e57373' }">&#9660;</span>
+        <span class="debuff-tri" :style="{ color: anim.color || '#e57373' }"></span>
+        <span class="debuff-tri t2" :style="{ color: anim.color || '#e57373' }"></span>
       </div>
 
       <!-- Mark dead: X overlay -->
@@ -195,6 +195,7 @@ function buffStyle(anim) {
     top: pos.y + 'px',
     width: pos.w + 'px',
     height: pos.h + 'px',
+    '--cell-w': pos.w + 'px',
     animationDelay: anim.startDelay + 'ms'
   }
 }
@@ -419,22 +420,25 @@ function formatValue(value) {
 }
 
 .buff-tri {
-  font-size: 1em;
-  line-height: 0.65;
+  display: block;
+  width: 0; height: 0;
+  border-left: calc(var(--cell-w, 32px) / 2) solid transparent;
+  border-right: calc(var(--cell-w, 32px) / 2) solid transparent;
+  border-bottom: calc(var(--cell-w, 32px) * 0.4) solid currentColor;
   filter: drop-shadow(0 0 4px currentColor);
   animation: buff-rise 500ms ease-out forwards;
   opacity: 0;
 }
 
 .buff-tri.t2 {
-  margin-top: -4px;
+  margin-top: -6px;
   animation-delay: 80ms;
 }
 
 @keyframes buff-rise {
-  0% { transform: translateY(0); opacity: 0; }
+  0% { transform: translateY(4px); opacity: 0; }
   15% { opacity: 1; }
-  100% { transform: translateY(-28px); opacity: 0; }
+  100% { transform: translateY(calc(var(--cell-w, 32px) * -0.8)); opacity: 0; }
 }
 
 /* ========== Debuff Down ========== */
@@ -448,22 +452,25 @@ function formatValue(value) {
 }
 
 .debuff-tri {
-  font-size: 1em;
-  line-height: 0.65;
+  display: block;
+  width: 0; height: 0;
+  border-left: calc(var(--cell-w, 32px) / 2) solid transparent;
+  border-right: calc(var(--cell-w, 32px) / 2) solid transparent;
+  border-top: calc(var(--cell-w, 32px) * 0.4) solid currentColor;
   filter: drop-shadow(0 0 4px currentColor);
   animation: debuff-sink 500ms ease-out forwards;
   opacity: 0;
 }
 
 .debuff-tri.t2 {
-  margin-top: -4px;
+  margin-top: -6px;
   animation-delay: 80ms;
 }
 
 @keyframes debuff-sink {
-  0% { transform: translateY(0); opacity: 0; }
+  0% { transform: translateY(-4px); opacity: 0; }
   15% { opacity: 1; }
-  100% { transform: translateY(28px); opacity: 0; }
+  100% { transform: translateY(calc(var(--cell-w, 32px) * 0.8)); opacity: 0; }
 }
 
 /* ========== Mark Dead ========== */

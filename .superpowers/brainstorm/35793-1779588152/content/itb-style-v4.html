@@ -1,0 +1,514 @@
+<h2>战斗动画 v4：场景演示</h2>
+<p class="subtitle">不同攻击场景下三种动画方案的表现</p>
+
+<!-- Scenario 1: Single target at angle -->
+<h3 style="margin-top: 1.5rem;">场景 1：(1,1) 攻击 (2,2) — 斜向单体</h3>
+<div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 1rem; margin-top: 0.5rem;">
+
+  <div class="mockup">
+    <div class="mockup-header">A: 脉冲波纹</div>
+    <div class="mockup-body" style="padding: 1rem;">
+      <div style="display: flex; align-items: center; justify-content: center; height: 160px;">
+        <div class="grid3">
+          <div class="c"></div><div class="c"></div><div class="c"></div>
+          <div class="c"></div><div class="c pulse-source"><span class="tk p">P1</span><div class="pulse-r"></div><div class="pulse-r d2"></div></div><div class="c"></div>
+          <div class="c"></div><div class="c"></div><div class="c"></div>
+        </div>
+        <div style="width:10px;"></div>
+        <div class="grid3">
+          <div class="c"></div><div class="c"></div><div class="c"></div>
+          <div class="c"></div><div class="c"></div><div class="c"></div>
+          <div class="c"></div><div class="c"></div><div class="c hit-c"><span class="tk e shake-a">E1</span><div class="dmg-n">-7</div></div>
+        </div>
+      </div>
+      <p class="cap">波纹不需要方向，从源头扩散<br/>目标直接反馈，适合任意角度</p>
+    </div>
+  </div>
+
+  <div class="mockup">
+    <div class="mockup-header">B: 闪白序列</div>
+    <div class="mockup-body" style="padding: 1rem;">
+      <div style="display: flex; align-items: center; justify-content: center; height: 160px;">
+        <div class="grid3">
+          <div class="c"></div><div class="c"></div><div class="c"></div>
+          <div class="c"></div><div class="c seq-f1"><span class="tk p">P1</span></div><div class="c"></div>
+          <div class="c"></div><div class="c"></div><div class="c seq-f2"></div>
+        </div>
+        <div style="width:10px;"></div>
+        <div class="grid3">
+          <div class="c"></div><div class="c"></div><div class="c"></div>
+          <div class="c"></div><div class="c"></div><div class="c"></div>
+          <div class="c"></div><div class="c"></div><div class="c seq-f3 hit-c"><span class="tk e shake-a">E1</span><div class="dmg-n">-7</div></div>
+        </div>
+      </div>
+      <p class="cap">光沿对角线传递：(1,1)→(2,2)→目标<br/>路径上的格子依次亮起</p>
+    </div>
+  </div>
+
+  <div class="mockup">
+    <div class="mockup-header">C: 箭头弹射</div>
+    <div class="mockup-body" style="padding: 1rem;">
+      <div style="display: flex; align-items: center; justify-content: center; height: 160px; position: relative;">
+        <div class="grid3">
+          <div class="c"></div><div class="c"></div><div class="c"></div>
+          <div class="c"></div><div class="c" style="border-color:#4fc3f7;"><span class="tk p">P1</span></div><div class="c"></div>
+          <div class="c"></div><div class="c"></div><div class="c"></div>
+        </div>
+        <div class="arrow-fly-diag">
+          <div class="arrow-tip"></div>
+        </div>
+        <div class="grid3">
+          <div class="c"></div><div class="c"></div><div class="c"></div>
+          <div class="c"></div><div class="c"></div><div class="c"></div>
+          <div class="c"></div><div class="c"></div><div class="c hit-c"><span class="tk e shake-a">E1</span><div class="dmg-n">-7</div></div>
+        </div>
+      </div>
+      <p class="cap">箭头沿斜向飞行<br/>角度自适应源→目标方向</p>
+    </div>
+  </div>
+</div>
+
+<!-- Scenario 2: (1,1) attacks (2,2) and (2,3) -->
+<h3 style="margin-top: 2rem;">场景 2：(1,1) 攻击 (2,2) 和 (2,3) — 斜向双目标</h3>
+<div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 1rem; margin-top: 0.5rem;">
+
+  <div class="mockup">
+    <div class="mockup-header">A: 脉冲波纹</div>
+    <div class="mockup-body" style="padding: 1rem;">
+      <div style="display: flex; align-items: center; justify-content: center; height: 160px;">
+        <div class="grid3">
+          <div class="c"></div><div class="c"></div><div class="c"></div>
+          <div class="c"></div><div class="c pulse-source"><span class="tk p">P1</span><div class="pulse-r"></div><div class="pulse-r d2"></div></div><div class="c"></div>
+          <div class="c"></div><div class="c"></div><div class="c"></div>
+        </div>
+        <div style="width:10px;"></div>
+        <div class="grid3">
+          <div class="c"></div><div class="c"></div><div class="c"></div>
+          <div class="c"></div><div class="c"></div><div class="c hit-c"><span class="tk e shake-a">E1</span><div class="dmg-n">-7</div></div>
+          <div class="c"></div><div class="c"></div><div class="c hit-c-delay"><span class="tk e shake-b">E2</span><div class="dmg-n d-delay">-7</div></div>
+        </div>
+      </div>
+      <p class="cap">一次波纹，多个目标同时/依次反馈<br/>天然支持 AOE</p>
+    </div>
+  </div>
+
+  <div class="mockup">
+    <div class="mockup-header">B: 闪白序列</div>
+    <div class="mockup-body" style="padding: 1rem;">
+      <div style="display: flex; align-items: center; justify-content: center; height: 160px;">
+        <div class="grid3">
+          <div class="c"></div><div class="c"></div><div class="c"></div>
+          <div class="c"></div><div class="c seq-f1"><span class="tk p">P1</span></div><div class="c"></div>
+          <div class="c"></div><div class="c"></div><div class="c"></div>
+        </div>
+        <div style="width:10px;"></div>
+        <div class="grid3">
+          <div class="c"></div><div class="c"></div><div class="c"></div>
+          <div class="c"></div><div class="c"></div><div class="c seq-f2 hit-c"><span class="tk e shake-a">E1</span><div class="dmg-n">-7</div></div>
+          <div class="c"></div><div class="c"></div><div class="c seq-f3 hit-c-delay"><span class="tk e shake-b">E2</span><div class="dmg-n d-delay">-7</div></div>
+        </div>
+      </div>
+      <p class="cap">光扩散到两个目标格<br/>目标依次亮起，有先后感</p>
+    </div>
+  </div>
+
+  <div class="mockup">
+    <div class="mockup-header">C: 箭头弹射</div>
+    <div class="mockup-body" style="padding: 1rem;">
+      <div style="display: flex; align-items: center; justify-content: center; height: 160px;">
+        <div class="grid3">
+          <div class="c"></div><div class="c"></div><div class="c"></div>
+          <div class="c"></div><div class="c" style="border-color:#4fc3f7;"><span class="tk p">P1</span></div><div class="c"></div>
+          <div class="c"></div><div class="c"></div><div class="c"></div>
+        </div>
+        <div style="width: 10px; position: relative; height: 100px;">
+          <div class="arrow-tip arrow-multi-1"></div>
+          <div class="arrow-tip arrow-multi-2"></div>
+        </div>
+        <div class="grid3">
+          <div class="c"></div><div class="c"></div><div class="c"></div>
+          <div class="c"></div><div class="c"></div><div class="c hit-c"><span class="tk e shake-a">E1</span><div class="dmg-n">-7</div></div>
+          <div class="c"></div><div class="c"></div><div class="c hit-c-delay"><span class="tk e shake-b">E2</span><div class="dmg-n d-delay">-7</div></div>
+        </div>
+      </div>
+      <p class="cap">分裂成两支箭头<br/>各自命中一个目标</p>
+    </div>
+  </div>
+</div>
+
+<!-- Scenario 3: Line attack (hit entire row) -->
+<h3 style="margin-top: 2rem;">场景 3：直线射线攻击整排 — 可选择任意一排</h3>
+<div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 1rem; margin-top: 0.5rem;">
+
+  <div class="mockup">
+    <div class="mockup-header">A: 脉冲 + 行高亮</div>
+    <div class="mockup-body" style="padding: 1rem;">
+      <div style="display: flex; align-items: center; justify-content: center; height: 160px;">
+        <div class="grid3">
+          <div class="c"></div><div class="c"></div><div class="c"></div>
+          <div class="c"></div><div class="c"></div><div class="c pulse-source"><span class="tk p">P1</span><div class="pulse-r"></div></div>
+          <div class="c"></div><div class="c"></div><div class="c"></div>
+        </div>
+        <div class="line-beam"></div>
+        <div class="grid3">
+          <div class="c"></div><div class="c"></div><div class="c"></div>
+          <div class="c hit-row"><span class="tk e shake-a">E1</span><div class="dmg-n">-5</div></div>
+          <div class="c hit-row"><span class="tk e shake-b">E2</span><div class="dmg-n d-delay">-5</div></div>
+          <div class="c hit-row"><span class="tk e shake-c">E3</span><div class="dmg-n d-delay2">-5</div></div>
+        </div>
+      </div>
+      <p class="cap">波纹 + 横向光束贯穿整排<br/>整排同时闪白命中</p>
+    </div>
+  </div>
+
+  <div class="mockup">
+    <div class="mockup-header">B: 逐格扫过</div>
+    <div class="mockup-body" style="padding: 1rem;">
+      <div style="display: flex; align-items: center; justify-content: center; height: 160px;">
+        <div class="grid3">
+          <div class="c"></div><div class="c"></div><div class="c"></div>
+          <div class="c"></div><div class="c"></div><div class="c seq-f1"><span class="tk p">P1</span></div>
+          <div class="c"></div><div class="c"></div><div class="c"></div>
+        </div>
+        <div style="width: 10px;"></div>
+        <div class="grid3">
+          <div class="c"></div><div class="c"></div><div class="c"></div>
+          <div class="c sweep-1"><span class="tk e shake-a">E1</span><div class="dmg-n">-5</div></div>
+          <div class="c sweep-2"><span class="tk e shake-b">E2</span><div class="dmg-n d-delay">-5</div></div>
+          <div class="c sweep-3"><span class="tk e shake-c">E3</span><div class="dmg-n d-delay2">-5</div></div>
+        </div>
+      </div>
+      <p class="cap">逐格从上到下（或左到右）扫过<br/>有"切过去"的扫荡感</p>
+    </div>
+  </div>
+
+  <div class="mockup">
+    <div class="mockup-header">C: 宽箭头贯穿</div>
+    <div class="mockup-body" style="padding: 1rem;">
+      <div style="display: flex; align-items: center; justify-content: center; height: 160px;">
+        <div class="grid3">
+          <div class="c"></div><div class="c"></div><div class="c"></div>
+          <div class="c"></div><div class="c"></div><div class="c" style="border-color:#4fc3f7;"><span class="tk p">P1</span></div>
+          <div class="c"></div><div class="c"></div><div class="c"></div>
+        </div>
+        <div class="wide-arrow-container">
+          <div class="wide-arrow"></div>
+        </div>
+        <div class="grid3">
+          <div class="c"></div><div class="c"></div><div class="c"></div>
+          <div class="c hit-row"><span class="tk e shake-a">E1</span><div class="dmg-n">-5</div></div>
+          <div class="c hit-row"><span class="tk e shake-b">E2</span><div class="dmg-n d-delay">-5</div></div>
+          <div class="c hit-row"><span class="tk e shake-c">E3</span><div class="dmg-n d-delay2">-5</div></div>
+        </div>
+      </div>
+      <p class="cap">加宽的箭头/光束覆盖整排<br/>宽度暗示范围</p>
+    </div>
+  </div>
+</div>
+
+<!-- Scenario 4: Sequential row attacks (front → mid → back) -->
+<h3 style="margin-top: 2rem;">场景 4：顺序攻击 — 先前排 → 中排 → 后排</h3>
+<div class="mockup" style="margin-top: 0.5rem;">
+  <div class="mockup-header">三种方案的时序编排</div>
+  <div class="mockup-body" style="padding: 1.5rem;">
+    <div style="display: flex; align-items: flex-start; justify-content: center; gap: 10px; height: 200px;">
+      <div class="grid3" style="grid-template-columns: repeat(3, 36px); grid-template-rows: repeat(3, 36px);">
+        <div class="c"></div><div class="c"></div><div class="c"></div>
+        <div class="c"></div><div class="c"></div><div class="c" style="border-color:#4fc3f7;"><span class="tk p" style="font-size:0.6em;">P1</span></div>
+        <div class="c"></div><div class="c"></div><div class="c"></div>
+      </div>
+      <div style="width: 6px;"></div>
+      <div class="grid3 seq-target-grid" style="grid-template-columns: repeat(3, 36px); grid-template-rows: repeat(3, 36px);">
+        <!-- col 0 = FRONT, col 1 = MID, col 2 = BACK -->
+        <div class="c step-hit-1"><span class="tk e" style="font-size:0.55em;">E1</span><div class="dmg-n" style="font-size:0.65em; top:-10px;">-4</div></div>
+        <div class="c step-hit-2"><span class="tk e" style="font-size:0.55em;">E3</span><div class="dmg-n d-delay" style="font-size:0.65em; top:-10px;">-4</div></div>
+        <div class="c step-hit-3"><span class="tk e" style="font-size:0.55em;">E5</span><div class="dmg-n d-delay2" style="font-size:0.65em; top:-10px;">-4</div></div>
+        <div class="c step-hit-1"><span class="tk e" style="font-size:0.55em;">E2</span><div class="dmg-n" style="font-size:0.65em; top:-10px;">-4</div></div>
+        <div class="c step-hit-2"></div>
+        <div class="c step-hit-3"><span class="tk e" style="font-size:0.55em;">E6</span><div class="dmg-n d-delay2" style="font-size:0.65em; top:-10px;">-4</div></div>
+        <div class="c step-hit-1"></div>
+        <div class="c step-hit-2"></div>
+        <div class="c step-hit-3"></div>
+      </div>
+      <div style="margin-left: 1.5rem; display: flex; flex-direction: column; gap: 0.8rem; font-size: 0.75em; color: #ccc;">
+        <div class="timeline-v">
+          <div class="tl-step">
+            <div class="tl-dot" style="background: #4fc3f7;"></div>
+            <div class="tl-text"><strong style="color:#4fc3f7;">0ms</strong> — 前排命中 (E1, E2)</div>
+          </div>
+          <div class="tl-line"></div>
+          <div class="tl-step">
+            <div class="tl-dot" style="background: #ffab40;"></div>
+            <div class="tl-text"><strong style="color:#ffab40;">300ms</strong> — 中排命中 (E3)</div>
+          </div>
+          <div class="tl-line"></div>
+          <div class="tl-step">
+            <div class="tl-dot" style="background: #e57373;"></div>
+            <div class="tl-text"><strong style="color:#e57373;">600ms</strong> — 后排命中 (E5, E6)</div>
+          </div>
+        </div>
+        <div style="border-top: 1px solid #444; padding-top: 0.5rem; margin-top: 0.3rem; color: #888; font-size: 0.85em;">
+          同一排内同时命中<br/>
+          排与排之间有 300ms 间隔<br/>
+          传达"由近到远扫过"的感觉
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Corner indicator: mod-defined combinations -->
+<h3 style="margin-top: 2rem;">角标组合：由 Mod 定义内容</h3>
+<div class="mockup" style="margin-top: 0.5rem;">
+  <div class="mockup-body" style="padding: 1.5rem;">
+    <div style="display: flex; align-items: center; justify-content: center; gap: 2.5rem; flex-wrap: wrap;">
+      <!-- Example combos -->
+      <div style="text-align: center;">
+        <div class="demo-cell-v4">
+          <div class="corner-tl" style="background: #66bb6a;"></div>
+          <div class="corner-tr" style="background: #4fc3f7;"></div>
+          <span class="tk p">P1</span>
+          <span class="cell-hp-v4">12/15</span>
+        </div>
+        <div class="state-lb">防御 + 加速</div>
+      </div>
+      <div style="text-align: center;">
+        <div class="demo-cell-v4">
+          <div class="corner-tl" style="background: #9c27b0;"></div>
+          <div class="corner-bl" style="background: #e57373;"></div>
+          <span class="tk e">E1</span>
+          <span class="cell-hp-v4">5/10</span>
+        </div>
+        <div class="state-lb">中毒 + 流血</div>
+      </div>
+      <div style="text-align: center;">
+        <div class="demo-cell-v4">
+          <div class="corner-tl" style="background: #66bb6a;"></div>
+          <div class="corner-tr" style="background: #66bb6a;"></div>
+          <div class="corner-bl" style="background: #4fc3f7;"></div>
+          <span class="tk p">P1</span>
+          <span class="cell-hp-v4">15/15</span>
+        </div>
+        <div class="state-lb">三个增益叠加</div>
+      </div>
+      <div style="text-align: center;">
+        <div class="demo-cell-v4 selected-cell-v4">
+          <span class="tk e">E2</span>
+          <span class="cell-hp-v4">8/10</span>
+        </div>
+        <div class="state-lb">选中目标</div>
+      </div>
+      <div style="text-align: center;">
+        <div class="demo-cell-v4 dead-cell-v4">
+          <span class="tk e" style="opacity:0.3;">E3</span>
+          <span class="dead-mark">X</span>
+        </div>
+        <div class="state-lb">死亡</div>
+      </div>
+    </div>
+    <div style="margin-top: 1.5rem; padding: 0.8rem; background: #111; border-radius: 4px; font-size: 0.75em; color: #aaa; border: 1px solid #333;">
+      <strong style="color: #fff;">Mod 定义格式：</strong>
+      <pre style="margin: 0.5rem 0 0; color: #ccc; font-size: 0.9em; line-height: 1.6;">indicators:
+  - corner: top-left      # 位置
+    color: "#66bb6a"      # 颜色=语义（绿=增益）
+  - corner: bottom-left
+    color: "#e57373"      # 红=减益</pre>
+    </div>
+  </div>
+</div>
+
+<style>
+/* Grid */
+.grid3 {
+  display: grid;
+  grid-template-columns: repeat(3, 38px);
+  grid-template-rows: repeat(3, 38px);
+  gap: 2px;
+}
+.c {
+  background: #1a1a2e;
+  border: 2px solid #444;
+  display: flex; align-items: center; justify-content: center;
+  position: relative;
+  border-radius: 2px;
+}
+.tk { font-size: 0.7em; font-weight: bold; padding: 2px 5px; border-radius: 3px; }
+.tk.p { color: #4fc3f7; background: rgba(79,195,247,0.15); }
+.tk.e { color: #e57373; background: rgba(229,115,115,0.15); }
+
+/* Damage */
+.dmg-n {
+  position: absolute;
+  top: -12px;
+  left: 50%; transform: translateX(-50%);
+  font-size: 0.8em; font-weight: 900;
+  color: #ff5252;
+  text-shadow: -1px -1px 0 #000, 1px -1px 0 #000, -1px 1px 0 #000, 1px 1px 0 #000, 0 0 6px rgba(255,82,82,0.5);
+  white-space: nowrap;
+  animation: dmg-pop 1.5s ease-out infinite;
+}
+.dmg-n.d-delay { animation-delay: 0.15s; }
+.dmg-n.d-delay2 { animation-delay: 0.3s; }
+@keyframes dmg-pop {
+  0% { transform: translateX(-50%) scale(0.7); opacity: 0; }
+  10% { transform: translateX(-50%) scale(1.1); opacity: 1; }
+  20% { transform: translateX(-50%) scale(1); opacity: 1; }
+  65% { transform: translateX(-50%) translateY(0); opacity: 1; }
+  100% { transform: translateX(-50%) translateY(-5px); opacity: 0; }
+}
+
+/* Shake variants */
+.shake-a { animation: sh 0.3s infinite; }
+.shake-b { animation: sh 0.3s infinite 0.15s; }
+.shake-c { animation: sh 0.3s infinite 0.3s; }
+@keyframes sh {
+  0%,100% { transform: translateX(0); }
+  25% { transform: translateX(-2px); }
+  75% { transform: translateX(2px); }
+}
+
+/* Hit cells */
+.hit-c { animation: hflash 1.5s ease-out infinite; }
+.hit-c-delay { animation: hflash 1.5s ease-out infinite 0.15s; }
+.hit-row { animation: hflash 1.5s ease-out infinite; }
+@keyframes hflash {
+  0% { background: rgba(255,255,255,0.5); }
+  20% { background: rgba(255,255,255,0.1); }
+  30%,100% { background: #1a1a2e; }
+}
+
+/* Attack A: Pulse */
+.pulse-source { border-color: #4fc3f7; }
+.pulse-r {
+  position: absolute; width: 100%; height: 100%;
+  border: 2px solid #4fc3f7;
+  border-radius: 3px;
+  animation: pexp 1.5s ease-out infinite;
+}
+.pulse-r.d2 { animation-delay: 0.25s; }
+@keyframes pexp {
+  0% { transform: scale(1); opacity: 0.7; }
+  100% { transform: scale(2.2); opacity: 0; }
+}
+
+/* Attack B: Flash sequence */
+.seq-f1 { animation: sfl 2s ease infinite; }
+.seq-f2 { animation: sfl 2s ease infinite 0.2s; }
+.seq-f3 { animation: sfl 2s ease infinite 0.4s; }
+@keyframes sfl {
+  0%,15% { background: #1a1a2e; border-color: #444; }
+  8% { background: rgba(255,255,255,0.35); border-color: #aaa; }
+  25%,100% { background: #1a1a2e; border-color: #444; }
+}
+
+/* Attack C: Arrow */
+.arrow-fly-diag { width: 16px; display: flex; align-items: center; justify-content: center; }
+.arrow-tip {
+  width: 0; height: 0;
+  border-top: 5px solid transparent;
+  border-bottom: 5px solid transparent;
+  border-left: 10px solid #fff;
+  filter: drop-shadow(0 0 3px #fff);
+  animation: afly 1s ease-in-out infinite;
+}
+@keyframes afly {
+  0% { transform: translateX(-14px); opacity: 0; }
+  15% { opacity: 1; }
+  50% { transform: translateX(8px); opacity: 1; }
+  65% { opacity: 0; }
+  100% { opacity: 0; transform: translateX(8px); }
+}
+.arrow-multi-1 {
+  position: absolute;
+  top: 30%;
+  animation: afly 1s ease-in-out infinite;
+}
+.arrow-multi-2 {
+  position: absolute;
+  top: 60%;
+  animation: afly 1s ease-in-out infinite 0.12s;
+}
+
+/* Line beam */
+.line-beam {
+  width: 16px; height: 4px;
+  background: linear-gradient(to right, #4fc3f7, #fff);
+  box-shadow: 0 0 8px #4fc3f7;
+  border-radius: 2px;
+  animation: beam-shoot 1.5s ease-out infinite;
+}
+@keyframes beam-shoot {
+  0% { transform: scaleX(0); transform-origin: left; opacity: 1; }
+  30% { transform: scaleX(1); opacity: 1; }
+  50% { opacity: 0.3; }
+  60%,100% { opacity: 0; }
+}
+
+/* Sweep (B for row) */
+.sweep-1 { animation: swp 2s ease infinite; }
+.sweep-2 { animation: swp 2s ease infinite 0.15s; }
+.sweep-3 { animation: swp 2s ease infinite 0.3s; }
+@keyframes swp {
+  0%,10% { background: #1a1a2e; border-color: #444; }
+  15% { background: rgba(255,255,255,0.4); border-color: #fff; }
+  30%,100% { background: #1a1a2e; border-color: #444; }
+}
+
+/* Wide arrow (C for row) */
+.wide-arrow-container { width: 16px; display: flex; align-items: center; }
+.wide-arrow {
+  width: 0; height: 0;
+  border-top: 18px solid transparent;
+  border-bottom: 18px solid transparent;
+  border-left: 14px solid #fff;
+  filter: drop-shadow(0 0 6px rgba(255,255,255,0.6));
+  animation: afly 1s ease-in-out infinite;
+}
+
+/* Sequential row hits */
+.step-hit-1 { animation: step-h 2.5s ease infinite; }
+.step-hit-2 { animation: step-h 2.5s ease infinite 0.4s; }
+.step-hit-3 { animation: step-h 2.5s ease infinite 0.8s; }
+@keyframes step-h {
+  0%,12% { background: #1a1a2e; border-color: #444; }
+  16% { background: rgba(255,255,255,0.5); border-color: #fff; }
+  28% { background: rgba(255,255,255,0.05); border-color: #444; }
+  35%,100% { background: #1a1a2e; border-color: #444; }
+}
+
+/* Corner indicators v4 */
+.demo-cell-v4 {
+  position: relative;
+  width: 64px; height: 64px;
+  background: #1a1a2e;
+  border: 3px solid #555;
+  border-radius: 3px;
+  display: flex; align-items: center; justify-content: center;
+}
+.corner-tl, .corner-tr, .corner-bl, .corner-br {
+  position: absolute;
+  width: 12px; height: 12px;
+  clip-path: polygon(0 0, 100% 0, 0 100%);
+}
+.corner-tl { top: 0; left: 0; clip-path: polygon(0 0, 100% 0, 0 100%); }
+.corner-tr { top: 0; right: 0; clip-path: polygon(0 0, 100% 0, 100% 100%); }
+.corner-bl { bottom: 0; left: 0; clip-path: polygon(0 0, 0 100%, 100% 100%); }
+.corner-br { bottom: 0; right: 0; clip-path: polygon(100% 0, 0 100%, 100% 100%); }
+.cell-hp-v4 {
+  position: absolute; bottom: 2px; right: 3px;
+  font-size: 0.5em; color: #999; font-weight: bold;
+}
+.selected-cell-v4 { border: 4px solid #ff9800; box-shadow: 0 0 10px rgba(255,152,0,0.4); }
+.dead-cell-v4 { border-color: #333; background: #111; }
+.dead-mark { position: absolute; font-size: 1.4em; font-weight: bold; color: #e57373; opacity: 0.7; }
+.state-lb { font-size: 0.65em; color: #888; margin-top: 0.4rem; }
+
+/* Timeline vertical */
+.timeline-v { display: flex; flex-direction: column; align-items: flex-start; }
+.tl-step { display: flex; align-items: center; gap: 8px; }
+.tl-dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
+.tl-line { width: 2px; height: 16px; background: #444; margin-left: 3px; }
+.tl-text { font-size: 0.85em; }
+
+.cap { text-align: center; font-size: 0.7em; color: #888; margin-top: 0.6rem; line-height: 1.5; }
+</style>

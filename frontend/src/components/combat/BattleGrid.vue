@@ -205,6 +205,7 @@ const currentActor = computed(() => {
 watch(currentActor, () => {
   step.value = 'command'
   selectedCommand.value = null
+  showSkills.value = false
 })
 
 const selectingTarget = computed(() => step.value === 'target')

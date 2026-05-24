@@ -1,0 +1,249 @@
+<h2>战斗动画原语演示</h2>
+<p class="subtitle">基于当前 3x3 格子布局，展示动画系统能做到的效果</p>
+
+<div style="display: grid; grid-template-columns: 1fr 1fr; gap: 2rem; margin-top: 1.5rem;">
+
+  <!-- Demo 1: Rush attack -->
+  <div class="mockup">
+    <div class="mockup-header">近战冲击 (rush + rush_back)</div>
+    <div class="mockup-body" style="padding: 1rem;">
+      <div style="display: flex; align-items: center; justify-content: center; gap: 8px; height: 180px;">
+        <!-- Player grid -->
+        <div style="display: grid; grid-template-columns: repeat(3, 40px); grid-template-rows: repeat(3, 40px); gap: 2px;">
+          <div class="gcell"></div><div class="gcell"></div><div class="gcell"></div>
+          <div class="gcell"></div><div class="gcell"></div><div class="gcell"><span class="token-p anim-rush">1▶</span></div>
+          <div class="gcell"></div><div class="gcell"></div><div class="gcell"></div>
+        </div>
+        <!-- Gap -->
+        <div style="width: 20px; display: flex; align-items: center; justify-content: center; color: #666;">⚔</div>
+        <!-- Enemy grid -->
+        <div style="display: grid; grid-template-columns: repeat(3, 40px); grid-template-rows: repeat(3, 40px); gap: 2px;">
+          <div class="gcell"></div><div class="gcell"></div><div class="gcell"></div>
+          <div class="gcell hit-flash"><span class="token-e">◀1</span><span class="dmg-popup">-12</span></div><div class="gcell"></div><div class="gcell"></div>
+          <div class="gcell"></div><div class="gcell"></div><div class="gcell"></div>
+        </div>
+      </div>
+      <p style="text-align:center; font-size: 0.8em; color: #aaa; margin-top: 0.5rem;">Token 冲向目标格 → 目标格闪红 + 数字弹出 → Token 回弹</p>
+    </div>
+  </div>
+
+  <!-- Demo 2: Projectile -->
+  <div class="mockup">
+    <div class="mockup-header">远程投射 (projectile)</div>
+    <div class="mockup-body" style="padding: 1rem;">
+      <div style="display: flex; align-items: center; justify-content: center; gap: 8px; height: 180px;">
+        <!-- Player grid -->
+        <div style="display: grid; grid-template-columns: repeat(3, 40px); grid-template-rows: repeat(3, 40px); gap: 2px;">
+          <div class="gcell"><span class="token-p">1▶</span></div><div class="gcell"></div><div class="gcell"></div>
+          <div class="gcell"></div><div class="gcell"></div><div class="gcell"></div>
+          <div class="gcell"></div><div class="gcell"></div><div class="gcell"></div>
+        </div>
+        <!-- Projectile path -->
+        <div style="width: 60px; display: flex; align-items: flex-start; justify-content: center; padding-top: 10px; position: relative;">
+          <span class="projectile-fire">●</span>
+        </div>
+        <!-- Enemy grid -->
+        <div style="display: grid; grid-template-columns: repeat(3, 40px); grid-template-rows: repeat(3, 40px); gap: 2px;">
+          <div class="gcell hit-flash"><span class="token-e shake">◀1</span></div><div class="gcell"></div><div class="gcell"></div>
+          <div class="gcell"></div><div class="gcell"></div><div class="gcell"></div>
+          <div class="gcell"></div><div class="gcell"></div><div class="gcell"></div>
+        </div>
+      </div>
+      <p style="text-align:center; font-size: 0.8em; color: #aaa; margin-top: 0.5rem;">火球从施法者飞向目标 → 命中时格子闪光 + 目标抖动</p>
+    </div>
+  </div>
+
+  <!-- Demo 3: Image/sprite support -->
+  <div class="mockup">
+    <div class="mockup-header">支持小图像/SVG (不限于文字符号)</div>
+    <div class="mockup-body" style="padding: 1rem;">
+      <div style="display: flex; align-items: center; justify-content: center; gap: 8px; height: 180px;">
+        <div style="display: grid; grid-template-columns: repeat(3, 40px); grid-template-rows: repeat(3, 40px); gap: 2px;">
+          <div class="gcell"></div><div class="gcell"></div><div class="gcell"></div>
+          <div class="gcell"></div>
+          <div class="gcell" style="position:relative;">
+            <!-- SVG sword slash effect -->
+            <svg class="slash-effect" width="36" height="36" viewBox="0 0 36 36">
+              <path d="M4 32 L32 4" stroke="#ffcc00" stroke-width="3" stroke-linecap="round" class="slash-anim"/>
+              <path d="M8 28 L28 8" stroke="#ff8800" stroke-width="2" stroke-linecap="round" class="slash-anim" style="animation-delay: 0.1s"/>
+            </svg>
+          </div>
+          <div class="gcell"></div>
+          <div class="gcell"></div><div class="gcell"></div><div class="gcell"></div>
+        </div>
+        <div style="width: 40px;"></div>
+        <div style="display: flex; flex-direction: column; gap: 0.5rem; font-size: 0.75em; color: #ccc;">
+          <div>原语可以渲染：</div>
+          <div style="display: flex; align-items: center; gap: 6px;"><span style="color: #ff4400; font-size: 1.5em;">●</span> Unicode 符号</div>
+          <div style="display: flex; align-items: center; gap: 6px;">
+            <svg width="16" height="16" viewBox="0 0 16 16"><circle cx="8" cy="8" r="6" fill="none" stroke="#4fc3f7" stroke-width="2"/></svg>
+            内联 SVG
+          </div>
+          <div style="display: flex; align-items: center; gap: 6px;"><span style="background: linear-gradient(45deg, #f00, #ff0); width: 14px; height: 14px; display: inline-block; border-radius: 2px;"></span> CSS 动画元素</div>
+          <div style="display: flex; align-items: center; gap: 6px;"><span style="font-size: 1.2em;">⚡</span> 组合序列</div>
+        </div>
+      </div>
+      <p style="text-align:center; font-size: 0.8em; color: #aaa; margin-top: 0.5rem;">原语的 symbol 字段支持任意 HTML 内容</p>
+    </div>
+  </div>
+
+  <!-- Demo 4: Number popup + death -->
+  <div class="mockup">
+    <div class="mockup-header">伤害弹出 + 死亡淡出</div>
+    <div class="mockup-body" style="padding: 1rem;">
+      <div style="display: flex; align-items: center; justify-content: center; gap: 8px; height: 180px;">
+        <div style="display: grid; grid-template-columns: repeat(3, 40px); grid-template-rows: repeat(3, 40px); gap: 2px;">
+          <div class="gcell"><span class="token-e"><span class="dmg-popup crit">-24!</span>◀1</span></div><div class="gcell"></div><div class="gcell"></div>
+          <div class="gcell"><span class="token-e dying">◀2</span></div><div class="gcell"></div><div class="gcell"></div>
+          <div class="gcell"><span class="token-e"><span class="heal-popup">+8</span>◀3</span></div><div class="gcell"></div><div class="gcell"></div>
+        </div>
+        <div style="width: 40px;"></div>
+        <div style="display: flex; flex-direction: column; gap: 0.8rem; font-size: 0.75em; color: #ccc;">
+          <div style="display: flex; align-items: center; gap: 6px;"><span class="dmg-popup-static">-12</span> 普通伤害</div>
+          <div style="display: flex; align-items: center; gap: 6px;"><span class="dmg-popup-static crit">-24!</span> 暴击</div>
+          <div style="display: flex; align-items: center; gap: 6px;"><span class="heal-popup-static">+8</span> 治疗</div>
+          <div style="display: flex; align-items: center; gap: 6px;"><span style="opacity: 0.3; color: #e57373;">◀2</span> 死亡淡出</div>
+        </div>
+      </div>
+      <p style="text-align:center; font-size: 0.8em; color: #aaa; margin-top: 0.5rem;">数字向上飘出 + 缩放 → 淡出消失 / 死亡时 token 渐变透明</p>
+    </div>
+  </div>
+
+</div>
+
+<h3 style="margin-top: 2rem;">动画时序示例：一次近战攻击</h3>
+<div class="mockup" style="margin-top: 0.5rem;">
+  <div class="mockup-body" style="padding: 1.5rem;">
+    <div style="display: flex; align-items: center; gap: 0; font-size: 0.8em; position: relative;">
+      <div class="timeline">
+        <div class="tl-item" style="flex: 2;">
+          <div class="tl-bar" style="background: #4fc3f7;">rush</div>
+          <div class="tl-label">0-200ms</div>
+        </div>
+        <div class="tl-item" style="flex: 1;">
+          <div class="tl-bar" style="background: #ff5252;">flash</div>
+          <div class="tl-label">200ms</div>
+        </div>
+        <div class="tl-item" style="flex: 1;">
+          <div class="tl-bar" style="background: #ffab40;">popup</div>
+          <div class="tl-label">200-600ms</div>
+        </div>
+        <div class="tl-item" style="flex: 2;">
+          <div class="tl-bar" style="background: #4fc3f7;">rush_back</div>
+          <div class="tl-label">400-600ms</div>
+        </div>
+      </div>
+    </div>
+    <p style="text-align:center; font-size: 0.8em; color: #aaa; margin-top: 1rem;">每个原语有 duration，前端按序列依次或并行播放（支持 delay 字段错开）</p>
+  </div>
+</div>
+
+<style>
+.gcell {
+  width: 40px; height: 40px;
+  background: #2a2a2a;
+  border: 1px solid #444;
+  display: flex; align-items: center; justify-content: center;
+  position: relative;
+  font-size: 0.8em;
+  border-radius: 2px;
+}
+.token-p { color: #4fc3f7; font-weight: bold; }
+.token-e { color: #e57373; font-weight: bold; position: relative; }
+.hit-flash { animation: hitflash 0.6s ease-in-out infinite; }
+@keyframes hitflash {
+  0%, 100% { background: #2a2a2a; }
+  50% { background: #5a1a1a; }
+}
+.anim-rush { animation: rush 1s ease-in-out infinite; }
+@keyframes rush {
+  0%, 100% { transform: translateX(0); }
+  40% { transform: translateX(30px); }
+  60% { transform: translateX(30px); }
+}
+.projectile-fire {
+  color: #ff4400;
+  font-size: 1.5em;
+  animation: fly 1.2s ease-in-out infinite;
+  text-shadow: 0 0 8px #ff4400;
+}
+@keyframes fly {
+  0% { transform: translateX(-20px); opacity: 1; }
+  80% { transform: translateX(20px); opacity: 1; }
+  100% { transform: translateX(20px); opacity: 0; }
+}
+.shake { animation: shake 0.3s ease-in-out infinite; }
+@keyframes shake {
+  0%, 100% { transform: translateX(0); }
+  25% { transform: translateX(-3px); }
+  75% { transform: translateX(3px); }
+}
+.dmg-popup {
+  position: absolute;
+  top: -8px; right: -4px;
+  color: #ff5252;
+  font-size: 0.7em;
+  font-weight: bold;
+  animation: popup 1s ease-out infinite;
+}
+.dmg-popup.crit { color: #ffab40; font-size: 0.8em; }
+@keyframes popup {
+  0% { transform: translateY(0); opacity: 1; }
+  100% { transform: translateY(-12px); opacity: 0; }
+}
+.heal-popup {
+  position: absolute;
+  top: -8px; right: -4px;
+  color: #66bb6a;
+  font-size: 0.7em;
+  font-weight: bold;
+  animation: popup 1s ease-out infinite;
+}
+.dying { animation: die 1.5s ease-out infinite; }
+@keyframes die {
+  0% { opacity: 1; }
+  100% { opacity: 0.15; }
+}
+.dmg-popup-static { color: #ff5252; font-weight: bold; }
+.dmg-popup-static.crit { color: #ffab40; }
+.heal-popup-static { color: #66bb6a; font-weight: bold; }
+
+.slash-effect { position: absolute; top: 2px; left: 2px; }
+.slash-anim {
+  stroke-dasharray: 40;
+  stroke-dashoffset: 40;
+  animation: slashdraw 0.8s ease-out infinite;
+}
+@keyframes slashdraw {
+  0% { stroke-dashoffset: 40; opacity: 1; }
+  60% { stroke-dashoffset: 0; opacity: 1; }
+  100% { stroke-dashoffset: 0; opacity: 0; }
+}
+
+.timeline {
+  display: flex;
+  width: 100%;
+  gap: 2px;
+}
+.tl-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+}
+.tl-bar {
+  width: 100%;
+  height: 24px;
+  border-radius: 3px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #000;
+  font-weight: bold;
+  font-size: 0.75em;
+}
+.tl-label {
+  font-size: 0.7em;
+  color: #888;
+}
+</style>

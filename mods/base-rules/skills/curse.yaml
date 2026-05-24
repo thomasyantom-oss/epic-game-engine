@@ -1,0 +1,11 @@
+id: curse
+name: "诅咒"
+category: skill
+silenceable: true
+targeting:
+  steps: []
+animation:
+  - type: debuff_down
+    target: field
+    color: "#e57373"
+    intensity: big

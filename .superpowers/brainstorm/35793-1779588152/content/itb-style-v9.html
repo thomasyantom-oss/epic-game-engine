@@ -1,0 +1,448 @@
+<!DOCTYPE html>
+<html>
+<head>
+<style>
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body { background: #0a0a14; color: #ccc; font-family: -apple-system, sans-serif; padding: 2rem; }
+h2 { color: #fff; margin-bottom: 0.3rem; }
+h3 { color: #fff; margin-top: 2rem; margin-bottom: 0.5rem; }
+.subtitle { color: #888; font-size: 0.85em; margin-bottom: 1rem; }
+.mockup { background: #12121e; border: 1px solid #333; border-radius: 6px; overflow: hidden; }
+.mockup-header { background: #1a1a2e; padding: 0.5rem 0.8rem; font-size: 0.8em; color: #aaa; border-bottom: 1px solid #333; }
+.mockup-body { padding: 1rem; }
+.cap { text-align: center; font-size: 0.7em; color: #888; margin-top: 0.6rem; line-height: 1.5; }
+</style>
+</head>
+<body>
+
+<h2>战斗动画 v9</h2>
+<p class="subtitle">月牙随角度旋转 + 命中时序修正（到达后才颤抖）</p>
+
+<!-- Crescent rotation based on angle -->
+<h3>月牙弧随攻击角度旋转</h3>
+<p class="subtitle">月牙的开口方向始终朝向飞行方向</p>
+
+<div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 1rem; margin-top: 1rem;">
+
+  <!-- Horizontal -->
+  <div class="mockup">
+    <div class="mockup-header">水平 (0°)</div>
+    <div class="mockup-body" style="padding: 0.8rem;">
+      <div style="display: flex; align-items: center; justify-content: center; height: 120px;">
+        <div class="mini-scene">
+          <div class="mc src"><span class="tk p">P1</span></div>
+          <div class="flight-zone hz">
+            <div class="crescent-proj rot0">
+              <svg viewBox="0 0 14 18" width="14" height="18"><path d="M 0,0 Q 12,9 0,18" fill="none" stroke="#fff" stroke-width="2.5" stroke-linecap="round"/></svg>
+            </div>
+          </div>
+          <div class="mc tgt-wait" id="t1"><span class="tk e">E1</span></div>
+        </div>
+      </div>
+      <p class="cap">弧口朝右 →</p>
+    </div>
+  </div>
+
+  <!-- Diagonal up -->
+  <div class="mockup">
+    <div class="mockup-header">斜上 (-35°)</div>
+    <div class="mockup-body" style="padding: 0.8rem;">
+      <div style="display: flex; align-items: center; justify-content: center; height: 120px;">
+        <div class="mini-scene-diag">
+          <div class="mc src" style="align-self: end;"><span class="tk p">P1</span></div>
+          <div class="flight-zone diag-up-zone">
+            <div class="crescent-proj rot-up">
+              <svg viewBox="0 0 14 18" width="14" height="18"><path d="M 0,0 Q 12,9 0,18" fill="none" stroke="#fff" stroke-width="2.5" stroke-linecap="round"/></svg>
+            </div>
+          </div>
+          <div class="mc tgt-wait" style="align-self: start;"><span class="tk e">E1</span></div>
+        </div>
+      </div>
+      <p class="cap">弧口朝右上 ↗</p>
+    </div>
+  </div>
+
+  <!-- Diagonal down -->
+  <div class="mockup">
+    <div class="mockup-header">斜下 (35°)</div>
+    <div class="mockup-body" style="padding: 0.8rem;">
+      <div style="display: flex; align-items: center; justify-content: center; height: 120px;">
+        <div class="mini-scene-diag">
+          <div class="mc src" style="align-self: start;"><span class="tk p">P1</span></div>
+          <div class="flight-zone diag-dn-zone">
+            <div class="crescent-proj rot-dn">
+              <svg viewBox="0 0 14 18" width="14" height="18"><path d="M 0,0 Q 12,9 0,18" fill="none" stroke="#fff" stroke-width="2.5" stroke-linecap="round"/></svg>
+            </div>
+          </div>
+          <div class="mc tgt-wait" style="align-self: end;"><span class="tk e">E1</span></div>
+        </div>
+      </div>
+      <p class="cap">弧口朝右下 ↘</p>
+    </div>
+  </div>
+
+  <!-- Steep diagonal -->
+  <div class="mockup">
+    <div class="mockup-header">大角度 (-55°)</div>
+    <div class="mockup-body" style="padding: 0.8rem;">
+      <div style="display: flex; align-items: center; justify-content: center; height: 120px;">
+        <div class="mini-scene-diag">
+          <div class="mc src" style="align-self: end;"><span class="tk p">P1</span></div>
+          <div class="flight-zone diag-steep-zone">
+            <div class="crescent-proj rot-steep">
+              <svg viewBox="0 0 14 18" width="14" height="18"><path d="M 0,0 Q 12,9 0,18" fill="none" stroke="#fff" stroke-width="2.5" stroke-linecap="round"/></svg>
+            </div>
+          </div>
+          <div class="mc tgt-wait" style="align-self: start;"><span class="tk e">E1</span></div>
+        </div>
+      </div>
+      <p class="cap">弧口朝大斜角 ↗↗</p>
+    </div>
+  </div>
+</div>
+
+<!-- Timing: hit on arrival -->
+<h3>命中时序：投射物到达 → 然后颤抖 + 伤害</h3>
+<p class="subtitle">受击反馈在投射物到达终点那一帧才开始</p>
+
+<div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem; margin-top: 1rem;">
+
+  <div class="mockup">
+    <div class="mockup-header">完整时序演示：圆形弹丸</div>
+    <div class="mockup-body" style="padding: 1.5rem;">
+      <div style="display: flex; align-items: center; justify-content: center; height: 140px;">
+        <div class="scene-time">
+          <div class="grid3t">
+            <div class="ct"></div><div class="ct"></div><div class="ct"></div>
+            <div class="ct"></div><div class="ct src"><span class="tk p">P1</span></div><div class="ct"></div>
+            <div class="ct"></div><div class="ct"></div><div class="ct"></div>
+          </div>
+          <div style="width: 10px;"></div>
+          <div class="grid3t">
+            <div class="ct"></div><div class="ct"></div><div class="ct"></div>
+            <div class="ct tgt-on-arrive"><span class="tk e shake-on-arrive">E1</span><div class="dmg-on-arrive">-7</div></div><div class="ct"></div><div class="ct"></div>
+            <div class="ct"></div><div class="ct"></div><div class="ct"></div>
+          </div>
+          <div class="proj-timed">
+            <div class="p-circle-t"></div>
+          </div>
+        </div>
+      </div>
+      <p class="cap">弹丸飞行 400ms → 到达瞬间 → 目标颤抖 + 白闪 + 数字弹出</p>
+    </div>
+  </div>
+
+  <div class="mockup">
+    <div class="mockup-header">完整时序演示：月牙飞行</div>
+    <div class="mockup-body" style="padding: 1.5rem;">
+      <div style="display: flex; align-items: center; justify-content: center; height: 140px;">
+        <div class="scene-time">
+          <div class="grid3t">
+            <div class="ct"></div><div class="ct"></div><div class="ct"></div>
+            <div class="ct"></div><div class="ct"></div><div class="ct src"><span class="tk p">P1</span></div>
+            <div class="ct"></div><div class="ct"></div><div class="ct"></div>
+          </div>
+          <div style="width: 10px;"></div>
+          <div class="grid3t">
+            <div class="ct"></div><div class="ct"></div><div class="ct"></div>
+            <div class="ct tgt-on-arrive2"><span class="tk e shake-on-arrive2">E1</span><div class="dmg-on-arrive2">-11</div></div><div class="ct"></div><div class="ct"></div>
+            <div class="ct"></div><div class="ct"></div><div class="ct"></div>
+          </div>
+          <div class="proj-timed2">
+            <div class="p-crescent-t">
+              <svg viewBox="0 0 14 18" width="14" height="18"><path d="M 0,0 Q 12,9 0,18" fill="none" stroke="#fff" stroke-width="2.5" stroke-linecap="round"/></svg>
+            </div>
+          </div>
+        </div>
+      </div>
+      <p class="cap">月牙飞行 400ms → 到达 → 颤抖 + 白闪 + 伤害数字</p>
+    </div>
+  </div>
+</div>
+
+<!-- Timeline diagram -->
+<div class="mockup" style="margin-top: 1rem;">
+  <div class="mockup-header">时序图</div>
+  <div class="mockup-body" style="padding: 1.5rem;">
+    <div class="timeline">
+      <div class="tl-row">
+        <div class="tl-label">投射物</div>
+        <div class="tl-bar-container">
+          <div class="tl-bar" style="width: 40%; background: #4fc3f7; left: 0;">飞行</div>
+          <div class="tl-bar" style="width: 5%; background: #fff; left: 40%; opacity: 0.8;"></div>
+        </div>
+      </div>
+      <div class="tl-row">
+        <div class="tl-label">目标白闪</div>
+        <div class="tl-bar-container">
+          <div class="tl-bar" style="width: 10%; background: #fff; left: 40%; opacity: 0.6;"></div>
+        </div>
+      </div>
+      <div class="tl-row">
+        <div class="tl-label">目标颤抖</div>
+        <div class="tl-bar-container">
+          <div class="tl-bar" style="width: 20%; background: #e57373; left: 40%;"></div>
+        </div>
+      </div>
+      <div class="tl-row">
+        <div class="tl-label">伤害数字</div>
+        <div class="tl-bar-container">
+          <div class="tl-bar" style="width: 35%; background: #ff5252; left: 42%;"></div>
+        </div>
+      </div>
+      <div class="tl-axis">
+        <span>0ms</span>
+        <span style="position:absolute; left: 40%;">到达</span>
+        <span style="position:absolute; right: 0;">~700ms</span>
+      </div>
+    </div>
+  </div>
+</div>
+
+<style>
+/* Tokens */
+.tk { font-size: 0.65em; font-weight: bold; padding: 2px 4px; border-radius: 3px; position: relative; z-index: 2; }
+.tk.p { color: #4fc3f7; background: rgba(79,195,247,0.15); }
+.tk.e { color: #e57373; background: rgba(229,115,115,0.15); }
+
+/* Mini scene for rotation demos */
+.mini-scene {
+  display: flex; align-items: center; gap: 0;
+}
+.mini-scene-diag {
+  display: flex; align-items: center; gap: 0; height: 90px;
+}
+.mc {
+  width: 36px; height: 36px;
+  background: #1a1a2e;
+  border: 2px solid #444;
+  border-radius: 2px;
+  display: flex; align-items: center; justify-content: center;
+}
+.mc.src { border-color: #4fc3f7; }
+.mc.tgt-wait { }
+
+/* Flight zone */
+.flight-zone {
+  position: relative;
+  width: 50px;
+  height: 18px;
+}
+.flight-zone.hz { height: 18px; }
+.flight-zone.diag-up-zone { width: 50px; height: 50px; }
+.flight-zone.diag-dn-zone { width: 50px; height: 50px; }
+.flight-zone.diag-steep-zone { width: 40px; height: 60px; }
+
+/* Crescent projectiles with rotation */
+.crescent-proj {
+  position: absolute;
+  filter: drop-shadow(0 0 4px #fff);
+}
+.crescent-proj.rot0 {
+  top: 0; left: 0;
+  transform: rotate(0deg);
+  animation: cfly-hz 1.1s ease-in-out infinite;
+}
+@keyframes cfly-hz {
+  0% { left: 0; opacity: 0; }
+  8% { opacity: 1; }
+  50% { left: calc(100% - 14px); opacity: 1; }
+  62% { opacity: 0; }
+  100% { opacity: 0; }
+}
+
+.crescent-proj.rot-up {
+  bottom: 0; left: 0;
+  transform: rotate(-35deg);
+  animation: cfly-up 1.2s ease-in-out infinite;
+}
+@keyframes cfly-up {
+  0% { left: 0; bottom: 0; opacity: 0; }
+  8% { opacity: 1; }
+  50% { left: calc(100% - 14px); bottom: calc(100% - 18px); opacity: 1; }
+  62% { opacity: 0; }
+  100% { opacity: 0; left: calc(100% - 14px); bottom: calc(100% - 18px); }
+}
+
+.crescent-proj.rot-dn {
+  top: 0; left: 0;
+  transform: rotate(35deg);
+  animation: cfly-dn 1.2s ease-in-out infinite;
+}
+@keyframes cfly-dn {
+  0% { left: 0; top: 0; opacity: 0; }
+  8% { opacity: 1; }
+  50% { left: calc(100% - 14px); top: calc(100% - 18px); opacity: 1; }
+  62% { opacity: 0; }
+  100% { opacity: 0; left: calc(100% - 14px); top: calc(100% - 18px); }
+}
+
+.crescent-proj.rot-steep {
+  bottom: 0; left: 0;
+  transform: rotate(-55deg);
+  animation: cfly-steep 1.2s ease-in-out infinite;
+}
+@keyframes cfly-steep {
+  0% { left: 0; bottom: 0; opacity: 0; }
+  8% { opacity: 1; }
+  50% { left: calc(100% - 14px); bottom: calc(100% - 18px); opacity: 1; }
+  62% { opacity: 0; }
+  100% { opacity: 0; left: calc(100% - 14px); bottom: calc(100% - 18px); }
+}
+
+/* Full timing demo */
+.scene-time { position: relative; display: flex; align-items: center; }
+.grid3t {
+  display: grid;
+  grid-template-columns: repeat(3, 32px);
+  grid-template-rows: repeat(3, 32px);
+  gap: 2px;
+}
+.ct {
+  background: #1a1a2e;
+  border: 2px solid #444;
+  display: flex; align-items: center; justify-content: center;
+  position: relative; border-radius: 2px;
+}
+.src { border-color: #4fc3f7; }
+
+/* Target reacts ONLY after projectile arrives (delay = flight time) */
+.tgt-on-arrive {
+  animation: tgt-flash-delayed 2s ease-out infinite;
+}
+@keyframes tgt-flash-delayed {
+  0%, 39% { background: #1a1a2e; }
+  40% { background: rgba(255,255,255,0.5); }
+  55%, 100% { background: #1a1a2e; }
+}
+
+.shake-on-arrive {
+  animation: shake-delayed 2s ease-in-out infinite;
+}
+@keyframes shake-delayed {
+  0%, 39% { transform: translateX(0); }
+  40% { transform: translateX(-3px); }
+  43% { transform: translateX(3px); }
+  46% { transform: translateX(-2px); }
+  49% { transform: translateX(2px); }
+  52% { transform: translateX(-1px); }
+  55%, 100% { transform: translateX(0); }
+}
+
+.dmg-on-arrive {
+  position: absolute;
+  top: -12px; left: 50%; transform: translateX(-50%);
+  font-size: 0.85em; font-weight: 900;
+  color: #ff5252;
+  text-shadow: -1px -1px 0 #000, 1px -1px 0 #000, -1px 1px 0 #000, 1px 1px 0 #000, 0 0 6px rgba(255,82,82,0.5);
+  opacity: 0;
+  animation: dmg-delayed 2s ease-out infinite;
+}
+@keyframes dmg-delayed {
+  0%, 39% { opacity: 0; transform: translateX(-50%) translateY(4px); }
+  42% { opacity: 1; transform: translateX(-50%) translateY(0) scale(1.1); }
+  48% { transform: translateX(-50%) translateY(0) scale(1); }
+  75% { opacity: 1; transform: translateX(-50%) translateY(0); }
+  100% { opacity: 0; transform: translateX(-50%) translateY(-6px); }
+}
+
+/* Projectile that disappears at 40% of animation cycle */
+.proj-timed {
+  position: absolute;
+  top: 50%; left: 50px;
+  width: 76px; height: 0;
+  pointer-events: none; z-index: 5;
+  transform: translateY(-4px);
+}
+.p-circle-t {
+  position: absolute;
+  width: 8px; height: 8px;
+  border-radius: 50%;
+  background: #4fc3f7;
+  box-shadow: 0 0 6px #4fc3f7, 0 0 12px rgba(79,195,247,0.4);
+  animation: pfly-timed 2s ease-in-out infinite;
+}
+@keyframes pfly-timed {
+  0% { left: 0; opacity: 0; }
+  5% { opacity: 1; }
+  38% { left: calc(100% - 8px); opacity: 1; }
+  40% { left: calc(100% - 8px); opacity: 0; }
+  100% { opacity: 0; }
+}
+
+/* Second demo: crescent timed */
+.tgt-on-arrive2 { animation: tgt-flash-delayed2 2.2s ease-out infinite; }
+@keyframes tgt-flash-delayed2 {
+  0%, 39% { background: #1a1a2e; }
+  40% { background: rgba(255,255,255,0.5); }
+  55%, 100% { background: #1a1a2e; }
+}
+.shake-on-arrive2 { animation: shake-delayed2 2.2s ease-in-out infinite; }
+@keyframes shake-delayed2 {
+  0%, 39% { transform: translateX(0); }
+  40% { transform: translateX(-3px); }
+  43% { transform: translateX(3px); }
+  46% { transform: translateX(-2px); }
+  49% { transform: translateX(2px); }
+  52% { transform: translateX(-1px); }
+  55%, 100% { transform: translateX(0); }
+}
+.dmg-on-arrive2 {
+  position: absolute;
+  top: -12px; left: 50%; transform: translateX(-50%);
+  font-size: 0.85em; font-weight: 900;
+  color: #ff5252;
+  text-shadow: -1px -1px 0 #000, 1px -1px 0 #000, -1px 1px 0 #000, 1px 1px 0 #000, 0 0 6px rgba(255,82,82,0.5);
+  opacity: 0;
+  animation: dmg-delayed2 2.2s ease-out infinite;
+}
+@keyframes dmg-delayed2 {
+  0%, 39% { opacity: 0; transform: translateX(-50%) translateY(4px); }
+  42% { opacity: 1; transform: translateX(-50%) translateY(0) scale(1.1); }
+  48% { transform: translateX(-50%) translateY(0) scale(1); }
+  75% { opacity: 1; transform: translateX(-50%) translateY(0); }
+  100% { opacity: 0; transform: translateX(-50%) translateY(-6px); }
+}
+.proj-timed2 {
+  position: absolute;
+  top: 50%; left: 82px;
+  width: 44px; height: 0;
+  pointer-events: none; z-index: 5;
+  transform: translateY(-9px);
+}
+.p-crescent-t {
+  position: absolute;
+  filter: drop-shadow(0 0 4px #fff);
+  animation: cfly-timed 2.2s ease-in-out infinite;
+}
+@keyframes cfly-timed {
+  0% { left: 0; opacity: 0; }
+  5% { opacity: 1; }
+  38% { left: calc(100% - 14px); opacity: 1; }
+  40% { left: calc(100% - 14px); opacity: 0; }
+  100% { opacity: 0; }
+}
+
+/* Timeline diagram */
+.timeline { position: relative; }
+.tl-row { display: flex; align-items: center; margin-bottom: 0.6rem; }
+.tl-label { width: 80px; font-size: 0.7em; color: #aaa; text-align: right; padding-right: 0.8rem; }
+.tl-bar-container { position: relative; flex: 1; height: 20px; background: #1a1a2e; border-radius: 3px; border: 1px solid #333; }
+.tl-bar {
+  position: absolute; top: 2px; bottom: 2px;
+  border-radius: 2px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 0.6em; color: #000; font-weight: bold;
+}
+.tl-axis {
+  position: relative;
+  margin-left: 80px;
+  padding-top: 0.3rem;
+  font-size: 0.6em;
+  color: #666;
+  border-top: 1px solid #444;
+}
+</style>
+
+</body>
+</html>

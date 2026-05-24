@@ -1,0 +1,649 @@
+<!DOCTYPE html>
+<html>
+<head>
+<style>
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body { background: #0a0a14; color: #ccc; font-family: -apple-system, sans-serif; padding: 2rem; }
+h2 { color: #fff; margin-bottom: 0.3rem; }
+h3 { color: #fff; margin-top: 2rem; margin-bottom: 0.5rem; }
+.subtitle { color: #888; font-size: 0.85em; margin-bottom: 1rem; }
+.mockup { background: #12121e; border: 1px solid #333; border-radius: 6px; overflow: hidden; }
+.mockup-header { background: #1a1a2e; padding: 0.5rem 0.8rem; font-size: 0.8em; color: #aaa; border-bottom: 1px solid #333; }
+.mockup-body { padding: 1rem; }
+.cap { text-align: center; font-size: 0.7em; color: #888; margin-top: 0.6rem; line-height: 1.5; }
+</style>
+</head>
+<body>
+
+<h2>战斗动画 v6</h2>
+<p class="subtitle">Buff/Debuff 范围分级 + 投射物从中心到中心 + 月牙斩</p>
+
+<!-- Buff/Debuff: single target vs full field -->
+<h3>Buff/Debuff：单体 vs 全场</h3>
+<p class="subtitle">单体 = 两个紧凑叠三角（快进箭头感），全场 = 大三角覆盖整个战场</p>
+
+<div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem; margin-top: 1rem;">
+
+  <!-- Single target buff -->
+  <div class="mockup">
+    <div class="mockup-header">单体 Buff — 两个叠在一起的三角</div>
+    <div class="mockup-body" style="padding: 1.5rem;">
+      <div style="display: flex; align-items: center; justify-content: center; height: 140px; gap: 3rem;">
+        <div style="text-align: center;">
+          <div class="demo-cell">
+            <span class="tk p">P1</span>
+            <div class="single-buff-anim">
+              <div class="sb-group">
+                <span class="sb-tri s1">&#9650;</span>
+                <span class="sb-tri s2">&#9650;</span>
+              </div>
+            </div>
+          </div>
+          <div class="anim-label">上升动画</div>
+        </div>
+        <div style="text-align: center;">
+          <div class="demo-cell">
+            <span class="tk e">E1</span>
+            <div class="single-debuff-anim">
+              <div class="sd-group">
+                <span class="sd-tri s1">&#9660;</span>
+                <span class="sd-tri s2">&#9660;</span>
+              </div>
+            </div>
+          </div>
+          <div class="anim-label">下沉动画</div>
+        </div>
+      </div>
+      <p class="cap">两个三角上下紧贴叠放，像快进符号<br/>作为一个整体向上飘出（buff）或向下沉（debuff）</p>
+    </div>
+  </div>
+
+  <!-- Full field buff -->
+  <div class="mockup">
+    <div class="mockup-header">全场 Buff — 大三角覆盖战场范围</div>
+    <div class="mockup-body" style="padding: 1.5rem;">
+      <div style="display: flex; align-items: center; justify-content: center; height: 140px; gap: 2rem;">
+        <!-- Full field buff -->
+        <div style="position: relative; text-align: center;">
+          <div class="field-container">
+            <div class="field-grid">
+              <div class="fc"><span class="tk p" style="font-size:0.55em;">P1</span></div>
+              <div class="fc"></div>
+              <div class="fc"></div>
+              <div class="fc"><span class="tk p" style="font-size:0.55em;">P2</span></div>
+              <div class="fc"></div>
+              <div class="fc"></div>
+            </div>
+            <div class="field-buff-anim">
+              <span class="fb-tri f1">&#9650;</span>
+              <span class="fb-tri f2">&#9650;</span>
+              <span class="fb-tri f3">&#9650;</span>
+              <span class="fb-tri f4">&#9650;</span>
+            </div>
+          </div>
+          <div class="anim-label">全场 Buff</div>
+        </div>
+        <!-- Full field debuff -->
+        <div style="position: relative; text-align: center;">
+          <div class="field-container">
+            <div class="field-grid">
+              <div class="fc"><span class="tk e" style="font-size:0.55em;">E1</span></div>
+              <div class="fc"></div>
+              <div class="fc"><span class="tk e" style="font-size:0.55em;">E2</span></div>
+              <div class="fc"></div>
+              <div class="fc"><span class="tk e" style="font-size:0.55em;">E3</span></div>
+              <div class="fc"></div>
+            </div>
+            <div class="field-debuff-anim">
+              <span class="fd-tri f1">&#9660;</span>
+              <span class="fd-tri f2">&#9660;</span>
+              <span class="fd-tri f3">&#9660;</span>
+              <span class="fd-tri f4">&#9660;</span>
+            </div>
+          </div>
+          <div class="anim-label">全场 Debuff</div>
+        </div>
+      </div>
+      <p class="cap">三四个大三角分散在整个网格区域内同时升起/沉下<br/>覆盖范围传达"全场生效"</p>
+    </div>
+  </div>
+</div>
+
+<!-- Projectiles: center to center -->
+<h3>投射物：从施法者中心到目标中心</h3>
+<p class="subtitle">投射物起点在源格子正中心，终点在目标格子正中心</p>
+
+<div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 1rem; margin-top: 1rem;">
+
+  <!-- Circle -->
+  <div class="mockup">
+    <div class="mockup-header">圆形弹丸</div>
+    <div class="mockup-body" style="padding: 1rem;">
+      <div style="display: flex; align-items: center; justify-content: center; height: 140px;">
+        <div class="battle-scene">
+          <div class="grid3">
+            <div class="c"></div><div class="c"></div><div class="c"></div>
+            <div class="c"></div><div class="c src-cell"><span class="tk p">P1</span></div><div class="c"></div>
+            <div class="c"></div><div class="c"></div><div class="c"></div>
+          </div>
+          <div class="gap-zone"></div>
+          <div class="grid3">
+            <div class="c"></div><div class="c"></div><div class="c"></div>
+            <div class="c tgt-cell"><span class="tk e shake-on-hit">E1</span></div><div class="c"></div><div class="c"></div>
+            <div class="c"></div><div class="c"></div><div class="c"></div>
+          </div>
+          <!-- Projectile overlay -->
+          <div class="proj-overlay">
+            <div class="proj circle-proj"></div>
+          </div>
+        </div>
+      </div>
+      <p class="cap">圆点从 P1 中心飞向 E1 中心<br/>带发光拖尾</p>
+    </div>
+  </div>
+
+  <!-- Diamond -->
+  <div class="mockup">
+    <div class="mockup-header">菱形弹射</div>
+    <div class="mockup-body" style="padding: 1rem;">
+      <div style="display: flex; align-items: center; justify-content: center; height: 140px;">
+        <div class="battle-scene">
+          <div class="grid3">
+            <div class="c"></div><div class="c"></div><div class="c"></div>
+            <div class="c"></div><div class="c src-cell"><span class="tk p">P1</span></div><div class="c"></div>
+            <div class="c"></div><div class="c"></div><div class="c"></div>
+          </div>
+          <div class="gap-zone"></div>
+          <div class="grid3">
+            <div class="c"></div><div class="c"></div><div class="c"></div>
+            <div class="c tgt-cell"><span class="tk e shake-on-hit">E1</span></div><div class="c"></div><div class="c"></div>
+            <div class="c"></div><div class="c"></div><div class="c"></div>
+          </div>
+          <div class="proj-overlay">
+            <div class="proj diamond-proj"></div>
+          </div>
+        </div>
+      </div>
+      <p class="cap">旋转菱形从中心到中心<br/>带光晕</p>
+    </div>
+  </div>
+
+  <!-- Line/beam -->
+  <div class="mockup">
+    <div class="mockup-header">射线</div>
+    <div class="mockup-body" style="padding: 1rem;">
+      <div style="display: flex; align-items: center; justify-content: center; height: 140px;">
+        <div class="battle-scene">
+          <div class="grid3">
+            <div class="c"></div><div class="c"></div><div class="c"></div>
+            <div class="c"></div><div class="c src-cell"><span class="tk p">P1</span></div><div class="c"></div>
+            <div class="c"></div><div class="c"></div><div class="c"></div>
+          </div>
+          <div class="gap-zone"></div>
+          <div class="grid3">
+            <div class="c"></div><div class="c"></div><div class="c"></div>
+            <div class="c tgt-cell"><span class="tk e shake-on-hit">E1</span></div><div class="c"></div><div class="c"></div>
+            <div class="c"></div><div class="c"></div><div class="c"></div>
+          </div>
+          <div class="proj-overlay">
+            <div class="proj beam-proj"></div>
+          </div>
+        </div>
+      </div>
+      <p class="cap">光线从源中心延伸到目标中心<br/>瞬间到达，持续短暂</p>
+    </div>
+  </div>
+</div>
+
+<!-- Crescent slash -->
+<h3>月牙斩：弧形/月牙形斩击</h3>
+<p class="subtitle">弧形斩线在目标格子中心展开</p>
+
+<div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 1rem; margin-top: 1rem;">
+
+  <div class="mockup">
+    <div class="mockup-header">月牙斩 — 正弧</div>
+    <div class="mockup-body" style="padding: 1rem;">
+      <div style="display: flex; align-items: center; justify-content: center; height: 140px;">
+        <div class="battle-scene">
+          <div class="grid3">
+            <div class="c"></div><div class="c"></div><div class="c"></div>
+            <div class="c"></div><div class="c"></div><div class="c src-cell"><span class="tk p">P1</span></div>
+            <div class="c"></div><div class="c"></div><div class="c"></div>
+          </div>
+          <div class="gap-zone"></div>
+          <div class="grid3">
+            <div class="c"></div><div class="c"></div><div class="c"></div>
+            <div class="c tgt-cell">
+              <span class="tk e shake-on-hit">E1</span>
+              <div class="crescent crescent-right"></div>
+            </div>
+            <div class="c"></div><div class="c"></div>
+            <div class="c"></div><div class="c"></div><div class="c"></div>
+          </div>
+        </div>
+      </div>
+      <p class="cap">月牙弧线在目标上划过<br/>弧口朝攻击方向</p>
+    </div>
+  </div>
+
+  <div class="mockup">
+    <div class="mockup-header">月牙斩 — 大弧（AOE）</div>
+    <div class="mockup-body" style="padding: 1rem;">
+      <div style="display: flex; align-items: center; justify-content: center; height: 140px;">
+        <div class="battle-scene">
+          <div class="grid3">
+            <div class="c"></div><div class="c"></div><div class="c"></div>
+            <div class="c"></div><div class="c"></div><div class="c src-cell"><span class="tk p">P1</span></div>
+            <div class="c"></div><div class="c"></div><div class="c"></div>
+          </div>
+          <div class="gap-zone"></div>
+          <div class="grid3 target-col-aoe">
+            <div class="c tgt-cell"><span class="tk e shake-on-hit" style="font-size:0.6em;">E1</span></div><div class="c"></div><div class="c"></div>
+            <div class="c tgt-cell"><span class="tk e shake-on-hit" style="font-size:0.6em;">E2</span></div><div class="c"></div><div class="c"></div>
+            <div class="c tgt-cell"><span class="tk e shake-on-hit" style="font-size:0.6em;">E3</span></div><div class="c"></div><div class="c"></div>
+            <div class="crescent-large"></div>
+          </div>
+        </div>
+      </div>
+      <p class="cap">大弧月牙覆盖整列<br/>从上到下划开，范围攻击</p>
+    </div>
+  </div>
+
+  <div class="mockup">
+    <div class="mockup-header">月牙斩 — 飞行月牙</div>
+    <div class="mockup-body" style="padding: 1rem;">
+      <div style="display: flex; align-items: center; justify-content: center; height: 140px;">
+        <div class="battle-scene">
+          <div class="grid3">
+            <div class="c"></div><div class="c"></div><div class="c"></div>
+            <div class="c"></div><div class="c"></div><div class="c src-cell"><span class="tk p">P1</span></div>
+            <div class="c"></div><div class="c"></div><div class="c"></div>
+          </div>
+          <div class="gap-zone"></div>
+          <div class="grid3">
+            <div class="c"></div><div class="c"></div><div class="c"></div>
+            <div class="c tgt-cell"><span class="tk e shake-on-hit">E1</span></div><div class="c"></div><div class="c"></div>
+            <div class="c"></div><div class="c"></div><div class="c"></div>
+          </div>
+          <div class="proj-overlay">
+            <div class="proj crescent-fly"></div>
+          </div>
+        </div>
+      </div>
+      <p class="cap">月牙形投射物从中心飞向目标<br/>远程斩击/气刃波</p>
+    </div>
+  </div>
+</div>
+
+<!-- Updated primitives list -->
+<h3>更新后的完整原语列表</h3>
+<div class="mockup" style="margin-top: 0.5rem;">
+  <div class="mockup-body" style="padding: 1.5rem;">
+    <table style="width: 100%; border-collapse: collapse; font-size: 0.8em;">
+      <tr style="border-bottom: 1px solid #444;">
+        <th style="text-align:left; padding: 0.4rem; color: #4fc3f7;">原语</th>
+        <th style="text-align:left; padding: 0.4rem; color: #4fc3f7;">类别</th>
+        <th style="text-align:left; padding: 0.4rem; color: #4fc3f7;">参数</th>
+      </tr>
+      <tr style="border-bottom: 1px solid #333;">
+        <td style="padding: 0.4rem; color: #fff;">pulse</td>
+        <td style="padding: 0.4rem; color: #ffab40;">发起</td>
+        <td style="padding: 0.4rem; color: #aaa;">actor, color</td>
+      </tr>
+      <tr style="border-bottom: 1px solid #333;">
+        <td style="padding: 0.4rem; color: #fff;">flash_sequence</td>
+        <td style="padding: 0.4rem; color: #ffab40;">发起</td>
+        <td style="padding: 0.4rem; color: #aaa;">path[], color</td>
+      </tr>
+      <tr style="border-bottom: 1px solid #333;">
+        <td style="padding: 0.4rem; color: #fff;">projectile</td>
+        <td style="padding: 0.4rem; color: #ffab40;">发起</td>
+        <td style="padding: 0.4rem; color: #aaa;">actor, target, shape(circle/diamond/crescent), trail, speed, color, size</td>
+      </tr>
+      <tr style="border-bottom: 1px solid #333;">
+        <td style="padding: 0.4rem; color: #fff;">beam</td>
+        <td style="padding: 0.4rem; color: #ffab40;">发起</td>
+        <td style="padding: 0.4rem; color: #aaa;">actor, target, color, width</td>
+      </tr>
+      <tr style="border-bottom: 1px solid #333;">
+        <td style="padding: 0.4rem; color: #fff;">slash</td>
+        <td style="padding: 0.4rem; color: #ffab40;">发起</td>
+        <td style="padding: 0.4rem; color: #aaa;">target(s), color, arc(small/large), direction</td>
+      </tr>
+      <tr style="border-bottom: 1px solid #333;">
+        <td style="padding: 0.4rem; color: #fff;">impact</td>
+        <td style="padding: 0.4rem; color: #e57373;">命中</td>
+        <td style="padding: 0.4rem; color: #aaa;">target, color(default: white)</td>
+      </tr>
+      <tr style="border-bottom: 1px solid #333;">
+        <td style="padding: 0.4rem; color: #fff;">shake</td>
+        <td style="padding: 0.4rem; color: #e57373;">命中</td>
+        <td style="padding: 0.4rem; color: #aaa;">target, intensity(light/normal/heavy)</td>
+      </tr>
+      <tr style="border-bottom: 1px solid #333;">
+        <td style="padding: 0.4rem; color: #fff;">damage_number</td>
+        <td style="padding: 0.4rem; color: #e57373;">命中</td>
+        <td style="padding: 0.4rem; color: #aaa;">target, value, color(damage/heal/miss)</td>
+      </tr>
+      <tr style="border-bottom: 1px solid #333;">
+        <td style="padding: 0.4rem; color: #fff;">buff_up</td>
+        <td style="padding: 0.4rem; color: #66bb6a;">状态</td>
+        <td style="padding: 0.4rem; color: #aaa;">target/field, color, intensity(normal/big)</td>
+      </tr>
+      <tr style="border-bottom: 1px solid #333;">
+        <td style="padding: 0.4rem; color: #fff;">debuff_down</td>
+        <td style="padding: 0.4rem; color: #66bb6a;">状态</td>
+        <td style="padding: 0.4rem; color: #aaa;">target/field, color, intensity(normal/big)</td>
+      </tr>
+      <tr style="border-bottom: 1px solid #333;">
+        <td style="padding: 0.4rem; color: #fff;">mark_dead</td>
+        <td style="padding: 0.4rem; color: #ce93d8;">结果</td>
+        <td style="padding: 0.4rem; color: #aaa;">target</td>
+      </tr>
+      <tr>
+        <td style="padding: 0.4rem; color: #fff;">indicator_add</td>
+        <td style="padding: 0.4rem; color: #ce93d8;">结果</td>
+        <td style="padding: 0.4rem; color: #aaa;">target, corner, color</td>
+      </tr>
+    </table>
+  </div>
+</div>
+
+<style>
+/* Tokens */
+.tk { font-size: 0.7em; font-weight: bold; padding: 2px 5px; border-radius: 3px; position: relative; z-index: 2; }
+.tk.p { color: #4fc3f7; background: rgba(79,195,247,0.15); }
+.tk.e { color: #e57373; background: rgba(229,115,115,0.15); }
+
+/* Demo cell */
+.demo-cell {
+  position: relative;
+  width: 64px; height: 64px;
+  background: #1a1a2e;
+  border: 3px solid #555;
+  border-radius: 3px;
+  display: flex; align-items: center; justify-content: center;
+  overflow: visible;
+}
+.anim-label { text-align: center; font-size: 0.6em; color: #666; margin-top: 0.4rem; }
+
+/* Single buff — stacked double triangle (fast-forward style) */
+.single-buff-anim {
+  position: absolute; inset: 0;
+  display: flex; align-items: center; justify-content: center;
+  pointer-events: none;
+}
+.sb-group {
+  display: flex; flex-direction: column; align-items: center;
+  gap: 0px;
+  animation: sb-rise 1.4s ease-out infinite;
+  opacity: 0;
+}
+.sb-tri {
+  color: #66bb6a;
+  font-size: 0.9em;
+  line-height: 0.7;
+  filter: drop-shadow(0 0 4px #66bb6a);
+}
+.sb-tri.s2 { margin-top: -4px; }
+@keyframes sb-rise {
+  0% { transform: translateY(6px); opacity: 0; }
+  15% { transform: translateY(2px); opacity: 1; }
+  55% { transform: translateY(-14px); opacity: 0.9; }
+  100% { transform: translateY(-26px); opacity: 0; }
+}
+
+/* Single debuff */
+.single-debuff-anim {
+  position: absolute; inset: 0;
+  display: flex; align-items: center; justify-content: center;
+  pointer-events: none;
+}
+.sd-group {
+  display: flex; flex-direction: column; align-items: center;
+  gap: 0px;
+  animation: sd-sink 1.4s ease-out infinite;
+  opacity: 0;
+}
+.sd-tri {
+  color: #e57373;
+  font-size: 0.9em;
+  line-height: 0.7;
+  filter: drop-shadow(0 0 4px #e57373);
+}
+.sd-tri.s2 { margin-top: -4px; }
+@keyframes sd-sink {
+  0% { transform: translateY(-6px); opacity: 0; }
+  15% { transform: translateY(-2px); opacity: 1; }
+  55% { transform: translateY(14px); opacity: 0.9; }
+  100% { transform: translateY(26px); opacity: 0; }
+}
+
+/* Field buff/debuff */
+.field-container {
+  position: relative;
+  width: 90px; height: 90px;
+  overflow: visible;
+}
+.field-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 28px);
+  grid-template-rows: repeat(2, 28px);
+  gap: 2px;
+  position: relative;
+  z-index: 1;
+}
+.fc {
+  background: #1a1a2e;
+  border: 2px solid #444;
+  border-radius: 2px;
+  display: flex; align-items: center; justify-content: center;
+}
+.field-buff-anim {
+  position: absolute; inset: -10px;
+  pointer-events: none;
+  z-index: 3;
+}
+.fb-tri {
+  position: absolute;
+  color: #66bb6a;
+  font-size: 1.4em;
+  opacity: 0;
+  filter: drop-shadow(0 0 6px #66bb6a);
+}
+.fb-tri.f1 { left: 10%; animation: fb-rise 2s ease-out infinite; }
+.fb-tri.f2 { left: 40%; animation: fb-rise 2s ease-out infinite 0.2s; }
+.fb-tri.f3 { left: 65%; animation: fb-rise 2s ease-out infinite 0.4s; }
+.fb-tri.f4 { left: 30%; animation: fb-rise 2s ease-out infinite 0.6s; }
+@keyframes fb-rise {
+  0% { top: 70%; transform: scale(0.7); opacity: 0; }
+  12% { transform: scale(1.1); opacity: 1; }
+  50% { top: 20%; opacity: 0.8; }
+  100% { top: -20%; transform: scale(0.9); opacity: 0; }
+}
+
+.field-debuff-anim {
+  position: absolute; inset: -10px;
+  pointer-events: none;
+  z-index: 3;
+}
+.fd-tri {
+  position: absolute;
+  color: #e57373;
+  font-size: 1.4em;
+  opacity: 0;
+  filter: drop-shadow(0 0 6px #e57373);
+}
+.fd-tri.f1 { left: 10%; animation: fd-sink 2s ease-out infinite; }
+.fd-tri.f2 { left: 40%; animation: fd-sink 2s ease-out infinite 0.2s; }
+.fd-tri.f3 { left: 65%; animation: fd-sink 2s ease-out infinite 0.4s; }
+.fd-tri.f4 { left: 30%; animation: fd-sink 2s ease-out infinite 0.6s; }
+@keyframes fd-sink {
+  0% { top: 10%; transform: scale(0.7); opacity: 0; }
+  12% { transform: scale(1.1); opacity: 1; }
+  50% { top: 60%; opacity: 0.8; }
+  100% { top: 110%; transform: scale(0.9); opacity: 0; }
+}
+
+/* Corner indicator */
+.corner-ind {
+  position: absolute;
+  width: 12px; height: 12px;
+}
+.corner-ind.tl { top: 0; left: 0; clip-path: polygon(0 0, 100% 0, 0 100%); }
+
+/* Battle scene with projectile overlay */
+.battle-scene {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+.grid3 {
+  display: grid;
+  grid-template-columns: repeat(3, 32px);
+  grid-template-rows: repeat(3, 32px);
+  gap: 2px;
+  position: relative;
+}
+.c {
+  background: #1a1a2e;
+  border: 2px solid #444;
+  display: flex; align-items: center; justify-content: center;
+  position: relative;
+  border-radius: 2px;
+}
+.gap-zone { width: 16px; }
+.src-cell { border-color: #4fc3f7; box-shadow: 0 0 4px rgba(79,195,247,0.3); }
+.tgt-cell { animation: tgt-flash 1.5s ease-out infinite 0.5s; }
+@keyframes tgt-flash {
+  0% { background: rgba(255,255,255,0.35); }
+  20% { background: #1a1a2e; }
+  100% { background: #1a1a2e; }
+}
+.shake-on-hit { animation: sh-h 0.3s ease-in-out infinite 0.5s; }
+@keyframes sh-h {
+  0%,100% { transform: translateX(0); }
+  25% { transform: translateX(-2px); }
+  75% { transform: translateX(2px); }
+}
+
+/* Projectile overlay — positioned between grids */
+.proj-overlay {
+  position: absolute;
+  top: 0; left: 0; right: 0; bottom: 0;
+  pointer-events: none;
+  display: flex; align-items: center;
+}
+.proj {
+  position: absolute;
+  left: 15%;
+  animation: proj-center 1.2s ease-in-out infinite;
+}
+
+/* Circle projectile */
+.circle-proj {
+  width: 8px; height: 8px;
+  border-radius: 50%;
+  background: #fff;
+  box-shadow: 0 0 8px #fff, 0 0 16px rgba(255,255,255,0.3);
+}
+.circle-proj::after {
+  content: '';
+  position: absolute;
+  right: 6px; top: 2px;
+  width: 14px; height: 4px;
+  background: linear-gradient(to left, rgba(255,255,255,0.5), transparent);
+  border-radius: 2px;
+}
+
+/* Diamond projectile */
+.diamond-proj {
+  width: 8px; height: 8px;
+  background: #ffee58;
+  transform: rotate(45deg);
+  box-shadow: 0 0 8px #ffee58, 0 0 14px rgba(255,238,88,0.4);
+}
+
+/* Beam */
+.beam-proj {
+  width: 0; height: 3px;
+  background: linear-gradient(to right, #4fc3f7, #fff);
+  box-shadow: 0 0 6px #4fc3f7, 0 0 12px rgba(79,195,247,0.3);
+  border-radius: 2px;
+  animation: beam-extend 1.2s ease-out infinite !important;
+}
+@keyframes beam-extend {
+  0% { width: 0; left: 15%; opacity: 1; }
+  30% { width: 70%; left: 15%; opacity: 1; }
+  50% { width: 70%; opacity: 0.6; }
+  60%,100% { width: 70%; opacity: 0; }
+}
+
+/* Crescent projectile (flying) */
+.crescent-fly {
+  width: 14px; height: 14px;
+  border: 3px solid #fff;
+  border-color: #fff transparent transparent transparent;
+  border-radius: 50%;
+  box-shadow: 0 0 6px #fff;
+  transform: rotate(-45deg);
+}
+
+@keyframes proj-center {
+  0% { left: 15%; opacity: 0; }
+  10% { opacity: 1; }
+  55% { left: 72%; opacity: 1; }
+  65% { left: 72%; opacity: 0; }
+  100% { left: 72%; opacity: 0; }
+}
+
+/* Crescent slash on target */
+.crescent {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  z-index: 3;
+}
+.crescent-right {
+  width: 28px; height: 28px;
+  border: 3px solid transparent;
+  border-right-color: #fff;
+  border-radius: 50%;
+  position: absolute;
+  top: 50%; left: 50%;
+  transform: translate(-50%, -50%);
+  box-shadow: 4px 0 8px rgba(255,255,255,0.5);
+  animation: crescent-swing 1.2s ease-out infinite;
+}
+@keyframes crescent-swing {
+  0% { transform: translate(-50%, -50%) rotate(-60deg) scale(0.5); opacity: 0; }
+  20% { transform: translate(-50%, -50%) rotate(0deg) scale(1); opacity: 1; }
+  50% { transform: translate(-50%, -50%) rotate(30deg) scale(1); opacity: 0.7; }
+  70%,100% { transform: translate(-50%, -50%) rotate(40deg) scale(1.1); opacity: 0; }
+}
+
+/* Large crescent for AOE column */
+.target-col-aoe { position: relative; }
+.crescent-large {
+  position: absolute;
+  top: -4px; left: -4px;
+  width: 36px; height: calc(100% + 8px);
+  border: 3px solid transparent;
+  border-right-color: #fff;
+  border-radius: 50% / 30%;
+  box-shadow: 4px 0 10px rgba(255,255,255,0.5);
+  animation: crescent-large-swing 1.4s ease-out infinite;
+  pointer-events: none;
+  z-index: 5;
+}
+@keyframes crescent-large-swing {
+  0% { transform: translateX(-10px) scaleY(0.5); opacity: 0; }
+  20% { transform: translateX(0) scaleY(1); opacity: 1; }
+  50% { transform: translateX(4px) scaleY(1); opacity: 0.7; }
+  70%,100% { transform: translateX(6px) scaleY(1); opacity: 0; }
+}
+</style>
+
+</body>
+</html>
