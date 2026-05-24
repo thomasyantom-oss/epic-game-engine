@@ -1,6 +1,9 @@
 <template>
   <div class="battle-layout">
-    <div class="round-banner">第 {{ combat.round }} 回合</div>
+    <div class="round-banner">
+      <span>第 {{ combat.round }} 回合</span>
+      <span v-if="showTimer && !animating" class="turn-timer">{{ timerDisplay }}</span>
+    </div>
     <div class="battle-content">
     <div class="status-col player-col">
       <div v-for="(unit, idx) in playerUnits" :key="unit.id" class="unit-status" :class="{ dead: !unit.alive }">
@@ -81,7 +84,7 @@
 </template>
 
 <script setup>
-import { computed, ref, watch } from 'vue'
+import { computed, ref, watch, onMounted, onUnmounted } from 'vue'
 import ActionLink from '../ActionLink.vue'
 
 const props = defineProps({
@@ -170,6 +173,7 @@ function selectCommand(action) {
   var style = action.style
 
   if (style === 'instant' || cmd === 'FLEE' || cmd === 'DEFEND') {
+    stopTimer()
     emit('command', { type: 'combat_command', params: { command: cmd, targetId: null } })
     return
   }
@@ -181,6 +185,7 @@ function selectCommand(action) {
 function onCellClick(cell) {
   if (step.value !== 'target') return
   if (!cell.marker || !cell.marker.alive) return
+  stopTimer()
   emit('command', { type: 'combat_command', params: { command: selectedCommand.value, targetId: cell.marker.id } })
   step.value = 'command'
   selectedCommand.value = null
@@ -190,6 +195,54 @@ function cancelSelect() {
   step.value = 'command'
   selectedCommand.value = null
 }
+
+// Turn timer — counts down from turnTimer seconds, auto-attacks on timeout
+const timeLeft = ref(30)
+const showTimer = computed(() => phase.value === 'COMMAND' && !props.animating)
+const timerDisplay = computed(() => timeLeft.value + 's')
+let timerInterval = null
+
+function startTimer() {
+  stopTimer()
+  timeLeft.value = props.combat?.turnTimer || 30
+  timerInterval = setInterval(() => {
+    timeLeft.value--
+    if (timeLeft.value <= 0) {
+      stopTimer()
+      autoAttack()
+    }
+  }, 1000)
+}
+
+function stopTimer() {
+  if (timerInterval) {
+    clearInterval(timerInterval)
+    timerInterval = null
+  }
+}
+
+function autoAttack() {
+  var firstAliveEnemy = enemyUnits.value.find(u => u.alive)
+  if (firstAliveEnemy) {
+    emit('command', { type: 'combat_command', params: { command: 'ATTACK', targetId: firstAliveEnemy.id } })
+  }
+}
+
+watch(() => props.combat?.round, () => {
+  if (phase.value === 'COMMAND' && !props.animating) {
+    startTimer()
+  }
+}, { immediate: true })
+
+watch(() => props.animating, (anim) => {
+  if (anim) {
+    stopTimer()
+  } else if (phase.value === 'COMMAND') {
+    startTimer()
+  }
+})
+
+onUnmounted(() => stopTimer())
 </script>
 
 <style scoped>
@@ -200,11 +253,20 @@ function cancelSelect() {
 }
 
 .round-banner {
-  text-align: center;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 1rem;
   padding: 0.3rem;
   color: var(--color-highlight);
   font-weight: bold;
   border-bottom: 2px solid var(--panel-border-color);
+}
+
+.turn-timer {
+  color: var(--color-text);
+  font-weight: normal;
+  opacity: 0.8;
 }
 
 .battle-content {

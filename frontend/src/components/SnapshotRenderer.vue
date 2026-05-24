@@ -166,35 +166,38 @@ const historyRounds = computed(() => {
   return currentIdx
 })
 
-// Animate current round entries — reveal one by one
-const visibleCount = ref(0)
+// Animate combat events — play through event queue one by one
 const isAnimating = ref(false)
+const playedEvents = ref([])
 let animTimer = null
 
-const visibleCurrentEntries = computed(() => {
-  return currentRoundEntries.value.slice(0, visibleCount.value)
-})
-
-watch(currentRoundEntries, (entries, oldEntries) => {
-  const oldLen = oldEntries?.length || 0
-  const newLen = entries.length
-  if (newLen > oldLen) {
-    if (animTimer) clearInterval(animTimer)
-    visibleCount.value = oldLen
-    isAnimating.value = true
-    animTimer = setInterval(() => {
-      visibleCount.value++
-      if (visibleCount.value >= entries.length) {
-        clearInterval(animTimer)
-        animTimer = null
-        isAnimating.value = false
-      }
-    }, 400)
-  } else {
-    visibleCount.value = newLen
+watch(() => props.snapshot?.combat?.events, (events) => {
+  if (!events || events.length === 0) {
     isAnimating.value = false
+    return
   }
+  // New events to play
+  if (animTimer) clearInterval(animTimer)
+  playedEvents.value = []
+  isAnimating.value = true
+  let idx = 0
+  animTimer = setInterval(() => {
+    if (idx < events.length) {
+      playedEvents.value = [...playedEvents.value, events[idx]]
+      idx++
+    }
+    if (idx >= events.length) {
+      clearInterval(animTimer)
+      animTimer = null
+      isAnimating.value = false
+    }
+  }, 600)
 }, { immediate: true })
+
+// Visible current round entries — show all completed (not animated anymore)
+const visibleCurrentEntries = computed(() => {
+  return currentRoundEntries.value
+})
 
 // Combat actions for BattleGrid
 const combatActions = computed(() => {

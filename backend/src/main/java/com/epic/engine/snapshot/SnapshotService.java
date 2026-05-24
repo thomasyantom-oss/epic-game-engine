@@ -217,6 +217,7 @@ public class SnapshotService {
                 terrain, terrains, currentTerrain, currentTerrainName, pois);
     }
 
+    @SuppressWarnings("unchecked")
     private WorldSnapshot.CombatSnapshot buildCombatSnapshot(String playerId) {
         Entity player = entityStore.get(playerId);
         if (player == null) return null;
@@ -226,6 +227,9 @@ public class SnapshotService {
                 Entity combat = entityStore.get(combatId);
                 if (combat == null || !combat.hasComponent("CombatState")) continue;
                 Component state = combat.getComponent("CombatState");
+
+                int turnTimer = state.has("turnTimer") ? state.getInt("turnTimer") : 30;
+
                 List<WorldSnapshot.CombatantInfo> combatants = new ArrayList<>();
                 for (Entity c : entityStore.getByTag("combat:" + combatId)) {
                     if (!c.hasComponent("Health")) continue;
@@ -237,8 +241,41 @@ public class SnapshotService {
                             health.getInt("hp"), health.getInt("maxHp"),
                             health.getInt("hp") > 0));
                 }
+
+                // Read combat events (pending playback)
+                List<WorldSnapshot.CombatEvent> events = new ArrayList<>();
+                if (combat.hasComponent("CombatEvents")) {
+                    List<Object> rawEvents = (List<Object>) combat.getComponent("CombatEvents").get("queue");
+                    if (rawEvents != null) {
+                        for (Object evtObj : rawEvents) {
+                            Map<String, Object> evt = (Map<String, Object>) evtObj;
+                            List<WorldSnapshot.TextSegment> segments = new ArrayList<>();
+                            List<Object> segs = (List<Object>) evt.get("segments");
+                            if (segs != null) {
+                                for (Object segObj : segs) {
+                                    Map<String, Object> seg = (Map<String, Object>) segObj;
+                                    segments.add(new WorldSnapshot.TextSegment(
+                                            (String) seg.get("text"), (String) seg.get("color")));
+                                }
+                            }
+                            List<WorldSnapshot.Effect> effects = new ArrayList<>();
+                            List<Object> effs = (List<Object>) evt.get("effects");
+                            if (effs != null) {
+                                for (Object effObj : effs) {
+                                    Map<String, Object> eff = (Map<String, Object>) effObj;
+                                    effects.add(new WorldSnapshot.Effect(
+                                            (String) eff.get("target"),
+                                            (String) eff.get("type"),
+                                            eff));
+                                }
+                            }
+                            events.add(new WorldSnapshot.CombatEvent(segments, effects));
+                        }
+                    }
+                }
+
                 return new WorldSnapshot.CombatSnapshot(combatId, state.getString("phase"),
-                        state.getInt("round"), combatants);
+                        state.getInt("round"), turnTimer, combatants, events);
             }
         }
         return null;
