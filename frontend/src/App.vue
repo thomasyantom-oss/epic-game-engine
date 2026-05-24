@@ -1,5 +1,6 @@
 <template>
   <div class="app-container">
+    <div v-if="errorMsg" class="error-toast">{{ errorMsg }}</div>
     <CharacterSelect v-if="phase === 'character_select'"
       :characters="snapshot.characters"
       :max-slots="snapshot.maxSlots"
@@ -21,10 +22,16 @@ import { ref, computed, onMounted } from 'vue'
 import CharacterSelect from './components/CharacterSelect.vue'
 import CharacterCreate from './components/CharacterCreate.vue'
 import SnapshotRenderer from './components/SnapshotRenderer.vue'
-import { performAction, getSnapshot } from './api/client.js'
+import { performAction, getSnapshot, setErrorHandler } from './api/client.js'
 
 const snapshot = ref(null)
+const errorMsg = ref(null)
 const phase = computed(() => snapshot.value?.phase || 'loading')
+
+setErrorHandler((msg) => {
+    errorMsg.value = msg
+    setTimeout(() => errorMsg.value = null, 5000)
+})
 
 async function selectCharacter(characterId) {
     snapshot.value = await performAction('select_character', { characterId })
@@ -93,6 +100,18 @@ onMounted(async () => {
   height: 100vh;
   padding: 0.5rem;
   box-sizing: border-box;
+  position: relative;
 }
 .loading { display: flex; align-items: center; justify-content: center; height: 100%; color: var(--text-color); }
+.error-toast {
+  position: absolute;
+  top: 1rem;
+  left: 50%;
+  transform: translateX(-50%);
+  background: var(--color-enemy);
+  color: #fff;
+  padding: 0.5rem 1.5rem;
+  z-index: 999;
+  font-size: 0.9em;
+}
 </style>

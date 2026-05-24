@@ -17,19 +17,31 @@ function saveToken(snapshot) {
     }
 }
 
+let onError = null
+
+export function setErrorHandler(handler) {
+    onError = handler
+}
+
 export async function performAction(type, params = {}) {
-    const response = await fetch(`${BASE_URL}/action`, {
-        method: 'POST',
-        headers: getHeaders(),
-        body: JSON.stringify({ type, params })
-    })
-    const data = await response.json()
-    if (!response.ok || !data.phase) {
-        console.error('Action failed:', type, data)
+    try {
+        const response = await fetch(`${BASE_URL}/action`, {
+            method: 'POST',
+            headers: getHeaders(),
+            body: JSON.stringify({ type, params })
+        })
+        const data = await response.json()
+        if (!response.ok || !data.phase) {
+            const msg = data.message || data.error || '操作失败'
+            if (onError) onError(msg)
+            return null
+        }
+        saveToken(data)
+        return data
+    } catch (e) {
+        if (onError) onError('网络错误: ' + e.message)
         return null
     }
-    saveToken(data)
-    return data
 }
 
 export async function getSnapshot() {
