@@ -3,12 +3,16 @@ import { ref } from 'vue'
 export function useAnimationPlayer() {
   const playing = ref(false)
   const activeAnimations = ref([])
+  const playedEventIndex = ref(-1)
   let queue = []
   let currentResolve = null
+  let eventIndex = 0
 
   function play(events) {
     if (!events || events.length === 0) return Promise.resolve()
     playing.value = true
+    playedEventIndex.value = -1
+    eventIndex = 0
     queue = [...events]
     return new Promise(resolve => {
       currentResolve = resolve
@@ -26,6 +30,9 @@ export function useAnimationPlayer() {
 
     const event = queue.shift()
     const anims = event.animation || []
+
+    playedEventIndex.value = eventIndex++
+
     if (anims.length === 0) {
       setTimeout(playNext, 400)
       return
@@ -93,5 +100,5 @@ export function useAnimationPlayer() {
     }
   }
 
-  return { playing, activeAnimations, play }
+  return { playing, activeAnimations, playedEventIndex, play }
 }

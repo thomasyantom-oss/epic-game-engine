@@ -11,7 +11,7 @@
           </div>
         </template>
         <template #battle v-if="snapshot.combat">
-          <BattleGrid ref="battleGridRef" :combat="snapshot.combat" :player-id="snapshot.playerId"
+          <BattleGrid ref="battleGridRef" :combat="displayCombat" :player-id="snapshot.playerId"
                       :commands="combatActions" :animating="isAnimating"
                       :terrain-color="currentTerrainColor"
                       @command="$emit('action', $event)" />
@@ -170,12 +170,35 @@ const historyRounds = computed(() => {
 // Animate combat events — delegate to BattleGrid's animation player
 const isAnimating = ref(false)
 const battleGridRef = ref(null)
+const preAnimHp = ref({})
+const currentEvents = ref([])
 
 watch(() => props.snapshot?.combat?.events, async (events) => {
   if (!events || events.length === 0) {
     isAnimating.value = false
+    preAnimHp.value = {}
+    currentEvents.value = []
     return
   }
+
+  // Calculate pre-animation HP by reversing all effects
+  const hpState = {}
+  const combatants = props.snapshot?.combat?.combatants || []
+  for (const c of combatants) {
+    hpState[c.id] = c.hp
+  }
+  // Walk backwards: final HP is what backend returned, reverse effects to get starting HP
+  for (let i = events.length - 1; i >= 0; i--) {
+    const effs = events[i].effects || []
+    for (const eff of effs) {
+      if (eff.type === 'hp_change' && eff.target) {
+        hpState[eff.target] = (hpState[eff.target] || 0) - (eff.amount || 0)
+      }
+    }
+  }
+  preAnimHp.value = { ...hpState }
+  currentEvents.value = events
+
   isAnimating.value = true
   await nextTick()
   if (battleGridRef.value) {
@@ -183,11 +206,47 @@ watch(() => props.snapshot?.combat?.events, async (events) => {
     await battleGridRef.value.play(events)
   }
   isAnimating.value = false
+  preAnimHp.value = {}
+  currentEvents.value = []
 }, { immediate: true })
+
+// Progressive HP: start at pre-animation values, apply effects as events play
+const displayCombat = computed(() => {
+  const combat = props.snapshot?.combat
+  if (!combat) return null
+  if (!isAnimating.value || Object.keys(preAnimHp.value).length === 0) return combat
+
+  const eventIdx = battleGridRef.value?.playedEventIndex?.value ?? -1
+  const hpState = { ...preAnimHp.value }
+
+  // Apply effects for events 0..eventIdx
+  for (let i = 0; i <= eventIdx && i < currentEvents.value.length; i++) {
+    const effs = currentEvents.value[i].effects || []
+    for (const eff of effs) {
+      if (eff.type === 'hp_change' && eff.target) {
+        hpState[eff.target] = (hpState[eff.target] || 0) + (eff.amount || 0)
+      }
+    }
+  }
+
+  const updatedCombatants = combat.combatants.map(c => ({
+    ...c,
+    hp: hpState[c.id] !== undefined ? Math.max(0, hpState[c.id]) : c.hp,
+    alive: (hpState[c.id] !== undefined ? hpState[c.id] : c.hp) > 0
+  }))
+
+  return { ...combat, combatants: updatedCombatants }
+})
 
 // Visible current round entries — show all completed (not animated anymore)
 const visibleCurrentEntries = computed(() => {
-  return currentRoundEntries.value
+  const entries = currentRoundEntries.value
+  if (!isAnimating.value || !battleGridRef.value) return entries
+  const eventIdx = battleGridRef.value?.playedEventIndex?.value ?? -1
+  // First entry is the round separator, rest are event entries
+  // Show separator + entries up to eventIdx+1
+  if (eventIdx < 0) return entries.length > 0 ? [entries[0]] : []
+  return entries.slice(0, eventIdx + 2)
 })
 
 // Current terrain color for battle grid background tint

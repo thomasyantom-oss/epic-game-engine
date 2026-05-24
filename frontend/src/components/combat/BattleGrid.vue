@@ -127,7 +127,7 @@ const props = defineProps({
 
 const emit = defineEmits(['command'])
 
-const { playing, activeAnimations, play } = useAnimationPlayer()
+const { playing, activeAnimations, playedEventIndex, play } = useAnimationPlayer()
 
 const gridAreaRef = ref(null)
 const cellPositions = ref({})
@@ -191,7 +191,7 @@ const cellBgStyle = computed(() => {
   return { backgroundColor: `rgba(${r}, ${g}, ${b}, 0.3)` }
 })
 
-defineExpose({ play, updateCellPositions })
+defineExpose({ play, updateCellPositions, playedEventIndex })
 
 const step = ref('command')
 const selectedCommand = ref(null)
