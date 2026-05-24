@@ -71,10 +71,12 @@ export function useAnimationPlayer() {
     activeAnimations.value = active
     const totalDuration = Math.max(...active.map(a => a.startDelay + a.duration))
 
-    // Trigger HP/log update when hit animations start (= delay, which is when launches finish)
+    // Trigger HP/log update when hit animations are visible
+    // If delay=0 (no launch anims), wait a bit for impact to show before updating HP
+    const callbackDelay = delay > 0 ? delay : Math.min(150, totalDuration * 0.3)
     setTimeout(() => {
       if (doneCallback) doneCallback()
-    }, delay)
+    }, callbackDelay)
 
     setTimeout(() => {
       activeAnimations.value = []
