@@ -63,7 +63,7 @@ engine.on("ui.render_actions", 100, function(event) {
                             poiParams.put("poiId", poi.get("id"));
                             poiParams.put("poiType", poi.get("type"));
                             poiParams.put("target", poi.get("target"));
-                            actions.add(engine.newActionOptionStyled("poi_interact", poi.get("label"), poiParams, "highlight", "instant"));
+                            actions.add(engine.newActionOptionStyled("poi_interact", poi.get("label"), poiParams, null, "instant"));
                         }
                     }
                 }

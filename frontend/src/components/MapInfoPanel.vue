@@ -17,7 +17,7 @@
     </div>
     <div class="poi-section" v-if="currentPois.length > 0">
       <ActionLink v-for="poi in currentPois" :key="poi.id"
-                  :action="{ type: 'poi_interact', label: poi.label, params: { poiId: poi.id, poiType: poi.type, target: poi.target }, color: 'highlight' }"
+                  :action="{ type: 'poi_interact', label: poi.label, params: { poiId: poi.id, poiType: poi.type, target: poi.target } }"
                   @action="$emit('poiAction', poi)" />
     </div>
   </div>
