@@ -71,8 +71,12 @@ export function useAnimationPlayer() {
     activeAnimations.value = active
     const totalDuration = Math.max(...active.map(a => a.startDelay + a.duration))
 
+    // Trigger HP/log update when hit animations start (= delay, which is when launches finish)
     setTimeout(() => {
       if (doneCallback) doneCallback()
+    }, delay)
+
+    setTimeout(() => {
       activeAnimations.value = []
       setTimeout(playNext, 100)
     }, totalDuration)
