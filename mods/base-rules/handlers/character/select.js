@@ -134,11 +134,14 @@ engine.on("action.confirm_character", 100, function(event) {
     skillList.add(fleeSkill);
 
     if (classId === "mage") {
-        var fbSkill = engine.newMap();
-        fbSkill.put("id", "fireball");
-        fbSkill.put("level", 1);
-        fbSkill.put("cooldown", 0);
-        skillList.add(fbSkill);
+        var mageSkills = ["fireball", "ice_beam", "crescent_slash", "pulse_wave", "poison_dart", "heal"];
+        for (var m = 0; m < mageSkills.length; m++) {
+            var ms = engine.newMap();
+            ms.put("id", mageSkills[m]);
+            ms.put("level", 1);
+            ms.put("cooldown", 0);
+            skillList.add(ms);
+        }
     }
 
     skills.set("list", skillList);

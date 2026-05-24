@@ -1,6 +1,6 @@
-id: defend
-name: "防御"
-category: action
+id: heal
+name: "治愈术"
+category: skill
 silenceable: true
 targeting:
   steps: []
@@ -9,3 +9,6 @@ animation:
     target: actor
     color: "#66bb6a"
     intensity: normal
+  - type: damage_number
+    target: actor
+    color: heal

@@ -1,0 +1,11 @@
+id: training_dummy
+name: "训练假人"
+enemies:
+  - id: dummy1
+    name: "木桩假人"
+    row: FRONT
+    slot: 0
+    hp: 999
+    attack: 0
+    defense: 0
+    speed: 1

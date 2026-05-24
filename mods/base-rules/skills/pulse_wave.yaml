@@ -1,6 +1,6 @@
-id: basic_attack
-name: "攻击"
-category: action
+id: pulse_wave
+name: "脉冲波"
+category: skill
 silenceable: true
 targeting:
   steps:
@@ -8,11 +8,12 @@ targeting:
       filter: enemy
       count: 1
 animation:
-  - type: lunge
+  - type: pulse
     target: actor
-    side: actor_side
+    color: "#ce93d8"
   - type: impact
     target: target
+    color: "#ce93d8"
   - type: shake
     target: target
     intensity: normal

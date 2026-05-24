@@ -53,3 +53,15 @@ pois:
     type: combat
     target: mountain_bandit
     label: "路遇山贼"
+  - id: training_1
+    x: 4
+    y: 4
+    type: combat
+    target: training_dummy
+    label: "训练假人 x1"
+  - id: training_3
+    x: 5
+    y: 4
+    type: combat
+    target: training_dummy_3
+    label: "训练假人 x3"

@@ -1,6 +1,6 @@
-id: basic_attack
-name: "攻击"
-category: action
+id: poison_dart
+name: "毒镖"
+category: skill
 silenceable: true
 targeting:
   steps:
@@ -8,14 +8,18 @@ targeting:
       filter: enemy
       count: 1
 animation:
-  - type: lunge
-    target: actor
-    side: actor_side
+  - type: projectile
+    from: actor
+    to: target
+    shape: diamond
+    color: "#9c27b0"
+    speed: fast
   - type: impact
     target: target
-  - type: shake
+    color: "#9c27b0"
+  - type: debuff_down
     target: target
-    intensity: normal
+    color: "#9c27b0"
   - type: damage_number
     target: target
     color: damage

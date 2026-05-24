@@ -1,0 +1,22 @@
+engine.on("combat.unit_action", 80, function(event) {
+    var cmd = event.get("command");
+    if (cmd.get("type") !== "ice_beam") return;
+    var actorId = event.get("actorId");
+    var combatId = event.get("combatId");
+    var targetId = cmd.get("targetId");
+    if (!targetId) return;
+    var target = store.get(targetId);
+    if (target === null || target.getComponent("Health").getInt("hp") <= 0) return;
+    var caster = store.get(actorId);
+    var attack = caster.hasComponent("CombatStats") ? caster.getComponent("CombatStats").getInt("attack") : 5;
+    var damage = attack + 8;
+    var health = target.getComponent("Health");
+    health.set("hp", Math.max(0, health.getInt("hp") - damage));
+    var dealEvent = engine.newEvent("combat.damage_dealt");
+    dealEvent.set("attackerId", actorId);
+    dealEvent.set("targetId", targetId);
+    dealEvent.set("damage", damage);
+    dealEvent.set("combatId", combatId);
+    dealEvent.set("skillId", "ice_beam");
+    engine.fire("combat.damage_dealt", dealEvent);
+});

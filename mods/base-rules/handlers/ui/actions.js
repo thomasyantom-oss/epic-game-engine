@@ -25,6 +25,7 @@ engine.on("ui.render_actions", 100, function(event) {
                 if (skillDef === null) continue;
 
                 var name = skillDef.get("name");
+                var category = skillDef.get("category") || "action";
                 var targeting = skillDef.get("targeting");
                 var steps = targeting !== null ? targeting.get("steps") : null;
                 var needsTarget = steps !== null && steps.size() > 0;
@@ -39,6 +40,7 @@ engine.on("ui.render_actions", 100, function(event) {
 
                 var params = engine.newMap();
                 params.put("command", skillId);
+                params.put("category", category);
                 var style = needsTarget ? "requires_target" : "instant";
                 if (!usable) {
                     actions.add(engine.newActionOptionStyled("combat_command", name, params, "text", "disabled"));

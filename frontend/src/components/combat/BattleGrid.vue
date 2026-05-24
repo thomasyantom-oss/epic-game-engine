@@ -72,13 +72,21 @@
           </template>
         </div>
         <div class="cmd-col cmd-actions" v-if="currentActor && phase === 'COMMAND' && !animating">
-          <ActionLink v-for="cmd in commands" :key="cmd.params?.command"
+          <ActionLink v-for="cmd in baseActions" :key="cmd.params?.command"
                       :action="cmd"
                       :class="{ active: selectedCommand === cmd.params?.command }"
                       @action="selectCommand(cmd)" />
+          <span v-if="skillActions.length > 0" class="cmd-item skill-btn"
+                :class="{ active: showSkills }"
+                @click="showSkills = !showSkills">▸ 技能</span>
           <span v-if="step === 'target'" class="cmd-item cancel-item" @click="cancelSelect">▸ 取消</span>
         </div>
         <div class="cmd-col cmd-detail">
+          <template v-if="showSkills && !selectingTarget">
+            <ActionLink v-for="cmd in skillActions" :key="cmd.params?.command"
+                        :action="cmd"
+                        @action="selectCommand(cmd)" />
+          </template>
         </div>
       </div>
     </div>
@@ -166,6 +174,14 @@ defineExpose({ play, updateCellPositions })
 
 const step = ref('command')
 const selectedCommand = ref(null)
+const showSkills = ref(false)
+
+const baseActions = computed(() =>
+  props.commands.filter(c => (c.params?.category || 'action') !== 'skill')
+)
+const skillActions = computed(() =>
+  props.commands.filter(c => c.params?.category === 'skill')
+)
 
 const phase = computed(() => props.combat?.phase || 'COMMAND')
 
@@ -544,6 +560,22 @@ onUnmounted(() => stopTimer())
 
 .cancel-item {
   color: var(--color-enemy);
+}
+
+.skill-btn {
+  cursor: pointer;
+  color: var(--link-color);
+}
+.skill-btn.active {
+  color: var(--color-highlight);
+}
+
+.cmd-detail {
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 0.1rem;
+  padding: 0.3rem;
 }
 
 .marker.shaking {

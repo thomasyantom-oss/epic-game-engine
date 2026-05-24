@@ -1,6 +1,6 @@
-id: basic_attack
-name: "攻击"
-category: action
+id: ice_beam
+name: "冰霜射线"
+category: skill
 silenceable: true
 targeting:
   steps:
@@ -8,11 +8,13 @@ targeting:
       filter: enemy
       count: 1
 animation:
-  - type: lunge
-    target: actor
-    side: actor_side
+  - type: beam
+    from: actor
+    to: target
+    color: "#81d4fa"
   - type: impact
     target: target
+    color: "#81d4fa"
   - type: shake
     target: target
     intensity: normal

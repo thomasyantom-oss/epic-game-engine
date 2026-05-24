@@ -1,6 +1,6 @@
-id: basic_attack
-name: "攻击"
-category: action
+id: crescent_slash
+name: "月牙斩"
+category: skill
 silenceable: true
 targeting:
   steps:
@@ -11,11 +11,12 @@ animation:
   - type: lunge
     target: actor
     side: actor_side
-  - type: impact
+  - type: slash
     target: target
+    color: "#ffffff"
   - type: shake
     target: target
-    intensity: normal
+    intensity: heavy
   - type: damage_number
     target: target
     color: damage
