@@ -323,6 +323,12 @@ function currentAllowEmpty() {
 
 function isValidTarget(cell) {
   if (!selectingTarget.value) return false
+  if (!cell.marker || !cell.marker.alive) return false
+  return true
+}
+
+function isClickable(cell) {
+  if (!selectingTarget.value) return false
   if (currentAllowEmpty()) return true
   if (!cell.marker || !cell.marker.alive) return false
   return true
@@ -351,7 +357,7 @@ function isInAoeZone(cell) {
 
 function onCellClick(cell) {
   if (step.value !== 'target') return
-  if (!isValidTarget(cell)) return
+  if (!isClickable(cell)) return
   stopTimer()
   var targetId = cell.marker?.id || null
   emit('command', { type: 'combat_command', params: { command: selectedCommand.value, targetId: targetId, targetRow: cell.row, targetCol: cell.col } })
