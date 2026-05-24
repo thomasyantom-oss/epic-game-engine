@@ -308,11 +308,31 @@
 - animation-fill-mode: both 修复 delay 期间闪烁
 - buff/debuff 三角底边=格子宽度
 
+**engine.combatEvent helper：**
+- `engine.combatEvent(combatId, { log, effects, animation })` 一次调用搞定日志+动画+effects
+- 同时写 CombatLog（持久日志面板）和 CombatEvents（动画队列）
+- 单体/AOE/纯文本效果/buff tick 统一使用
+- 火球术/光击阵/灼烧buff 已改用 helper
+- mod 作者可自定义任意日志文案（不再限于"对xxx造成N点伤害"）
+
+**战斗动画与数据同步：**
+- HP 血条随动画逐步更新（BattleGrid 内部 flush:sync watch + displayHp ref）
+- 日志随动画逐条/逐批显示（playedCount + logCount 控制）
+- 日志面板自动滚动到最新行
+- AOE 多目标日志通过 logCount 同时显示
+- 防御也写入 CombatLog 保持 event 和日志一一对应
+- combat_log.js 检查 skipLog 避免 AOE 日志重复
+
+**UI 交互改进：**
+- 选择技能后子行动栏显示 YAML 定义的 prompt 文字 + 取消按钮
+- 技能列表在目标选择时隐藏
+- AOE 范围指示：黄框=有单位可选，红框=AOE 边界，红染色=命中区域
+- allow_empty 控制能否选空地（光击阵可选空地，十字爆裂需选单位）
+
 **其他：**
 - 删除存档功能
 - YAML 热加载（地图/地形/颜色修改自动生效）
 - 主题切换（夜间/摸鱼/亮色/多巴胺）
 - ModuleLoader 扫描 handlers/skills/buffs 三个目录
 - CombatPosition 组件 + 十字阵型假人
-- 训练假人 POI（x1/x3/十字）
-- 法师 12 个测试技能覆盖所有动画原语和 AOE 模式
+- 训练假人 POI（x1/x3/十字/快速假人）
