@@ -51,7 +51,7 @@
                 <TextRenderer :segments="entry.segments" />
               </div>
             </div>
-            <div v-for="(entry, i) in currentRoundEntries" :key="'c'+i" class="log-entry">
+            <div v-for="(entry, i) in visibleCurrentEntries" :key="'c'+i" class="log-entry">
               <TextRenderer :segments="entry.segments" />
             </div>
             <div v-if="currentRoundEntries.length === 0 && historyEntries.length === 0" class="empty-log">等待指令...</div>
@@ -72,7 +72,7 @@
 </template>
 
 <script setup>
-import { computed, ref } from 'vue'
+import { computed, ref, watch } from 'vue'
 import TabPanel from './TabPanel.vue'
 import TextRenderer from './TextRenderer.vue'
 import StatusBars from './StatusBars.vue'
@@ -165,6 +165,33 @@ const historyRounds = computed(() => {
   })()
   return currentIdx
 })
+
+// Animate current round entries — reveal one by one
+const visibleCount = ref(0)
+let animTimer = null
+
+const visibleCurrentEntries = computed(() => {
+  return currentRoundEntries.value.slice(0, visibleCount.value)
+})
+
+watch(currentRoundEntries, (entries, oldEntries) => {
+  const oldLen = oldEntries?.length || 0
+  const newLen = entries.length
+  if (newLen > oldLen) {
+    // New entries appeared — animate from where we were
+    if (animTimer) clearInterval(animTimer)
+    visibleCount.value = oldLen
+    animTimer = setInterval(() => {
+      visibleCount.value++
+      if (visibleCount.value >= entries.length) {
+        clearInterval(animTimer)
+        animTimer = null
+      }
+    }, 400)
+  } else {
+    visibleCount.value = newLen
+  }
+}, { immediate: true })
 
 // Combat actions for BattleGrid
 const combatActions = computed(() => {
