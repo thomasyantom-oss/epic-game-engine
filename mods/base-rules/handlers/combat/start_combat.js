@@ -39,7 +39,7 @@ engine.on("combat.start_encounter", 100, function(event) {
     var enemies = encounterData.get("enemies");
     for (var i = 0; i < enemies.size(); i++) {
         var enemyDef = enemies.get(i);
-        var enemyId = enemyDef.get("id") + "_" + i;
+        var enemyId = "" + enemyDef.get("id") + "_" + i;
         var enemy = engine.createEntity(enemyId);
 
         var health = engine.newComponent("Health");

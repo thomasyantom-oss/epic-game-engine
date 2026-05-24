@@ -9,6 +9,9 @@ engine.on("combat.unit_action", 100, function(event) {
 
     if (cmdTypeStr === "ATTACK") {
         var targetId = cmd.get("targetId");
+        if (targetId === null || targetId === undefined) return;
+        var targetEntity = store.get(targetId);
+        if (targetEntity === null || !targetEntity.hasComponent("Health") || targetEntity.getComponent("Health").getInt("hp") <= 0) return;
 
         var calcEvent = engine.newEvent("combat.damage_calc");
         calcEvent.set("attackerId", actorId);
