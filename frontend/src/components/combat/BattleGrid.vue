@@ -45,7 +45,7 @@
             v-for="(cell, idx) in enemyCells"
             :key="'e'+idx"
             class="terrain-cell"
-            :class="{ 'target-cell': isValidTarget(cell), 'aoe-zone': isInAoeZone(cell) }"
+            :class="{ 'target-cell': isValidTarget(cell), 'aoe-border': isInAoeZone(cell), 'aoe-hit': isInAoeZone(cell) && cell.marker && cell.marker.alive }"
             :style="cellBgStyle"
             :data-unit-id="cell.marker?.id"
             @click="onCellClick(cell)"
@@ -630,8 +630,12 @@ onUnmounted(() => stopTimer())
   cursor: default;
 }
 
-.terrain-cell.aoe-zone {
-  background-color: rgba(229, 69, 96, 0.2) !important;
+.terrain-cell.aoe-border {
+  border-color: var(--color-enemy);
+}
+
+.terrain-cell.aoe-hit {
+  background-color: rgba(229, 69, 96, 0.25) !important;
   border-color: var(--color-enemy);
 }
 
