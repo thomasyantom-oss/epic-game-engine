@@ -26,7 +26,10 @@
             class="terrain-cell"
           >
             <span v-if="cell.marker && cell.marker.alive" class="marker player">
-              <span class="marker-num">{{ cell.marker.index }}</span>▶
+              P{{ cell.marker.index }}
+            </span>
+            <span v-if="cell.marker && cell.marker.alive" class="corner-hp">
+              {{ cell.marker.hp }}/{{ cell.marker.maxHp }}
             </span>
           </div>
         </div>
@@ -40,7 +43,10 @@
             @click="onCellClick(cell)"
           >
             <span v-if="cell.marker && cell.marker.alive" class="marker enemy">
-              ◀<span class="marker-num">{{ cell.marker.index }}</span>
+              E{{ cell.marker.index }}
+            </span>
+            <span v-if="cell.marker && cell.marker.alive" class="corner-hp">
+              {{ cell.marker.hp }}/{{ cell.marker.maxHp }}
             </span>
           </div>
         </div>
@@ -159,7 +165,7 @@ function mapUnitsToGrid(units, side) {
     const unitRow = unit.row || 'FRONT'
     const col = side === 'player' ? (playerColMap[unitRow] ?? 2) : (enemyColMap[unitRow] ?? 0)
     const row = unit.slot ?? idx % 3
-    markers.push({ col, row, side, index: idx + 1, alive: unit.alive, id: unit.id })
+    markers.push({ col, row, side, index: idx + 1, alive: unit.alive, id: unit.id, hp: unit.hp, maxHp: unit.maxHp })
   })
   return markers
 }
@@ -361,31 +367,43 @@ onUnmounted(() => stopTimer())
   display: flex;
   align-items: center;
   justify-content: center;
-  border: 1px solid #222;
-  border-radius: 2px;
-  background-color: #333;
+  border: 3px solid #444;
+  border-radius: 3px;
+  background-color: #1a1a2e;
+  position: relative;
+  overflow: hidden;
 }
 
 .terrain-cell.target-cell {
   cursor: pointer;
-  border: 3px solid var(--color-enemy);
+  border: 4px solid var(--color-highlight);
+  box-shadow: 0 0 10px rgba(255, 152, 0, 0.4), inset 0 0 6px rgba(255, 152, 0, 0.15);
 }
 
 .terrain-cell.target-cell:hover {
-  box-shadow: 0 0 4px var(--color-enemy);
+  box-shadow: 0 0 14px rgba(255, 152, 0, 0.5), inset 0 0 8px rgba(255, 152, 0, 0.2);
 }
 
 .marker {
   font-weight: bold;
   display: flex;
   align-items: center;
+  justify-content: center;
+  padding: 2px 5px;
+  border-radius: 3px;
+  font-size: 0.75em;
 }
 
-.marker.player { color: var(--color-player); }
-.marker.enemy { color: var(--color-enemy); }
+.marker.player { color: var(--color-player); background: rgba(79, 195, 247, 0.15); }
+.marker.enemy { color: var(--color-enemy); background: rgba(229, 115, 115, 0.15); }
 
-.marker-num {
-  color: #fff;
+.corner-hp {
+  position: absolute;
+  bottom: 2px;
+  right: 3px;
+  font-size: 0.45em;
+  color: #999;
+  font-weight: bold;
 }
 
 .command-row {
