@@ -163,6 +163,14 @@ engine.on("combat.unit_action", 200, function(event) {
         evt.put("animation", animation);
 
         combat.getComponent("CombatEvents").get("queue").add(evt);
+
+        // Also write to CombatLog
+        if (combat.hasComponent("CombatLog")) {
+            var logEntry = engine.newList();
+            var l1 = engine.newMap(); l1.put("text", actorName); l1.put("color", actorSide); logEntry.add(l1);
+            var l2 = engine.newMap(); l2.put("text", " 进行防御"); l2.put("color", "text"); logEntry.add(l2);
+            combat.getComponent("CombatLog").get("entries").add(logEntry);
+        }
     }
 });
 
