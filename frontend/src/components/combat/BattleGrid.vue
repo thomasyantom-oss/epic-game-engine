@@ -24,10 +24,10 @@
             v-for="(cell, idx) in playerCells"
             :key="'p'+idx"
             class="terrain-cell"
-            :class="[{ 'shaking': isShaking(cell.marker?.id) }, lungingClass(cell.marker?.id)]"
             :data-unit-id="cell.marker?.id"
           >
-            <span v-if="cell.marker && cell.marker.alive" class="marker player">
+            <span v-if="cell.marker && cell.marker.alive" class="marker player"
+                  :class="[{ 'shaking': isShaking(cell.marker?.id) }, lungingClass(cell.marker?.id)]">
               P{{ cell.marker.index }}
             </span>
             <span v-if="cell.marker && cell.marker.alive" class="corner-hp">
@@ -41,11 +41,12 @@
             v-for="(cell, idx) in enemyCells"
             :key="'e'+idx"
             class="terrain-cell"
-            :class="[{ 'target-cell': selectingTarget && cell.marker && cell.marker.alive, 'shaking': isShaking(cell.marker?.id) }, lungingClass(cell.marker?.id)]"
+            :class="{ 'target-cell': selectingTarget && cell.marker && cell.marker.alive }"
             :data-unit-id="cell.marker?.id"
             @click="onCellClick(cell)"
           >
-            <span v-if="cell.marker && cell.marker.alive" class="marker enemy">
+            <span v-if="cell.marker && cell.marker.alive" class="marker enemy"
+                  :class="[{ 'shaking': isShaking(cell.marker?.id) }, lungingClass(cell.marker?.id)]">
               E{{ cell.marker.index }}
             </span>
             <span v-if="cell.marker && cell.marker.alive" class="corner-hp">
@@ -508,11 +509,11 @@ onUnmounted(() => stopTimer())
   color: var(--color-enemy);
 }
 
-.terrain-cell.shaking {
-  animation: cell-shake 250ms ease-in-out;
+.marker.shaking {
+  animation: marker-shake 250ms ease-in-out;
 }
 
-@keyframes cell-shake {
+@keyframes marker-shake {
   0%, 100% { transform: translateX(0); }
   20% { transform: translateX(-3px); }
   40% { transform: translateX(3px); }
@@ -520,11 +521,11 @@ onUnmounted(() => stopTimer())
   80% { transform: translateX(2px); }
 }
 
-.terrain-cell.lunge-right {
+.marker.lunge-right {
   animation: lunge-right 250ms ease-in-out;
 }
 
-.terrain-cell.lunge-left {
+.marker.lunge-left {
   animation: lunge-left 250ms ease-in-out;
 }
 
