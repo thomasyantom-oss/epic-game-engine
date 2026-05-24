@@ -180,8 +180,46 @@
 - **每种颜色唯一语义** — 不滥用，交互统一链接色
 - **前端是纯渲染器** — 不含游戏知识，所有逻辑在后端模块
 
+### 战报系统 + 回合节奏
+
+- 战斗事件队列（CombatEvents 组件）— 每回合生成有序事件列表
+- 每条事件包含：segments（文字显示）+ effects（数据变化，为动画预留）
+- effect 类型：hp_change、death（后续扩展 add_buff、mp_change 等）
+- 前端按 600ms/条逐步播放事件，播放期间指令不可用
+- 30 秒回合倒计时，超时自动攻击最近目标
+- 倒计时在结算期间暂停，下回合重新开始
+
+### 交互统一
+
+- ActionLink 组件 — 所有可交互元素统一 `▸前缀` + 链接色
+- 战斗指令后端驱动（攻击/防御/逃跑由 handler 动态生成，不前端硬编码）
+- 颜色不指定时默认用 `--link-color`（设置面板可调）
+- 特殊颜色由模块指定（如未来史诗装备 `color: "epic"`）
+
+### 颜色系统模块化
+
+- `colors.yaml` 定义语义色（player/enemy/damage/highlight/text）
+- 启动时加载到 `_config` entity 的 Colors 组件
+- 每次 snapshot 携带完整 colorMap
+- 前端 watch snapshot.colors 动态设置 CSS 变量
+- 模块可自由扩展新语义色（如 `epic`、`blood`）
+
+### Bug 修复
+
+- 角色持久化 — 重启后端不丢角色（session token 恢复 + loadAllPersistent）
+- 启动时清理残留 combat tag — 防止重启后 ghost combat
+- 战斗死亡满血复活
+- 寻路不可通过时立即停止（不死循环）
+- API 错误前端 toast 提示（不白屏）
+- 战斗中隐藏退出角色按钮
+- 战斗日志战斗结束后保留，新战斗清空
+- JS 热加载 — 文件监听自动重载 handler，不用重启
+
 ### 待做
 
+- **动画系统**（重中之重，Into the Breach 风格，单独迭代）
+  - 位移（近战冲击）、投射（远程法术）、格子闪光、数字弹出、状态标记
+  - 与战报系统 effects 数据对接
 - 技能系统（技能定义、MP/资源消耗、多种范围）
 - 联动系统：状态标签 / 资源累积 / 技能链
 - 高级 AI（行为模式、按遭遇战配置）
