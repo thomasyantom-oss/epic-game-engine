@@ -48,7 +48,7 @@ export function useAnimationPlayer() {
       if (parallel.includes(anim.type)) {
         // These play in parallel with the preceding launch animation
       } else {
-        delay += duration
+        delay += getDelayContribution(anim)
       }
     }
 
@@ -77,6 +77,19 @@ export function useAnimationPlayer() {
       case 'mark_dead': return 400
       case 'indicator_add': return 300
       default: return 300
+    }
+  }
+
+  // How long before the next animation should start (arrival time for projectiles/beams)
+  function getDelayContribution(anim) {
+    switch (anim.type) {
+      case 'projectile': {
+        const total = anim.speed === 'fast' ? 300 : anim.speed === 'slow' ? 600 : 400
+        return Math.floor(total * 0.7)
+      }
+      case 'beam': return 120
+      case 'slash': return 200
+      default: return getAnimDuration(anim)
     }
   }
 
