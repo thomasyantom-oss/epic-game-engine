@@ -61,6 +61,7 @@ export function useAnimationPlayer() {
   function getAnimDuration(anim) {
     switch (anim.type) {
       case 'lunge': return 250
+      case 'projectile': return anim.speed === 'fast' ? 300 : anim.speed === 'slow' ? 600 : 400
       case 'impact': return 150
       case 'shake': return 250
       case 'damage_number': return 500

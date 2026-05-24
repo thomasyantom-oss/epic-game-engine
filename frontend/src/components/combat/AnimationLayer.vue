@@ -1,10 +1,18 @@
 <template>
   <div class="animation-layer">
     <template v-for="(anim, idx) in animations" :key="idx">
+      <!-- Projectile: flies from source center to target center -->
+      <div v-if="anim.type === 'projectile'"
+           class="anim-projectile"
+           :class="'shape-' + (anim.shape || 'circle')"
+           :style="projectileStyle(anim)" />
+
+      <!-- Impact: white flash on target cell -->
       <div v-if="anim.type === 'impact'"
            class="anim-impact"
            :style="impactStyle(anim)" />
 
+      <!-- Damage number -->
       <div v-if="anim.type === 'damage_number'"
            class="anim-damage-number"
            :class="damageClass(anim)"
@@ -25,13 +33,36 @@ function getCellPos(targetId) {
   return props.cellPositions[targetId] || { x: 0, y: 0, w: 32, h: 32 }
 }
 
+function projectileStyle(anim) {
+  const from = getCellPos(anim.from)
+  const to = getCellPos(anim.to)
+  const startX = from.x + from.w / 2
+  const startY = from.y + from.h / 2
+  const endX = to.x + to.w / 2
+  const endY = to.y + to.h / 2
+  const color = anim.color || '#fff'
+  const duration = anim.duration || 400
+
+  return {
+    '--start-x': startX + 'px',
+    '--start-y': startY + 'px',
+    '--end-x': endX + 'px',
+    '--end-y': endY + 'px',
+    '--proj-color': color,
+    animationDelay: anim.startDelay + 'ms',
+    animationDuration: duration + 'ms'
+  }
+}
+
 function impactStyle(anim) {
   const pos = getCellPos(anim.target)
+  const color = anim.color || '#fff'
   return {
     left: pos.x + 'px',
     top: pos.y + 'px',
     width: pos.w + 'px',
     height: pos.h + 'px',
+    '--impact-color': color,
     animationDelay: anim.startDelay + 'ms',
     animationDuration: anim.duration + 'ms'
   }
@@ -66,6 +97,61 @@ function formatValue(value) {
   z-index: 10;
 }
 
+/* Projectile */
+.anim-projectile {
+  position: absolute;
+  left: var(--start-x);
+  top: var(--start-y);
+  transform: translate(-50%, -50%);
+  animation: projectile-fly linear forwards;
+  opacity: 0;
+}
+
+.anim-projectile.shape-circle {
+  width: 8px; height: 8px;
+  border-radius: 50%;
+  background: var(--proj-color);
+  box-shadow: 0 0 6px var(--proj-color), 0 0 12px var(--proj-color);
+}
+
+.anim-projectile.shape-diamond {
+  width: 8px; height: 8px;
+  background: var(--proj-color);
+  box-shadow: 0 0 6px var(--proj-color), 0 0 12px var(--proj-color);
+  transform: translate(-50%, -50%) rotate(45deg);
+}
+
+.anim-projectile.shape-crescent {
+  width: 12px; height: 12px;
+  border: 3px solid var(--proj-color);
+  border-color: var(--proj-color) transparent transparent transparent;
+  border-radius: 50%;
+  box-shadow: 0 0 4px var(--proj-color);
+  background: transparent;
+}
+
+@keyframes projectile-fly {
+  0% {
+    left: var(--start-x);
+    top: var(--start-y);
+    opacity: 0;
+  }
+  10% {
+    opacity: 1;
+  }
+  85% {
+    left: var(--end-x);
+    top: var(--end-y);
+    opacity: 1;
+  }
+  100% {
+    left: var(--end-x);
+    top: var(--end-y);
+    opacity: 0;
+  }
+}
+
+/* Impact */
 .anim-impact {
   position: absolute;
   border-radius: 3px;
@@ -77,6 +163,7 @@ function formatValue(value) {
   100% { background: transparent; }
 }
 
+/* Damage number */
 .anim-damage-number {
   position: absolute;
   transform: translateX(-50%);
