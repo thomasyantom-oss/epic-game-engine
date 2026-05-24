@@ -45,12 +45,15 @@
 
       <div class="command-row">
         <div class="cmd-col cmd-actor">
-          <template v-if="currentActor && phase === 'COMMAND'">
+          <template v-if="currentActor && phase === 'COMMAND' && !animating">
             <div class="actor-avatar"></div>
             <div class="actor-name">{{ currentActor.name }}</div>
           </template>
+          <template v-else-if="animating">
+            <div class="resolving-text">结算中...</div>
+          </template>
         </div>
-        <div class="cmd-col cmd-actions" v-if="currentActor && phase === 'COMMAND'">
+        <div class="cmd-col cmd-actions" v-if="currentActor && phase === 'COMMAND' && !animating">
           <ActionLink v-for="cmd in commands" :key="cmd.params?.command"
                       :action="cmd"
                       :class="{ active: selectedCommand === cmd.params?.command }"
@@ -84,7 +87,8 @@ import ActionLink from '../ActionLink.vue'
 const props = defineProps({
   combat: { type: Object, required: true },
   playerId: { type: String, default: '' },
-  commands: { type: Array, default: () => [] }
+  commands: { type: Array, default: () => [] },
+  animating: { type: Boolean, default: false }
 })
 
 const emit = defineEmits(['command'])
@@ -364,6 +368,16 @@ function cancelSelect() {
 
 .actor-name {
   color: var(--color-player);
+}
+
+.resolving-text {
+  color: var(--color-highlight);
+  animation: pulse 1s infinite;
+}
+
+@keyframes pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.4; }
 }
 
 .cmd-item {

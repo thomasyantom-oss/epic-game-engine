@@ -12,7 +12,7 @@
         </template>
         <template #battle v-if="snapshot.combat">
           <BattleGrid :combat="snapshot.combat" :player-id="snapshot.playerId"
-                      :commands="combatActions"
+                      :commands="combatActions" :animating="isAnimating"
                       @command="$emit('action', $event)" />
         </template>
       </TabPanel>
@@ -168,6 +168,7 @@ const historyRounds = computed(() => {
 
 // Animate current round entries — reveal one by one
 const visibleCount = ref(0)
+const isAnimating = ref(false)
 let animTimer = null
 
 const visibleCurrentEntries = computed(() => {
@@ -178,18 +179,20 @@ watch(currentRoundEntries, (entries, oldEntries) => {
   const oldLen = oldEntries?.length || 0
   const newLen = entries.length
   if (newLen > oldLen) {
-    // New entries appeared — animate from where we were
     if (animTimer) clearInterval(animTimer)
     visibleCount.value = oldLen
+    isAnimating.value = true
     animTimer = setInterval(() => {
       visibleCount.value++
       if (visibleCount.value >= entries.length) {
         clearInterval(animTimer)
         animTimer = null
+        isAnimating.value = false
       }
     }, 400)
   } else {
     visibleCount.value = newLen
+    isAnimating.value = false
   }
 }, { immediate: true })
 
