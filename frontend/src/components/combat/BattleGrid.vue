@@ -23,6 +23,7 @@
             v-for="(cell, idx) in playerCells"
             :key="'p'+idx"
             class="terrain-cell"
+            :style="cellBgStyle"
             :data-unit-id="cell.marker?.id"
           >
             <span v-if="cell.marker && cell.marker.alive" class="marker player"
@@ -43,6 +44,7 @@
             :key="'e'+idx"
             class="terrain-cell"
             :class="{ 'target-cell': selectingTarget && cell.marker && cell.marker.alive }"
+            :style="cellBgStyle"
             :data-unit-id="cell.marker?.id"
             @click="onCellClick(cell)"
           >
@@ -102,7 +104,8 @@ const props = defineProps({
   combat: { type: Object, required: true },
   playerId: { type: String, default: '' },
   commands: { type: Array, default: () => [] },
-  animating: { type: Boolean, default: false }
+  animating: { type: Boolean, default: false },
+  terrainColor: { type: String, default: null }
 })
 
 const emit = defineEmits(['command'])
@@ -141,6 +144,15 @@ function lungingClass(unitId) {
   if (!anim) return ''
   return anim.side === 'player' ? 'lunge-right' : 'lunge-left'
 }
+
+const cellBgStyle = computed(() => {
+  if (!props.terrainColor) return {}
+  const hex = props.terrainColor.replace('#', '')
+  const r = parseInt(hex.substring(0, 2), 16)
+  const g = parseInt(hex.substring(2, 4), 16)
+  const b = parseInt(hex.substring(4, 6), 16)
+  return { backgroundColor: `rgba(${r}, ${g}, ${b}, 0.12)` }
+})
 
 defineExpose({ play, updateCellPositions })
 

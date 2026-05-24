@@ -13,6 +13,7 @@
         <template #battle v-if="snapshot.combat">
           <BattleGrid ref="battleGridRef" :combat="snapshot.combat" :player-id="snapshot.playerId"
                       :commands="combatActions" :animating="isAnimating"
+                      :terrain-color="currentTerrainColor"
                       @command="$emit('action', $event)" />
         </template>
       </TabPanel>
@@ -187,6 +188,14 @@ watch(() => props.snapshot?.combat?.events, async (events) => {
 // Visible current round entries — show all completed (not animated anymore)
 const visibleCurrentEntries = computed(() => {
   return currentRoundEntries.value
+})
+
+// Current terrain color for battle grid background tint
+const currentTerrainColor = computed(() => {
+  const map = props.snapshot?.map
+  if (!map || !map.currentTerrain || !map.terrains) return null
+  const info = map.terrains[map.currentTerrain]
+  return info?.color || null
 })
 
 // Combat actions for BattleGrid
