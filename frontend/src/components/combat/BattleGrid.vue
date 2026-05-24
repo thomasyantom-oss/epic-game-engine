@@ -33,7 +33,7 @@
             <span v-if="cell.marker && cell.marker.alive" class="corner-hp">
               {{ cell.marker.hp }}/{{ cell.marker.maxHp }}
             </span>
-            <span v-for="(buff, bi) in (cell.marker?.buffs || [])" :key="bi"
+            <span v-if="cell.marker?.alive" v-for="(buff, bi) in (cell.marker?.buffs || [])" :key="bi"
                   class="buff-indicator" :class="'corner-' + bi" :style="{ backgroundColor: buffColor(buff.id) }"></span>
           </div>
         </div>
@@ -57,7 +57,7 @@
             <span v-if="cell.marker && cell.marker.alive" class="corner-hp">
               {{ cell.marker.hp }}/{{ cell.marker.maxHp }}
             </span>
-            <span v-for="(buff, bi) in (cell.marker?.buffs || [])" :key="bi"
+            <span v-if="cell.marker?.alive" v-for="(buff, bi) in (cell.marker?.buffs || [])" :key="bi"
                   class="buff-indicator" :class="'corner-' + bi" :style="{ backgroundColor: buffColor(buff.id) }"></span>
           </div>
         </div>
