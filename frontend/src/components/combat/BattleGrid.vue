@@ -24,7 +24,7 @@
             v-for="(cell, idx) in playerCells"
             :key="'p'+idx"
             class="terrain-cell"
-            :class="{ 'shaking': isShaking(cell.marker?.id) }"
+            :class="[{ 'shaking': isShaking(cell.marker?.id) }, lungingClass(cell.marker?.id)]"
             :data-unit-id="cell.marker?.id"
           >
             <span v-if="cell.marker && cell.marker.alive" class="marker player">
@@ -41,7 +41,7 @@
             v-for="(cell, idx) in enemyCells"
             :key="'e'+idx"
             class="terrain-cell"
-            :class="{ 'target-cell': selectingTarget && cell.marker && cell.marker.alive, 'shaking': isShaking(cell.marker?.id) }"
+            :class="[{ 'target-cell': selectingTarget && cell.marker && cell.marker.alive, 'shaking': isShaking(cell.marker?.id) }, lungingClass(cell.marker?.id)]"
             :data-unit-id="cell.marker?.id"
             @click="onCellClick(cell)"
           >
@@ -131,6 +131,13 @@ function updateCellPositions() {
 function isShaking(unitId) {
   if (!unitId) return false
   return activeAnimations.value.some(a => a.type === 'shake' && a.target === unitId)
+}
+
+function lungingClass(unitId) {
+  if (!unitId) return ''
+  const anim = activeAnimations.value.find(a => a.type === 'lunge' && a.target === unitId)
+  if (!anim) return ''
+  return anim.side === 'player' ? 'lunge-right' : 'lunge-left'
 }
 
 defineExpose({ play, updateCellPositions })
@@ -511,5 +518,23 @@ onUnmounted(() => stopTimer())
   40% { transform: translateX(3px); }
   60% { transform: translateX(-2px); }
   80% { transform: translateX(2px); }
+}
+
+.terrain-cell.lunge-right {
+  animation: lunge-right 250ms ease-in-out;
+}
+
+.terrain-cell.lunge-left {
+  animation: lunge-left 250ms ease-in-out;
+}
+
+@keyframes lunge-right {
+  0%, 100% { transform: translateX(0); }
+  40% { transform: translateX(6px); }
+}
+
+@keyframes lunge-left {
+  0%, 100% { transform: translateX(0); }
+  40% { transform: translateX(-6px); }
 }
 </style>

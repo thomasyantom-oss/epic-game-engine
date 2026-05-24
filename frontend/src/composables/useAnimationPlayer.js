@@ -60,6 +60,7 @@ export function useAnimationPlayer() {
 
   function getAnimDuration(anim) {
     switch (anim.type) {
+      case 'lunge': return 250
       case 'impact': return 150
       case 'shake': return 250
       case 'damage_number': return 500

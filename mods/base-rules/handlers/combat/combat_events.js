@@ -55,6 +55,12 @@ engine.on("combat.damage_dealt", 60, function(event) {
 
     var animation = engine.newList();
 
+    var lungeAnim = engine.newMap();
+    lungeAnim.put("type", "lunge");
+    lungeAnim.put("target", attackerId);
+    lungeAnim.put("side", attackerSide);
+    animation.add(lungeAnim);
+
     var impactAnim = engine.newMap();
     impactAnim.put("type", "impact");
     impactAnim.put("target", targetId);
