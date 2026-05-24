@@ -241,7 +241,8 @@ public class SnapshotService {
                         if (comp.getType().startsWith("Buff_")) {
                             String buffId = comp.getType().substring(5);
                             int stacks = comp.has("stacks") ? comp.getInt("stacks") : 1;
-                            buffList.add(new WorldSnapshot.BuffInfo(buffId, stacks));
+                            String color = comp.has("color") ? (String) comp.get("color") : null;
+                            buffList.add(new WorldSnapshot.BuffInfo(buffId, stacks, color));
                         }
                     }
                     combatants.add(new WorldSnapshot.CombatantInfo(

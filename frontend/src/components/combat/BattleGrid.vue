@@ -34,7 +34,7 @@
               {{ cell.marker.hp }}/{{ cell.marker.maxHp }}
             </span>
             <span v-if="cell.marker?.alive" v-for="(buff, bi) in (cell.marker?.buffs || [])" :key="bi"
-                  class="buff-indicator" :class="'corner-' + bi" :style="{ backgroundColor: buffColor(buff.id) }"></span>
+                  class="buff-indicator" :class="'corner-' + bi" :style="{ backgroundColor: buffColor(buff) }"></span>
           </div>
         </div>
         <div class="grid-gap">
@@ -58,7 +58,7 @@
               {{ cell.marker.hp }}/{{ cell.marker.maxHp }}
             </span>
             <span v-if="cell.marker?.alive" v-for="(buff, bi) in (cell.marker?.buffs || [])" :key="bi"
-                  class="buff-indicator" :class="'corner-' + bi" :style="{ backgroundColor: buffColor(buff.id) }"></span>
+                  class="buff-indicator" :class="'corner-' + bi" :style="{ backgroundColor: buffColor(buff) }"></span>
           </div>
         </div>
         <AnimationLayer :animations="activeAnimations" :cell-positions="cellPositions" />
@@ -149,9 +149,8 @@ function lungingClass(unitId) {
   return anim.side === 'player' ? 'lunge-right' : 'lunge-left'
 }
 
-const buffColors = { defending: '#66bb6a', poison: '#9c27b0', burning: '#ff4400' }
-function buffColor(buffId) {
-  return buffColors[buffId] || '#999'
+function buffColor(buff) {
+  return buff.color || '#999'
 }
 
 const cellBgStyle = computed(() => {

@@ -4,5 +4,7 @@ engine.on("combat.unit_action", 80, function(event) {
     if (cmdType !== "defend") return;
 
     var actorId = event.get("actorId");
-    buffs.applyBuff(actorId, "defending", engine.newMap());
+    var data = engine.newMap();
+    data.put("color", "#66bb6a");
+    buffs.applyBuff(actorId, "defending", data);
 });

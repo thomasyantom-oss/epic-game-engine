@@ -45,5 +45,6 @@ engine.on("combat.unit_action", 80, function(event) {
     burnData.put("remaining", 2);
     burnData.put("stacking", "refresh");
     burnData.put("source", actorId);
+    burnData.put("color", "#ff4400");
     buffs.applyBuff(targetId, "burning", burnData);
 });
