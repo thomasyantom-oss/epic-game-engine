@@ -7,18 +7,18 @@ engine.on("combat.unit_action", 80, function(event) {
     var targetRow = cmd.get("targetRow");
     var targetCol = cmd.get("targetCol");
 
-    // Determine center: use targetId position if available, else use row/col
+    // Determine center: use targetId position if entity exists, else use row/col
     var centerSlot, centerRowIdx;
     var rowOrder = ["FRONT", "MID", "BACK"];
-    if (targetId !== null && targetId !== undefined) {
-        var t = store.get(targetId);
-        var pos = t !== null && t.hasComponent("CombatPosition") ? t.getComponent("CombatPosition") : null;
+    var targetEntity = targetId ? store.get(targetId) : null;
+    if (targetEntity !== null && targetEntity !== undefined) {
+        var pos = targetEntity.hasComponent("CombatPosition") ? targetEntity.getComponent("CombatPosition") : null;
         centerSlot = pos !== null ? pos.getInt("slot") : 0;
         var centerRow = pos !== null ? pos.getString("row") : "FRONT";
         centerRowIdx = rowOrder.indexOf(centerRow);
     } else {
-        centerSlot = targetRow !== null ? targetRow : 1;
-        centerRowIdx = targetCol !== null ? targetCol : 1;
+        centerSlot = parseInt(targetRow) || 0;
+        centerRowIdx = parseInt(targetCol) || 0;
     }
 
     var caster = store.get(actorId);
