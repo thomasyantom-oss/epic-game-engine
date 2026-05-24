@@ -269,7 +269,14 @@ public class SnapshotService {
                                             eff));
                                 }
                             }
-                            events.add(new WorldSnapshot.CombatEvent(segments, effects));
+                            List<Map<String, Object>> animation = new ArrayList<>();
+                            List<Object> anims = (List<Object>) evt.get("animation");
+                            if (anims != null) {
+                                for (Object animObj : anims) {
+                                    animation.add((Map<String, Object>) animObj);
+                                }
+                            }
+                            events.add(new WorldSnapshot.CombatEvent(segments, effects, animation));
                         }
                     }
                 }

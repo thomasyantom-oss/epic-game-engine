@@ -53,6 +53,28 @@ engine.on("combat.damage_dealt", 60, function(event) {
     effects.add(hpEffect);
     evt.put("effects", effects);
 
+    var animation = engine.newList();
+
+    var impactAnim = engine.newMap();
+    impactAnim.put("type", "impact");
+    impactAnim.put("target", targetId);
+    animation.add(impactAnim);
+
+    var shakeAnim = engine.newMap();
+    shakeAnim.put("type", "shake");
+    shakeAnim.put("target", targetId);
+    shakeAnim.put("intensity", "normal");
+    animation.add(shakeAnim);
+
+    var dmgAnim = engine.newMap();
+    dmgAnim.put("type", "damage_number");
+    dmgAnim.put("target", targetId);
+    dmgAnim.put("value", -damage);
+    dmgAnim.put("color", "damage");
+    animation.add(dmgAnim);
+
+    evt.put("animation", animation);
+
     combat.getComponent("CombatEvents").get("queue").add(evt);
 });
 
@@ -107,6 +129,16 @@ engine.on("combat.unit_death", 60, function(event) {
     deathEffect.put("type", "death");
     effects.add(deathEffect);
     evt.put("effects", effects);
+
+    var animation = engine.newList();
+
+    var shakeAnim = engine.newMap();
+    shakeAnim.put("type", "shake");
+    shakeAnim.put("target", deadId);
+    shakeAnim.put("intensity", "heavy");
+    animation.add(shakeAnim);
+
+    evt.put("animation", animation);
 
     combat.getComponent("CombatEvents").get("queue").add(evt);
 });
