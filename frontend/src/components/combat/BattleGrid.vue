@@ -2,7 +2,6 @@
   <div class="battle-layout">
     <div class="round-banner">
       <span>第 {{ combat.round }} 回合</span>
-      <span v-if="showTimer && !animating" class="turn-timer">{{ timerDisplay }}</span>
     </div>
     <div class="battle-content">
     <div class="status-col player-col">
@@ -35,7 +34,9 @@
             </span>
           </div>
         </div>
-        <div class="grid-gap"></div>
+        <div class="grid-gap">
+          <span v-if="showTimer && !animating" class="mid-timer">{{ timerDisplay }}</span>
+        </div>
         <div class="enemy-grid">
           <div
             v-for="(cell, idx) in enemyCells"
@@ -246,7 +247,7 @@ function cancelSelect() {
 // Turn timer — counts down from turnTimer seconds, auto-attacks on timeout
 const timeLeft = ref(30)
 const showTimer = computed(() => phase.value === 'COMMAND' && !props.animating)
-const timerDisplay = computed(() => timeLeft.value + 's')
+const timerDisplay = computed(() => '' + timeLeft.value)
 let timerInterval = null
 
 function startTimer() {
@@ -310,11 +311,6 @@ onUnmounted(() => stopTimer())
   border-bottom: 2px solid var(--panel-border-color);
 }
 
-.turn-timer {
-  color: var(--color-text);
-  font-weight: normal;
-  opacity: 0.8;
-}
 
 .battle-content {
   display: grid;
@@ -389,7 +385,7 @@ onUnmounted(() => stopTimer())
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 5%;
+  gap: 2%;
   padding: 5%;
   min-width: 0;
   min-height: 0;
@@ -405,7 +401,18 @@ onUnmounted(() => stopTimer())
 }
 
 .grid-gap {
-  display: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 3rem;
+  flex-shrink: 0;
+}
+
+.mid-timer {
+  font-size: 1.4em;
+  font-weight: bold;
+  color: var(--color-text);
+  opacity: 0.8;
 }
 
 .terrain-cell {
