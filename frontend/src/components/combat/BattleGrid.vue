@@ -45,7 +45,7 @@
             v-for="(cell, idx) in enemyCells"
             :key="'e'+idx"
             class="terrain-cell"
-            :class="{ 'target-cell': selectingTarget && cell.marker && cell.marker.alive, 'hover-highlight': isHoverHighlighted(cell) }"
+            :class="{ 'target-cell': isValidTarget(cell), 'aoe-zone': isInAoeZone(cell) }"
             :style="cellBgStyle"
             :data-unit-id="cell.marker?.id"
             @click="onCellClick(cell)"
@@ -295,13 +295,27 @@ function currentHighlightMode() {
   return cmd?.params?.highlight || 'single'
 }
 
-function isHoverHighlighted(cell) {
-  if (step.value !== 'target' || !hoveredCell.value || !hoveredCell.value.marker) return false
+function isValidTarget(cell) {
+  if (!selectingTarget.value) return false
+  if (!cell.marker || !cell.marker.alive) return false
+  return true
+}
+
+function isInAoeZone(cell) {
+  if (step.value !== 'target' || !hoveredCell.value) return false
   const mode = currentHighlightMode()
   const hovered = hoveredCell.value
-  if (mode === 'single') return cell.marker && cell.marker.id === hovered.marker.id
+  if (!hovered.marker || !hovered.marker.alive) return false
+
+  if (mode === 'single') return cell.row === hovered.row && cell.col === hovered.col
   if (mode === 'row') return cell.col === hovered.col
   if (mode === 'column') return cell.row === hovered.row
+  if (mode === 'cross') {
+    return (cell.row === hovered.row && cell.col === hovered.col) ||
+           (cell.row === hovered.row && Math.abs(cell.col - hovered.col) === 1) ||
+           (cell.col === hovered.col && Math.abs(cell.row - hovered.row) === 1)
+  }
+  if (mode === 'all') return true
   return false
 }
 
@@ -615,9 +629,9 @@ onUnmounted(() => stopTimer())
   cursor: default;
 }
 
-.terrain-cell.hover-highlight {
-  background-color: rgba(255, 152, 0, 0.15) !important;
-  border-color: var(--color-highlight);
+.terrain-cell.aoe-zone {
+  background-color: rgba(229, 69, 96, 0.2) !important;
+  border-color: var(--color-enemy);
 }
 
 .cmd-actions.locked {

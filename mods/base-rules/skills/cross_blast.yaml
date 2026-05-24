@@ -1,0 +1,23 @@
+id: cross_blast
+name: "十字爆裂"
+category: skill
+silenceable: true
+targeting:
+  highlight: cross
+  steps:
+    - prompt: "选择十字中心"
+      filter: enemy
+      count: 1
+animation:
+  - type: pulse
+    target: actor
+    color: "#ffee58"
+  - type: impact
+    target: target
+    color: "#ffee58"
+  - type: shake
+    target: target
+    intensity: heavy
+  - type: damage_number
+    target: target
+    color: damage
