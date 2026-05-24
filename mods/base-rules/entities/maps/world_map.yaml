@@ -30,19 +30,19 @@ pois:
     target: forest_goblin
     label: "哥布林营地"
   - id: scorpion_nest
-    x: 2
+    x: 3
     y: 5
     type: combat
     target: desert_scorpion
     label: "蝎子巢穴"
   - id: lake_shore
-    x: 7
-    y: 1
+    x: 6
+    y: 0
     type: combat
     target: lake_slime
     label: "湖畔史莱姆"
   - id: mountain_pass
-    x: 6
+    x: 3
     y: 7
     type: combat
     target: mountain_bandit
