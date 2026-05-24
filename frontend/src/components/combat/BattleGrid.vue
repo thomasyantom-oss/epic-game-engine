@@ -33,6 +33,8 @@
             <span v-if="cell.marker && cell.marker.alive" class="corner-hp">
               {{ cell.marker.hp }}/{{ cell.marker.maxHp }}
             </span>
+            <span v-for="(buff, bi) in (cell.marker?.buffs || [])" :key="bi"
+                  class="buff-indicator" :class="'corner-' + bi" :style="{ backgroundColor: buffColor(buff.id) }"></span>
           </div>
         </div>
         <div class="grid-gap">
@@ -55,6 +57,8 @@
             <span v-if="cell.marker && cell.marker.alive" class="corner-hp">
               {{ cell.marker.hp }}/{{ cell.marker.maxHp }}
             </span>
+            <span v-for="(buff, bi) in (cell.marker?.buffs || [])" :key="bi"
+                  class="buff-indicator" :class="'corner-' + bi" :style="{ backgroundColor: buffColor(buff.id) }"></span>
           </div>
         </div>
         <AnimationLayer :animations="activeAnimations" :cell-positions="cellPositions" />
@@ -145,6 +149,11 @@ function lungingClass(unitId) {
   return anim.side === 'player' ? 'lunge-right' : 'lunge-left'
 }
 
+const buffColors = { defending: '#66bb6a', poison: '#9c27b0', burning: '#ff4400' }
+function buffColor(buffId) {
+  return buffColors[buffId] || '#999'
+}
+
 const cellBgStyle = computed(() => {
   if (!props.terrainColor) return {}
   const hex = props.terrainColor.replace('#', '')
@@ -222,7 +231,7 @@ function mapUnitsToGrid(units, side) {
     const unitRow = unit.row || 'FRONT'
     const col = side === 'player' ? (playerColMap[unitRow] ?? 2) : (enemyColMap[unitRow] ?? 0)
     const row = unit.slot ?? idx % 3
-    markers.push({ col, row, side, index: idx + 1, alive: unit.alive, id: unit.id, hp: unit.hp, maxHp: unit.maxHp })
+    markers.push({ col, row, side, index: idx + 1, alive: unit.alive, id: unit.id, hp: unit.hp, maxHp: unit.maxHp, buffs: unit.buffs || [] })
   })
   return markers
 }
@@ -470,6 +479,15 @@ onUnmounted(() => stopTimer())
   color: #999;
   font-weight: bold;
 }
+
+.buff-indicator {
+  position: absolute;
+  width: 10px; height: 10px;
+}
+.buff-indicator.corner-0 { top: 0; left: 0; clip-path: polygon(0 0, 100% 0, 0 100%); }
+.buff-indicator.corner-1 { top: 0; right: 0; clip-path: polygon(0 0, 100% 0, 100% 100%); }
+.buff-indicator.corner-2 { bottom: 0; left: 0; clip-path: polygon(0 0, 0 100%, 100% 100%); }
+.buff-indicator.corner-3 { bottom: 0; right: 0; clip-path: polygon(100% 0, 0 100%, 100% 100%); }
 
 .command-row {
   border-top: 2px solid var(--panel-border-color);

@@ -236,10 +236,18 @@ public class SnapshotService {
                     Component health = c.getComponent("Health");
                     String name = c.hasComponent("Name") ? c.getComponent("Name").getString("value") : c.getId();
                     String side = c.hasTag("player") ? "PLAYER" : "ENEMY";
+                    List<WorldSnapshot.BuffInfo> buffList = new ArrayList<>();
+                    for (Component comp : c.getAllComponents()) {
+                        if (comp.getType().startsWith("Buff_")) {
+                            String buffId = comp.getType().substring(5);
+                            int stacks = comp.has("stacks") ? comp.getInt("stacks") : 1;
+                            buffList.add(new WorldSnapshot.BuffInfo(buffId, stacks));
+                        }
+                    }
                     combatants.add(new WorldSnapshot.CombatantInfo(
                             c.getId(), name, side,
                             health.getInt("hp"), health.getInt("maxHp"),
-                            health.getInt("hp") > 0));
+                            health.getInt("hp") > 0, buffList));
                 }
 
                 // Read combat events (pending playback)

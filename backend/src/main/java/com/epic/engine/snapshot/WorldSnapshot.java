@@ -34,7 +34,8 @@ public record WorldSnapshot(
     public record PoiInfo(String id, int x, int y, String type, String target, String label) {}
     public record CombatSnapshot(String combatId, String phase, int round, int turnTimer,
                                      List<CombatantInfo> combatants, List<CombatEvent> events) {}
-    public record CombatantInfo(String id, String name, String side, int hp, int maxHp, boolean alive) {}
+    public record CombatantInfo(String id, String name, String side, int hp, int maxHp, boolean alive, List<BuffInfo> buffs) {}
+    public record BuffInfo(String id, int stacks) {}
     public record CombatEvent(List<TextSegment> segments, List<Effect> effects, List<Map<String, Object>> animation) {}
     public record Effect(String target, String type, Map<String, Object> data) {}
     public record ActionOption(String type, String label, Map<String, Object> params, String color, String style) {
