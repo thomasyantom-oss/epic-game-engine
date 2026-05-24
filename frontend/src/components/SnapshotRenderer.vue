@@ -172,6 +172,14 @@ const isAnimating = ref(false)
 const battleGridRef = ref(null)
 const animEventIndex = ref(-1)
 const animatedRound = ref(-1)
+const lastCombatId = ref(null)
+
+watch(() => props.snapshot?.combat?.combatId, (id) => {
+  if (id !== lastCombatId.value) {
+    lastCombatId.value = id
+    animatedRound.value = -1
+  }
+})
 
 watch(() => props.snapshot?.combat?.events, async (events) => {
   if (!events || events.length === 0) {
