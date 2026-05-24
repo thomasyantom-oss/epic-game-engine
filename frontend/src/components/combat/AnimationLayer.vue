@@ -26,8 +26,8 @@
       <div v-if="anim.type === 'slash'"
            class="anim-slash"
            :style="slashStyle(anim)">
-        <svg viewBox="0 0 40 40" width="100%" height="100%">
-          <path class="slash-path" d="M 0,0 Q 38,20 0,40" fill="none" :stroke="anim.color || '#fff'" stroke-width="3" stroke-linecap="round"/>
+        <svg viewBox="0 0 40 40" width="100%" height="100%" preserveAspectRatio="none">
+          <path class="slash-path" d="M 0,0 Q 40,20 0,40" fill="none" :stroke="anim.color || '#fff'" stroke-width="3" stroke-linecap="round"/>
         </svg>
       </div>
 

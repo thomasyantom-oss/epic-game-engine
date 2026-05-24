@@ -38,12 +38,15 @@ engine.on("ui.render_actions", 100, function(event) {
 
                 var usable = canUseEvent.get("usable");
 
-                var highlight = targeting !== null && targeting.get("highlight") !== null ? targeting.get("highlight") : "single";
-
                 var params = engine.newMap();
                 params.put("command", skillId);
                 params.put("category", category);
-                params.put("highlight", highlight);
+
+                // AOE offsets for frontend range indicator
+                var aoeOffsets = targeting !== null ? targeting.get("aoe_offsets") : null;
+                if (aoeOffsets !== null) {
+                    params.put("aoeOffsets", aoeOffsets);
+                }
                 var style = needsTarget ? "requires_target" : "instant";
                 if (!usable) {
                     actions.add(engine.newActionOptionStyled("combat_command", name, params, "text", "disabled"));

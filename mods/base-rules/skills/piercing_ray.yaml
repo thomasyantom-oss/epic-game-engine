@@ -3,7 +3,7 @@ name: "贯穿射线"
 category: skill
 silenceable: true
 targeting:
-  highlight: column
+  aoe_offsets: [[0,-1],[0,0],[0,1]]
   steps:
     - prompt: "选择一列中的任意目标"
       filter: enemy

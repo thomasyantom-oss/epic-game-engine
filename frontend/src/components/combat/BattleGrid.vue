@@ -289,10 +289,10 @@ function onCellHover(cell) {
   hoveredCell.value = cell
 }
 
-function currentHighlightMode() {
-  if (!selectedCommand.value) return 'single'
+function currentAoeOffsets() {
+  if (!selectedCommand.value) return null
   const cmd = props.commands.find(c => c.params?.command === selectedCommand.value)
-  return cmd?.params?.highlight || 'single'
+  return cmd?.params?.aoeOffsets || null
 }
 
 function isValidTarget(cell) {
@@ -303,19 +303,20 @@ function isValidTarget(cell) {
 
 function isInAoeZone(cell) {
   if (step.value !== 'target' || !hoveredCell.value) return false
-  const mode = currentHighlightMode()
   const hovered = hoveredCell.value
   if (!hovered.marker || !hovered.marker.alive) return false
 
-  if (mode === 'single') return cell.row === hovered.row && cell.col === hovered.col
-  if (mode === 'row') return cell.col === hovered.col
-  if (mode === 'column') return cell.row === hovered.row
-  if (mode === 'cross') {
-    return (cell.row === hovered.row && cell.col === hovered.col) ||
-           (cell.row === hovered.row && Math.abs(cell.col - hovered.col) === 1) ||
-           (cell.col === hovered.col && Math.abs(cell.row - hovered.row) === 1)
+  const offsets = currentAoeOffsets()
+  if (!offsets) {
+    return cell.row === hovered.row && cell.col === hovered.col
   }
-  if (mode === 'all') return true
+
+  for (let i = 0; i < offsets.length; i++) {
+    const o = offsets[i]
+    const dr = o[0] !== undefined ? o[0] : (o.get ? o.get(0) : 0)
+    const dc = o[1] !== undefined ? o[1] : (o.get ? o.get(1) : 0)
+    if (cell.row === hovered.row + dr && cell.col === hovered.col + dc) return true
+  }
   return false
 }
 

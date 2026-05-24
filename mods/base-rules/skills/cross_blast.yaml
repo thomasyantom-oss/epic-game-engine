@@ -3,7 +3,7 @@ name: "十字爆裂"
 category: skill
 silenceable: true
 targeting:
-  highlight: cross
+  aoe_offsets: [[0,0],[-1,0],[1,0],[0,-1],[0,1]]
   steps:
     - prompt: "选择十字中心"
       filter: enemy
