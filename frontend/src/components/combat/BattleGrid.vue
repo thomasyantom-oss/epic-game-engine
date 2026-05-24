@@ -30,9 +30,6 @@
                   :class="[{ 'shaking': isShaking(cell.marker?.id) }, lungingClass(cell.marker?.id)]">
               P{{ cell.marker.index }}
             </span>
-            <span v-if="cell.marker && cell.marker.alive" class="corner-hp">
-              {{ cell.marker.hp }}/{{ cell.marker.maxHp }}
-            </span>
             <span v-if="cell.marker?.alive" v-for="(buff, bi) in (cell.marker?.buffs || [])" :key="bi"
                   class="buff-indicator" :class="'corner-' + bi" :style="{ backgroundColor: buffColor(buff) }"></span>
           </div>
@@ -55,9 +52,6 @@
             <span v-if="cell.marker && cell.marker.alive" class="marker enemy"
                   :class="[{ 'shaking': isShaking(cell.marker?.id) }, lungingClass(cell.marker?.id)]">
               E{{ cell.marker.index }}
-            </span>
-            <span v-if="cell.marker && cell.marker.alive" class="corner-hp">
-              {{ cell.marker.hp }}/{{ cell.marker.maxHp }}
             </span>
             <span v-if="cell.marker?.alive" v-for="(buff, bi) in (cell.marker?.buffs || [])" :key="bi"
                   class="buff-indicator" :class="'corner-' + bi" :style="{ backgroundColor: buffColor(buff) }"></span>
