@@ -1,9 +1,16 @@
 engine.on("world.init", 100, function(event) {
-    // Load map
+    // Load map (idempotent — update if exists)
     var mapData = engine.loadYaml("entities/maps/world_map.yaml");
     var terrainsData = engine.loadYaml("entities/terrains.yaml");
 
-    var mapEntity = engine.createEntity(mapData.get("id"));
+    var mapId = mapData.get("id");
+    var mapEntity = store.get(mapId);
+    if (mapEntity === null) {
+        mapEntity = engine.createEntity(mapId);
+        mapEntity.addTag("map");
+        store.add(mapEntity);
+    }
+    mapEntity.removeComponent("MapData");
     var mapComponent = engine.newComponent("MapData");
     mapComponent.set("width", mapData.get("width"));
     mapComponent.set("height", mapData.get("height"));
@@ -12,8 +19,6 @@ engine.on("world.init", 100, function(event) {
     mapComponent.set("terrains", terrainsData.get("terrains"));
     mapComponent.set("pois", mapData.get("pois"));
     mapEntity.addComponent(mapComponent);
-    mapEntity.addTag("map");
-    store.add(mapEntity);
 
     // Load colors into global config entity
     var colorsData = engine.loadYaml("colors.yaml");

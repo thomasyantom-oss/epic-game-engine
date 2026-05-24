@@ -1,6 +1,7 @@
 package com.epic.engine.script;
 
 import com.epic.engine.core.EventBus;
+import com.epic.engine.core.GameEvent;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -57,8 +58,9 @@ public class HotReloader {
                     boolean needsReload = false;
                     for (WatchEvent<?> event : key.pollEvents()) {
                         Path changed = ((Path) key.watchable()).resolve((Path) event.context());
-                        if (changed.toString().endsWith(".js")) {
-                            log.info("检测到 JS 变更: {}", changed.getFileName());
+                        String name = changed.toString();
+                        if (name.endsWith(".js") || name.endsWith(".yaml")) {
+                            log.info("检测到变更: {}", changed.getFileName());
                             needsReload = true;
                         }
                     }
@@ -108,6 +110,7 @@ public class HotReloader {
             log.error("扫描 JS 文件失败", e);
         }
         log.info("JS handlers 重新加载完成，共 {} 个脚本", loadedScripts.size());
+        bus.fire("world.init", new GameEvent("world.init"));
     }
 
     private void registerRecursive(Path root, WatchService watcher) throws IOException {
