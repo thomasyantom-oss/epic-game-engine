@@ -685,8 +685,8 @@ onUnmounted(() => stopTimer())
   grid-template-columns: 1fr 1fr;
   gap: 0.3rem;
   align-items: center;
-  justify-items: center;
-  padding: 0.3rem;
+  justify-items: start;
+  padding: 0.3rem 0.6rem;
 }
 
 .actor-avatar {
@@ -754,8 +754,8 @@ onUnmounted(() => stopTimer())
   grid-template-columns: 1fr 1fr;
   gap: 0.3rem;
   align-items: center;
-  justify-items: center;
-  padding: 0.3rem;
+  justify-items: start;
+  padding: 0.3rem 0.6rem;
 }
 
 .marker.shaking {
