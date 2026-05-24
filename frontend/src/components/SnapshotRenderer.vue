@@ -172,12 +172,14 @@ const isAnimating = ref(false)
 const battleGridRef = ref(null)
 const preAnimHp = ref({})
 const currentEvents = ref([])
+const animEventIndex = ref(-1)
 
 watch(() => props.snapshot?.combat?.events, async (events) => {
   if (!events || events.length === 0) {
     isAnimating.value = false
     preAnimHp.value = {}
     currentEvents.value = []
+    animEventIndex.value = -1
     return
   }
 
@@ -187,7 +189,6 @@ watch(() => props.snapshot?.combat?.events, async (events) => {
   for (const c of combatants) {
     hpState[c.id] = c.hp
   }
-  // Walk backwards: final HP is what backend returned, reverse effects to get starting HP
   for (let i = events.length - 1; i >= 0; i--) {
     const effs = events[i].effects || []
     for (const eff of effs) {
@@ -198,16 +199,20 @@ watch(() => props.snapshot?.combat?.events, async (events) => {
   }
   preAnimHp.value = { ...hpState }
   currentEvents.value = events
+  animEventIndex.value = -1
 
   isAnimating.value = true
   await nextTick()
   if (battleGridRef.value) {
     battleGridRef.value.updateCellPositions()
-    await battleGridRef.value.play(events)
+    await battleGridRef.value.play(events, (idx) => {
+      animEventIndex.value = idx
+    })
   }
   isAnimating.value = false
   preAnimHp.value = {}
   currentEvents.value = []
+  animEventIndex.value = -1
 }, { immediate: true })
 
 // Progressive HP: start at pre-animation values, apply effects as events play
@@ -216,10 +221,9 @@ const displayCombat = computed(() => {
   if (!combat) return null
   if (!isAnimating.value || Object.keys(preAnimHp.value).length === 0) return combat
 
-  const eventIdx = battleGridRef.value?.playedEventIndex?.value ?? -1
+  const eventIdx = animEventIndex.value
   const hpState = { ...preAnimHp.value }
 
-  // Apply effects for events 0..eventIdx
   for (let i = 0; i <= eventIdx && i < currentEvents.value.length; i++) {
     const effs = currentEvents.value[i].effects || []
     for (const eff of effs) {
@@ -241,10 +245,8 @@ const displayCombat = computed(() => {
 // Visible current round entries — show all completed (not animated anymore)
 const visibleCurrentEntries = computed(() => {
   const entries = currentRoundEntries.value
-  if (!isAnimating.value || !battleGridRef.value) return entries
-  const eventIdx = battleGridRef.value?.playedEventIndex?.value ?? -1
-  // First entry is the round separator, rest are event entries
-  // Show separator + entries up to eventIdx+1
+  if (!isAnimating.value) return entries
+  const eventIdx = animEventIndex.value
   if (eventIdx < 0) return entries.length > 0 ? [entries[0]] : []
   return entries.slice(0, eventIdx + 2)
 })

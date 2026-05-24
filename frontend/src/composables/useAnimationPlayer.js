@@ -8,11 +8,14 @@ export function useAnimationPlayer() {
   let currentResolve = null
   let eventIndex = 0
 
-  function play(events) {
+  let onEventCallback = null
+
+  function play(events, onEvent) {
     if (!events || events.length === 0) return Promise.resolve()
     playing.value = true
     playedEventIndex.value = -1
     eventIndex = 0
+    onEventCallback = onEvent || null
     queue = [...events]
     return new Promise(resolve => {
       currentResolve = resolve
@@ -32,6 +35,7 @@ export function useAnimationPlayer() {
     const anims = event.animation || []
 
     playedEventIndex.value = eventIndex++
+    if (onEventCallback) onEventCallback(playedEventIndex.value)
 
     if (anims.length === 0) {
       setTimeout(playNext, 400)

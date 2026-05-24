@@ -191,7 +191,11 @@ const cellBgStyle = computed(() => {
   return { backgroundColor: `rgba(${r}, ${g}, ${b}, 0.3)` }
 })
 
-defineExpose({ play, updateCellPositions, playedEventIndex })
+function playWithCallback(events, onEvent) {
+  return play(events, onEvent)
+}
+
+defineExpose({ play: playWithCallback, updateCellPositions })
 
 const step = ref('command')
 const selectedCommand = ref(null)
