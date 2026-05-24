@@ -4,9 +4,10 @@ category: skill
 silenceable: true
 targeting:
   aoe_offsets: [[0,0],[-1,0],[1,0],[0,-1],[0,1]]
+  allow_empty: true
   steps:
     - prompt: "选择十字中心"
-      filter: enemy
+      filter: any
       count: 1
 animation:
   - type: pulse

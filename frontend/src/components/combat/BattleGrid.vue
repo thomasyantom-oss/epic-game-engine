@@ -302,6 +302,10 @@ const hoveredCell = ref(null)
 
 function onCellHover(cell) {
   if (step.value !== 'target') return
+  if (!currentAllowEmpty() && (!cell.marker || !cell.marker.alive)) {
+    hoveredCell.value = null
+    return
+  }
   hoveredCell.value = cell
 }
 
@@ -327,7 +331,6 @@ function isValidTarget(cell) {
 function isInAoeZone(cell) {
   if (step.value !== 'target' || !hoveredCell.value) return false
   const hovered = hoveredCell.value
-  if (!currentAllowEmpty() && (!hovered.marker || !hovered.marker.alive)) return false
 
   const offsets = currentAoeOffsets()
   if (!offsets) {
@@ -348,7 +351,7 @@ function isInAoeZone(cell) {
 
 function onCellClick(cell) {
   if (step.value !== 'target') return
-  if (!currentAllowEmpty() && (!cell.marker || !cell.marker.alive)) return
+  if (!isValidTarget(cell)) return
   stopTimer()
   var targetId = cell.marker?.id || null
   emit('command', { type: 'combat_command', params: { command: selectedCommand.value, targetId: targetId, targetRow: cell.row, targetCol: cell.col } })
