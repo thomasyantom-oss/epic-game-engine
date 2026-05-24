@@ -7,7 +7,7 @@
         <template v-if="cell.x === playerX && cell.y === playerY">
           <span class="player-marker">★</span>
         </template>
-        <template v-else>{{ cell.char }}</template>
+        <template v-else-if="isStealth">{{ cell.char }}</template>
       </div>
     </div>
   </div>
@@ -15,6 +15,10 @@
 
 <script setup>
 import { computed, ref, onMounted, onUnmounted, nextTick } from 'vue'
+import { useSettings } from '../composables/useSettings.js'
+
+const { settings } = useSettings()
+const isStealth = computed(() => settings.theme === 'stealth')
 
 const props = defineProps({
   map: Object,
@@ -81,10 +85,11 @@ const gridStyle = computed(() => {
 function cellStyle(cell) {
   const terrains = props.map?.terrains || {}
   const info = terrains[cell.char]
+  const stealth = isStealth.value
   return {
-    backgroundColor: info?.color || '#333',
-    color: info?.textColor || '#fff',
-    border: '2px solid #333',
+    backgroundColor: stealth ? 'var(--panel-bg)' : (info?.color || '#333'),
+    color: stealth ? 'var(--text-color)' : (info?.textColor || '#fff'),
+    border: stealth ? '1px solid var(--panel-border-color)' : '2px solid #333',
     borderRadius: '2px',
     display: 'flex',
     alignItems: 'center',
