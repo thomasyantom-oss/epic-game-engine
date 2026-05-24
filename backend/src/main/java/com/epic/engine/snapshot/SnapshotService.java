@@ -105,37 +105,47 @@ public class SnapshotService {
         Entity player = entityStore.get(playerId);
         if (player == null) return List.of();
 
+        // Active combat log
         for (String tag : player.getTags()) {
             if (tag.startsWith("combat:")) {
                 String combatId = tag.substring(7);
                 Entity combat = entityStore.get(combatId);
                 if (combat == null || !combat.hasComponent("CombatLog")) continue;
-
-                List<Object> entries = (List<Object>) combat.getComponent("CombatLog").get("entries");
-                if (entries == null) return List.of();
-
-                List<WorldSnapshot.LogEntry> log = new ArrayList<>();
-                for (Object entryObj : entries) {
-                    List<Object> segments = (List<Object>) entryObj;
-                    List<WorldSnapshot.TextSegment> textSegments = new ArrayList<>();
-                    Integer round = null;
-                    for (Object segObj : segments) {
-                        Map<String, Object> seg = (Map<String, Object>) segObj;
-                        textSegments.add(new WorldSnapshot.TextSegment(
-                                (String) seg.get("text"),
-                                (String) seg.get("color")));
-                        if (seg.containsKey("round") && seg.get("round") != null) {
-                            round = ((Number) seg.get("round")).intValue();
-                        }
-                    }
-                    if (!textSegments.isEmpty()) {
-                        log.add(new WorldSnapshot.LogEntry(textSegments, round));
-                    }
-                }
-                return log;
+                return parseLogEntries((List<Object>) combat.getComponent("CombatLog").get("entries"));
             }
         }
+
+        // Last combat log (after battle ended)
+        if (player.hasComponent("LastCombatLog")) {
+            List<Object> entries = (List<Object>) player.getComponent("LastCombatLog").get("entries");
+            return parseLogEntries(entries);
+        }
+
         return List.of();
+    }
+
+    @SuppressWarnings("unchecked")
+    private List<WorldSnapshot.LogEntry> parseLogEntries(List<Object> entries) {
+        if (entries == null) return List.of();
+        List<WorldSnapshot.LogEntry> log = new ArrayList<>();
+        for (Object entryObj : entries) {
+            List<Object> segments = (List<Object>) entryObj;
+            List<WorldSnapshot.TextSegment> textSegments = new ArrayList<>();
+            Integer round = null;
+            for (Object segObj : segments) {
+                Map<String, Object> seg = (Map<String, Object>) segObj;
+                textSegments.add(new WorldSnapshot.TextSegment(
+                        (String) seg.get("text"),
+                        (String) seg.get("color")));
+                if (seg.containsKey("round") && seg.get("round") != null) {
+                    round = ((Number) seg.get("round")).intValue();
+                }
+            }
+            if (!textSegments.isEmpty()) {
+                log.add(new WorldSnapshot.LogEntry(textSegments, round));
+            }
+        }
+        return log;
     }
 
     private WorldSnapshot.MapSnapshot buildMapSnapshot(Entity player) {

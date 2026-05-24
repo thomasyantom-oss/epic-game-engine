@@ -30,8 +30,9 @@ engine.on("combat.start_encounter", 100, function(event) {
     logComp.set("entries", entries);
     combatEntity.addComponent(logComp);
 
-    // Tag the player as in this combat
+    // Tag the player as in this combat, clear old combat log
     var player = store.get(playerId);
+    player.removeComponent("LastCombatLog");
     player.addTag("combat:" + combatId);
     store.reindexTags(player);
 
@@ -127,6 +128,24 @@ engine.on("action.combat_command", 100, function(event) {
 });
 
 function endCombat(player, combatId, isDefeat) {
+    var combat = store.get(combatId);
+
+    // Save combat log to player for post-battle viewing
+    if (combat !== null && combat.hasComponent("CombatLog")) {
+        var log = combat.getComponent("CombatLog");
+        var resultSegments = engine.newList();
+        var rs = engine.newMap();
+        rs.put("text", isDefeat ? "— 战斗失败 —" : "— 战斗胜利 —");
+        rs.put("color", isDefeat ? "enemy" : "player");
+        resultSegments.add(rs);
+        log.get("entries").add(resultSegments);
+
+        player.removeComponent("LastCombatLog");
+        var saved = engine.newComponent("LastCombatLog");
+        saved.set("entries", log.get("entries"));
+        player.addComponent(saved);
+    }
+
     var combatants = store.getByTagAsList("combat:" + combatId);
     player.removeTag("combat:" + combatId);
     store.reindexTags(player);

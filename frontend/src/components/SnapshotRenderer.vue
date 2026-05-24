@@ -35,23 +35,23 @@
     </div>
 
     <div class="panel-log">
-      <TabPanel :tabs="logTabs" :default-tab="snapshot.combat ? 'combat-log' : 'events'">
+      <TabPanel :tabs="logTabs" :default-tab="hasLog ? 'combat-log' : 'events'">
         <template #events>
           <div class="log-scroll">
             <div v-if="!snapshot.log || snapshot.log.length === 0" class="empty-log">暂无事件</div>
           </div>
         </template>
-        <template #combat-log v-if="snapshot.combat">
+        <template #combat-log v-if="hasLog">
           <div class="log-scroll">
             <div v-if="historyEntries.length > 0" class="history-toggle" @click="showHistory = !showHistory">
               {{ showHistory ? '▼ 收起历史' : '▶ 查看历史 (' + historyRounds + '回合)' }}
             </div>
             <div v-if="showHistory" class="combat-history">
-              <div v-for="(entry, i) in historyEntries" :key="'h'+i">
+              <div v-for="(entry, i) in historyEntries" :key="'h'+i" class="log-entry">
                 <TextRenderer :segments="entry.segments" />
               </div>
             </div>
-            <div v-for="(entry, i) in currentRoundEntries" :key="'c'+i">
+            <div v-for="(entry, i) in currentRoundEntries" :key="'c'+i" class="log-entry">
               <TextRenderer :segments="entry.segments" />
             </div>
             <div v-if="currentRoundEntries.length === 0 && historyEntries.length === 0" class="empty-log">等待指令...</div>
@@ -97,8 +97,12 @@ const mainTabs = computed(() => {
 
 const funcTabs = [{ id: 'status', label: '人物' }, { id: 'settings', label: '设置' }]
 
+const hasLog = computed(() => {
+  return (props.snapshot?.log && props.snapshot.log.length > 0) || props.snapshot?.combat
+})
+
 const logTabs = computed(() => {
-  if (props.snapshot?.combat) {
+  if (hasLog.value) {
     return [{ id: 'combat-log', label: '战斗' }, { id: 'events', label: '事件' }]
   }
   return [{ id: 'events', label: '事件' }]
@@ -212,4 +216,5 @@ function onPoiAction(poi) {
 .buff-item { font-size: 0.9em; margin: 0.2rem 0; color: var(--text-color); }
 .history-toggle { cursor: pointer; color: var(--link-color); margin-bottom: 0.3rem; }
 .combat-history { border-bottom: 1px solid var(--panel-border-color); margin-bottom: 0.3rem; padding-bottom: 0.3rem; opacity: 0.7; }
+.log-entry { margin-bottom: 0.15rem; }
 </style>
