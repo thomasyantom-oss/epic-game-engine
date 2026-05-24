@@ -47,3 +47,9 @@ pois:
     type: combat
     target: mountain_bandit
     label: "山贼据点"
+  - id: road_ambush
+    x: 4
+    y: 6
+    type: combat
+    target: mountain_bandit
+    label: "路遇山贼"
