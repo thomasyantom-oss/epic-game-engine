@@ -61,6 +61,19 @@ public class EngineBootstrap {
 
         // Load persistent entities from database (player characters etc.)
         persistenceService.loadAllPersistent();
+
+        // Clean up stale combat tags from restarted sessions
+        for (Entity entity : entityStore.all()) {
+            var staleTags = entity.getTags().stream()
+                    .filter(t -> t.startsWith("combat:"))
+                    .toList();
+            if (!staleTags.isEmpty()) {
+                staleTags.forEach(entity::removeTag);
+                entityStore.reindexTags(entity);
+                persistenceService.save(entity);
+            }
+        }
+
         log.info("已从数据库恢复 {} 个持久实体", entityStore.all().size());
 
         eventBus.fire("world.init", new GameEvent("world.init"));
