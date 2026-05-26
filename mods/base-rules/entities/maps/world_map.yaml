@@ -71,3 +71,9 @@ pois:
     type: combat
     target: training_dummy_cross
     label: "训练假人 十字"
+  - id: training_9
+    x: 4
+    y: 3
+    type: combat
+    target: training_dummy_9
+    label: "训练假人 x9"

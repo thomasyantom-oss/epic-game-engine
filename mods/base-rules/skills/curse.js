@@ -13,6 +13,8 @@ engine.on("combat.unit_action", 80, function(event) {
             data.put("color", "#e57373");
             data.put("stacking", "refresh");
             data.put("remaining", 3);
+            data.put("permanent", false);
+            data.put("positive", false);
             buffs.applyBuff(entity.getId(), "cursed", data);
         }
     }

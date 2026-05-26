@@ -230,6 +230,7 @@ public class SnapshotService {
 
                 int turnTimer = state.has("turnTimer") ? state.getInt("turnTimer") : 30;
 
+                Map<String, String> colorMap = buildColorMap();
                 List<WorldSnapshot.CombatantInfo> combatants = new ArrayList<>();
                 for (Entity c : entityStore.getByTag("combat:" + combatId)) {
                     if (!c.hasComponent("Health")) continue;
@@ -242,7 +243,9 @@ public class SnapshotService {
                             String buffId = comp.getType().substring(5);
                             int stacks = comp.has("stacks") ? comp.getInt("stacks") : 1;
                             String color = comp.has("color") ? (String) comp.get("color") : null;
-                            buffList.add(new WorldSnapshot.BuffInfo(buffId, stacks, color));
+                            boolean positive = comp.has("positive") && Boolean.TRUE.equals(comp.get("positive"));
+                            int remaining = comp.has("remaining") ? comp.getInt("remaining") : -1;
+                            buffList.add(new WorldSnapshot.BuffInfo(buffId, stacks, color, positive, remaining));
                         }
                     }
                     String row = "FRONT";
@@ -252,10 +255,23 @@ public class SnapshotService {
                         row = pos.has("row") ? pos.getString("row") : "FRONT";
                         slot = pos.has("slot") ? pos.getInt("slot") : 0;
                     }
+                    int mp = 0, maxMp = 0;
+                    if (c.hasComponent("Mana")) {
+                        Component mana = c.getComponent("Mana");
+                        mp = mana.has("mp") ? mana.getInt("mp") : 0;
+                        maxMp = mana.has("maxMp") ? mana.getInt("maxMp") : 0;
+                    }
+                    // HP/MP 颜色从 colorMap 读，支持后端配置覆盖
+                    boolean isPlayer = c.hasTag("player");
+                    String hpColor = isPlayer
+                            ? colorMap.getOrDefault("player", "#4ecdc4")
+                            : colorMap.getOrDefault("enemy", "#e94560");
+                    String mpColor = colorMap.getOrDefault("mana", "#4f8ef7");
                     combatants.add(new WorldSnapshot.CombatantInfo(
                             c.getId(), name, side,
                             health.getInt("hp"), health.getInt("maxHp"),
-                            health.getInt("hp") > 0, buffList, row, slot));
+                            mp, maxMp,
+                            health.getInt("hp") > 0, buffList, row, slot, hpColor, mpColor));
                 }
 
                 // Read combat events (pending playback)

@@ -1,6 +1,8 @@
 id: burning
 name: "灼烧"
 stacking: refresh
+permanent: false
+positive: false
 indicator:
   corner: bottom-right
   color: "#ff4400"

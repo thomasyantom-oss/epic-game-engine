@@ -1,22 +1,59 @@
 <template>
   <div class="battle-layout">
-    <div class="round-banner">
-      <span>第 {{ combat.round }} 回合</span>
-    </div>
     <div class="battle-content">
     <div class="status-col player-col">
-      <div v-for="(unit, idx) in playerUnits" :key="unit.id" class="unit-status" :class="{ dead: !unit.alive }">
-        <div class="unit-header" :class="{ active: unit.id === currentActorId }">
-          <span class="unit-name player-name">{{ unit.name }}</span>
-          <span class="hp-text">{{ unit.hp }}/{{ unit.maxHp }}</span>
-        </div>
-        <div class="hp-bar">
-          <div class="hp-fill" :style="{ width: hpPercent(unit) + '%' }"></div>
-        </div>
+      <div v-for="(unit, idx) in playerUnits" :key="unit.id"
+           class="unit-status"
+           :class="{ dead: !unit.alive, compact: playerCompressed }"
+           @mouseenter="playerHovered = unit.id"
+           @mouseleave="playerHovered = null">
+        <!-- 压缩态：只显示名字和 HP 色条 -->
+        <template v-if="playerCompressed && playerHovered !== unit.id">
+          <div class="compact-bar" :style="{ background: hpColor('player', unit) }"></div>
+          <span class="compact-name player-name">{{ unit.name }}</span>
+        </template>
+        <!-- 完整态 -->
+        <template v-else>
+          <div class="unit-header" :class="{ active: unit.id === currentActorId }">
+            <span class="unit-name player-name">{{ unit.name }}</span>
+          </div>
+          <div class="stat-bar-row">
+            <span class="stat-label" :style="{ color: unit.hpColor }">HP</span>
+            <div class="stat-bar-track">
+              <div class="stat-bar-fill" :style="{ width: hpPercent(unit) + '%', background: unit.hpColor }"></div>
+            </div>
+            <span class="stat-bar-num">{{ displayHp[unit.id] ?? unit.hp }}/{{ unit.maxHp }}</span>
+          </div>
+          <div class="stat-bar-row" :style="{ visibility: unit.maxMp > 0 ? 'visible' : 'hidden' }">
+            <span class="stat-label" :style="{ color: unit.mpColor }">MP</span>
+            <div class="stat-bar-track">
+              <div class="stat-bar-fill" :style="{ width: mpPercent(unit) + '%', background: unit.mpColor }"></div>
+            </div>
+            <span class="stat-bar-num">{{ unit.mp }}/{{ unit.maxMp }}</span>
+          </div>
+          <div class="buff-status-row" :style="{ visibility: (unit.buffs && unit.buffs.length) ? 'visible' : 'hidden' }">
+            <div class="buff-status-group">
+              <div v-for="(b, bi) in unitBuffs(unit)" :key="bi" class="bstat-icon" :title="`${b.id} ×${b.stacks} · ${b.remaining ?? '?'}回合`">
+                <div class="bstat-tri up" :style="{ background: b.color || '#888' }"></div>
+                <span class="bstat-stack">{{ b.stacks }}</span>
+                <span class="bstat-remain">{{ b.remaining ?? '' }}</span>
+              </div>
+            </div>
+            <div class="bstat-divider"></div>
+            <div class="buff-status-group">
+              <div v-for="(b, bi) in unitDebuffs(unit)" :key="bi" class="bstat-icon" :title="`${b.id} ×${b.stacks} · ${b.remaining ?? '?'}回合`">
+                <div class="bstat-tri down" :style="{ background: b.color || '#888' }"></div>
+                <span class="bstat-stack bstat-stack-down">{{ b.stacks }}</span>
+                <span class="bstat-remain">{{ b.remaining ?? '' }}</span>
+              </div>
+            </div>
+          </div>
+        </template>
       </div>
     </div>
 
     <div class="center-col">
+      <div class="round-top">第 {{ combat.round }} 回合</div>
       <div class="grid-area" ref="gridAreaRef">
         <div class="player-grid">
           <div
@@ -91,14 +128,53 @@
     </div>
 
     <div class="status-col enemy-col">
-      <div v-for="(unit, idx) in enemyUnits" :key="unit.id" class="unit-status" :class="{ dead: !unit.alive }">
+      <div v-for="(unit, idx) in enemyUnits" :key="unit.id"
+           class="unit-status"
+           :class="{ dead: !unit.alive, compact: enemyCompressed }"
+           @mouseenter="enemyHovered = unit.id"
+           @mouseleave="enemyHovered = null">
+        <!-- 压缩态 -->
+        <template v-if="enemyCompressed && enemyHovered !== unit.id">
+          <div class="compact-bar" :style="{ background: hpColor('enemy', unit) }"></div>
+          <span class="compact-name enemy-name">{{ unit.name }}</span>
+        </template>
+        <!-- 完整态 -->
+        <template v-else>
         <div class="unit-header">
           <span class="unit-name enemy-name">{{ unit.name }}</span>
-          <span class="hp-text">{{ unit.hp }}/{{ unit.maxHp }}</span>
         </div>
-        <div class="hp-bar enemy-bar">
-          <div class="hp-fill enemy-fill" :style="{ width: hpPercent(unit) + '%' }"></div>
+        <div class="stat-bar-row">
+          <span class="stat-label" :style="{ color: unit.hpColor }">HP</span>
+          <div class="stat-bar-track">
+            <div class="stat-bar-fill" :style="{ width: hpPercent(unit) + '%', background: unit.hpColor }"></div>
+          </div>
+          <span class="stat-bar-num">{{ unit.hp }}/{{ unit.maxHp }}</span>
         </div>
+        <div class="stat-bar-row" :style="{ visibility: unit.maxMp > 0 ? 'visible' : 'hidden' }">
+          <span class="stat-label" :style="{ color: unit.mpColor }">MP</span>
+          <div class="stat-bar-track">
+            <div class="stat-bar-fill" :style="{ width: mpPercent(unit) + '%', background: unit.mpColor }"></div>
+          </div>
+          <span class="stat-bar-num">{{ unit.mp }}/{{ unit.maxMp }}</span>
+        </div>
+        <div class="buff-status-row" :style="{ visibility: (unit.buffs && unit.buffs.length) ? 'visible' : 'hidden' }">
+          <div class="buff-status-group">
+            <div v-for="(b, bi) in unitBuffs(unit)" :key="bi" class="bstat-icon" :title="`${b.id} ×${b.stacks} · ${b.remaining ?? '?'}回合`">
+              <div class="bstat-tri up" :style="{ background: b.color || '#888' }"></div>
+              <span class="bstat-stack">{{ b.stacks }}</span>
+              <span class="bstat-remain">{{ b.remaining ?? '' }}</span>
+            </div>
+          </div>
+          <div class="bstat-divider"></div>
+          <div class="buff-status-group">
+            <div v-for="(b, bi) in unitDebuffs(unit)" :key="bi" class="bstat-icon" :title="`${b.id} ×${b.stacks} · ${b.remaining ?? '?'}回合`">
+              <div class="bstat-tri down" :style="{ background: b.color || '#888' }"></div>
+              <span class="bstat-stack bstat-stack-down">{{ b.stacks }}</span>
+              <span class="bstat-remain">{{ b.remaining ?? '' }}</span>
+            </div>
+          </div>
+        </div>
+        </template>
       </div>
     </div>
     </div>
@@ -209,6 +285,28 @@ function buffColor(buff) {
   return buff.color || '#999'
 }
 
+const COMPACT_THRESHOLD = 5
+
+const playerHovered = ref(null)
+const enemyHovered = ref(null)
+
+const playerCompressed = computed(() => playerUnits.value.length > COMPACT_THRESHOLD)
+const enemyCompressed = computed(() => enemyUnits.value.length > COMPACT_THRESHOLD)
+
+function hpColor(side, unit) {
+  const pct = hpPercent(unit)
+  if (side === 'player') return `rgba(46,125,50,${0.3 + pct / 100 * 0.5})`
+  return `rgba(198,40,40,${0.3 + pct / 100 * 0.5})`
+}
+
+function unitBuffs(unit) {
+  return (unit.buffs || []).filter(b => b.positive === true)
+}
+
+function unitDebuffs(unit) {
+  return (unit.buffs || []).filter(b => b.positive === false || b.positive === undefined)
+}
+
 const cellBgStyle = computed(() => {
   if (!props.terrainColor) return {}
   const hex = props.terrainColor.replace('#', '')
@@ -294,6 +392,11 @@ const selectingTarget = computed(() => step.value === 'target')
 
 function hpPercent(unit) {
   return Math.max(0, unit.hp / unit.maxHp * 100)
+}
+
+function mpPercent(unit) {
+  if (!unit.maxMp || unit.maxMp === 0) return 0
+  return Math.max(0, unit.mp / unit.maxMp * 100)
 }
 
 const playerCells = computed(() => {
@@ -493,18 +596,6 @@ onUnmounted(() => stopTimer())
   height: 100%;
 }
 
-.round-banner {
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  gap: 1rem;
-  padding: 0.3rem;
-  color: var(--color-highlight);
-  font-weight: bold;
-  border-bottom: 2px solid var(--panel-border-color);
-}
-
-
 .battle-content {
   display: grid;
   grid-template-columns: 15% 1fr 15%;
@@ -515,10 +606,11 @@ onUnmounted(() => stopTimer())
 .status-col {
   display: flex;
   flex-direction: column;
-  justify-content: center;
-  gap: 0.8rem;
-  padding: 0.5rem;
+  gap: 2px;
+  padding: 0 0.3rem;
   border-right: 2px solid var(--panel-border-color);
+  overflow: hidden;
+  height: 100%;
 }
 
 .enemy-col {
@@ -528,7 +620,7 @@ onUnmounted(() => stopTimer())
 
 .center-col {
   display: grid;
-  grid-template-rows: 1fr 25%;
+  grid-template-rows: auto 1fr 25%;
   min-height: 0;
   overflow: hidden;
 }
@@ -536,7 +628,97 @@ onUnmounted(() => stopTimer())
 .unit-status {
   display: flex;
   flex-direction: column;
-  gap: 3px;
+  flex: 0 0 calc((100% - 8px) / 5);
+  overflow: hidden;
+  border: 2px solid var(--panel-border-color);
+  padding: 2px 4px;
+  background: rgba(255,255,255,0.03);
+  box-sizing: border-box;
+  transition: flex 0.15s ease, border-color 0.15s;
+}
+.unit-status.dead { opacity: 0.35; }
+
+/* 压缩态：固定 1/10，扣除 gap（8×2px÷10）= (100%-16px)/10 */
+.unit-status.compact {
+  flex: 0 0 calc((100% - 16px) / 10);
+}
+/* 压缩态 hover：展开到 2×compact，填满同比高度 */
+.unit-status.compact:hover {
+  flex: 0 0 calc((100% - 16px) / 5);
+  border-color: var(--link-color);
+  position: relative;
+  z-index: 1;
+}
+
+/* 压缩态内容 */
+.compact-bar {
+  height: 3px;
+  width: 100%;
+  flex-shrink: 0;
+}
+.compact-name {
+  font-size: 9px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  line-height: 1.2;
+}
+
+/* Buff 状态行 */
+.buff-status-row {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  flex-shrink: 0;
+  margin-top: 2px;
+}
+.buff-status-group {
+  display: flex;
+  gap: 2px;
+  align-items: center;
+  flex: 1;
+}
+.buff-status-group:last-child {
+  justify-content: flex-end;
+}
+.bstat-divider {
+  width: 1px;
+  background: #1e1e2e;
+  align-self: stretch;
+  flex-shrink: 0;
+}
+.bstat-icon {
+  position: relative;
+  width: 12px;
+  height: 12px;
+  flex-shrink: 0;
+  cursor: default;
+}
+.bstat-tri {
+  position: absolute;
+  top: 0; left: 0;
+  width: 100%; height: 100%;
+}
+.bstat-tri.up   { clip-path: polygon(50% 0%, 0% 100%, 100% 100%); }
+.bstat-tri.down { clip-path: polygon(0% 0%, 100% 0%, 50% 100%); }
+.bstat-stack {
+  position: absolute;
+  left: 50%; top: 40%;
+  transform: translate(-50%, -50%);
+  font-size: 6px;
+  font-weight: bold;
+  color: rgba(255,255,255,0.9);
+  line-height: 1;
+  pointer-events: none;
+}
+.bstat-stack-down { top: 30%; }
+.bstat-remain {
+  position: absolute;
+  bottom: 0; right: 0;
+  font-size: 5px;
+  color: rgba(255,255,255,0.6);
+  line-height: 1;
+  pointer-events: none;
 }
 
 .unit-status.dead {
@@ -547,6 +729,8 @@ onUnmounted(() => stopTimer())
   display: flex;
   align-items: center;
   justify-content: space-between;
+  flex-shrink: 0;
+  line-height: 1.2;
 }
 
 .unit-header.active {
@@ -556,21 +740,48 @@ onUnmounted(() => stopTimer())
 .player-name { color: var(--color-player); }
 .enemy-name { color: var(--color-enemy); }
 
-.hp-bar {
-  height: 4px;
-  background: #333;
-  border-radius: 2px;
-  overflow: hidden;
+/* ── 能量条：标签(固定宽) + 条(flex:1) + 数值(固定宽) ── */
+.stat-bar-row {
+  display: flex;
+  align-items: center;
+  flex-shrink: 0;
+  margin-top: 4px;
+  gap: 4px;
 }
 
-.hp-fill {
+.stat-label {
+  font-size: 0.6em;
+  width: 16px;
+  text-align: right;
+  flex-shrink: 0;
+  font-weight: bold;
+  line-height: 1;
+}
+
+.stat-bar-track {
+  flex: 1;
+  height: 5px;
+  background: rgba(0, 0, 0, 0.4);
+  border-radius: 2px;
+  overflow: hidden;
+  min-width: 0;
+}
+
+.stat-bar-fill {
   height: 100%;
-  background: var(--color-player);
+  border-radius: 2px;
   transition: width 0.3s;
 }
 
-.enemy-bar .hp-fill, .enemy-fill {
-  background: var(--color-enemy);
+/* 固定宽度：不同数字长度不会影响条的宽度 */
+.stat-bar-num {
+  font-size: 0.6em;
+  color: rgba(255, 255, 255, 0.75);
+  white-space: nowrap;
+  flex-shrink: 0;
+  width: 42px;
+  text-align: right;
+  line-height: 1;
 }
 
 .grid-area {
@@ -598,6 +809,17 @@ onUnmounted(() => stopTimer())
   align-items: center;
   justify-content: center;
   width: 3rem;
+  flex-shrink: 0;
+}
+
+.round-top {
+  text-align: center;
+  font-size: 0.75em;
+  color: var(--color-highlight);
+  font-weight: bold;
+  opacity: 0.7;
+  padding: 2px 0;
+  letter-spacing: 1px;
   flex-shrink: 0;
 }
 

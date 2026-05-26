@@ -1,13 +1,3 @@
-engine.on("skill.can_use", 100, function(event) {
-    if (event.get("skillId") !== "fireball") return;
-    var entity = store.get(event.get("entityId"));
-    if (entity === null) return;
-    var mana = entity.getComponent("Mana");
-    if (mana === null || mana.getInt("mp") < 10) {
-        event.set("usable", false);
-    }
-});
-
 engine.on("combat.unit_action", 80, function(event) {
     var cmd = event.get("command");
     var cmdType = cmd.get("type");
@@ -26,11 +16,6 @@ engine.on("combat.unit_action", 80, function(event) {
     var targetName = target.hasComponent("Name") ? target.getComponent("Name").getString("value") : targetId;
     var casterSide = caster.hasTag("player") ? "player" : "enemy";
     var targetSide = target.hasTag("player") ? "player" : "enemy";
-
-    var mana = caster.getComponent("Mana");
-    if (mana !== null) {
-        mana.set("mp", Math.max(0, mana.getInt("mp") - 10));
-    }
 
     var attack = caster.hasComponent("CombatStats") ? caster.getComponent("CombatStats").getInt("attack") : 5;
     var damage = attack + 10;
@@ -101,5 +86,7 @@ engine.on("combat.unit_action", 80, function(event) {
     burnData.put("stacking", "refresh");
     burnData.put("source", actorId);
     burnData.put("color", "#ff4400");
+    burnData.put("permanent", false);
+    burnData.put("positive", false);
     buffs.applyBuff(targetId, "burning", burnData);
 });

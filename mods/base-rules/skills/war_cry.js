@@ -12,6 +12,8 @@ engine.on("combat.unit_action", 80, function(event) {
             var data = engine.newMap();
             data.put("color", "#ffab40");
             data.put("stacking", "refresh");
+            data.put("permanent", false);
+            data.put("positive", true);
             buffs.applyBuff(entity.getId(), "war_cry", data);
         }
     }

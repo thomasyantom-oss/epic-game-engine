@@ -12,6 +12,24 @@ engine.on("combat.damage_dealt", 100, function(event) {
     }
 });
 
+// On death, remove all non-permanent buffs
+engine.on("combat.unit_death", 50, function(event) {
+    var deadId = event.get("deadId");
+    var entity = store.get(deadId);
+    if (entity === null) return;
+
+    var components = entity.getAllComponents();
+    for (var i = 0; i < components.size(); i++) {
+        var comp = components.get(i);
+        if (!comp.getType().startsWith("Buff_")) continue;
+        var permanent = comp.has("permanent") && comp.getBoolean("permanent");
+        if (!permanent) {
+            var buffId = comp.getType().substring(5);
+            buffs.removeBuff(deadId, buffId);
+        }
+    }
+});
+
 // Check if combat is over
 engine.on("combat.check_end", 100, function(event) {
     var combatId = event.get("combatId");

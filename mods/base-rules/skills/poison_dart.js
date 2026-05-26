@@ -25,5 +25,7 @@ engine.on("combat.unit_action", 80, function(event) {
     poisonData.put("stacking", "stack");
     poisonData.put("maxStacks", 5);
     poisonData.put("color", "#9c27b0");
+    poisonData.put("permanent", false);
+    poisonData.put("positive", false);
     buffs.applyBuff(targetId, "poison", poisonData);
 });

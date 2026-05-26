@@ -2,6 +2,8 @@ id: poison
 name: "中毒"
 stacking: stack
 max_stacks: 5
+permanent: false
+positive: false
 indicator:
   corner: bottom-left
   color: "#9c27b0"

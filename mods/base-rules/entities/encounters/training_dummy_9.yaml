@@ -1,0 +1,75 @@
+id: training_dummy_9
+name: "训练假人 x9"
+enemies:
+  - id: dummy1
+    name: "假人甲"
+    row: FRONT
+    slot: 0
+    hp: 999
+    attack: 0
+    defense: 0
+    speed: 1
+  - id: dummy2
+    name: "假人乙"
+    row: FRONT
+    slot: 1
+    hp: 999
+    attack: 0
+    defense: 0
+    speed: 1
+  - id: dummy3
+    name: "假人丙"
+    row: FRONT
+    slot: 2
+    hp: 999
+    attack: 0
+    defense: 0
+    speed: 1
+  - id: dummy4
+    name: "假人丁"
+    row: MID
+    slot: 0
+    hp: 999
+    attack: 0
+    defense: 0
+    speed: 1
+  - id: dummy5
+    name: "假人戊"
+    row: MID
+    slot: 1
+    hp: 999
+    attack: 0
+    defense: 0
+    speed: 1
+  - id: dummy6
+    name: "假人己"
+    row: MID
+    slot: 2
+    hp: 999
+    attack: 0
+    defense: 0
+    speed: 1
+  - id: dummy7
+    name: "假人庚"
+    row: BACK
+    slot: 0
+    hp: 999
+    attack: 0
+    defense: 0
+    speed: 1
+  - id: dummy8
+    name: "假人辛"
+    row: BACK
+    slot: 1
+    hp: 999
+    attack: 0
+    defense: 0
+    speed: 1
+  - id: dummy9
+    name: "假人壬"
+    row: BACK
+    slot: 2
+    hp: 999
+    attack: 0
+    defense: 0
+    speed: 1
