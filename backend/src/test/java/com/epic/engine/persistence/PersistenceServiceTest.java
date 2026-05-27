@@ -1,12 +1,12 @@
 package com.epic.engine.persistence;
 
-import com.epic.engine.core.Component;
-import com.epic.engine.core.Entity;
-import com.epic.engine.core.EntityStore;
+import com.epic.engine.core.*;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.ActiveProfiles;
+
+import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -47,5 +47,41 @@ class PersistenceServiceTest {
         persistenceService.save(goblin);
 
         assertThat(persistenceService.load("temp_goblin")).isNull();
+    }
+
+    @Test
+    void save_withChain_savesBaseStateValues() {
+        ModifierTypeRegistry typeReg = new ModifierTypeRegistry();
+        EventBus bus = new EventBus();
+        ModifierChainService chainService = new ModifierChainService(bus, entityStore, typeReg);
+
+        Entity e = new Entity("char_test");
+        Component stats = new Component("CombatStats");
+        stats.set("attack", 10);
+        e.addComponent(stats);
+        Component slots = new Component("EquipmentSlots");
+        slots.set("weapon", "iron_sword");
+        e.addComponent(slots);
+        e.addTag("persistent");
+        entityStore.add(e);
+
+        // setBase with only stat components
+        chainService.setBaseSelective("char_test", List.of("CombatStats"));
+        // Add modifier that inflates attack
+        chainService.addModifier("char_test", new Modifier("sword", "equipment", "铁剑", "equipment_sword", 50,
+                ent -> ent.getComponent("CombatStats").set("attack", ent.getComponent("CombatStats").getInt("attack") + 8)));
+
+        // Current state: attack=18, EquipmentSlots.weapon="iron_sword"
+        assertThat(e.getComponent("CombatStats").getInt("attack")).isEqualTo(18);
+
+        // Inject chainService and save
+        persistenceService.setModifierChainService(chainService);
+        persistenceService.save(e);
+
+        // Load and verify: attack should be BASE value (10), not 18
+        Entity loaded = persistenceService.load("char_test");
+        assertThat(loaded.getComponent("CombatStats").getInt("attack")).isEqualTo(10);
+        // Non-stat component preserved as-is
+        assertThat(loaded.getComponent("EquipmentSlots").getString("weapon")).isEqualTo("iron_sword");
     }
 }

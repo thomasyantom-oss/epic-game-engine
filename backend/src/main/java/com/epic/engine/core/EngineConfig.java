@@ -55,7 +55,9 @@ public class EngineConfig {
                                            EventBus eventBus, EntityStore entityStore,
                                            ScriptRuntime scriptRuntime, PersistenceService persistenceService,
                                            SessionService sessionService, BuffService buffService,
-                                           ModifierTypeRegistry modifierTypeRegistry) {
+                                           ModifierTypeRegistry modifierTypeRegistry,
+                                           ModifierChainService modifierChainService) {
+        persistenceService.setModifierChainService(modifierChainService);
         return new EngineBootstrap(moduleLoader, schemaRegistry, eventBus, entityStore, Path.of(modsPath),
                 scriptRuntime, persistenceService, sessionService, buffService, modifierTypeRegistry);
     }
