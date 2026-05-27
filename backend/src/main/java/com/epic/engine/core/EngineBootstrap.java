@@ -29,12 +29,14 @@ public class EngineBootstrap {
     private final PersistenceService persistenceService;
     private final SessionService sessionService;
     private final BuffService buffService;
+    private final ModifierTypeRegistry modifierTypeRegistry;
     private HotReloader hotReloader;
 
     public EngineBootstrap(ModuleLoader moduleLoader, SchemaRegistry schemaRegistry,
                            EventBus eventBus, EntityStore entityStore, Path modsPath,
                            ScriptRuntime scriptRuntime, PersistenceService persistenceService,
-                           SessionService sessionService, BuffService buffService) {
+                           SessionService sessionService, BuffService buffService,
+                           ModifierTypeRegistry modifierTypeRegistry) {
         this.moduleLoader = moduleLoader;
         this.schemaRegistry = schemaRegistry;
         this.eventBus = eventBus;
@@ -44,6 +46,7 @@ public class EngineBootstrap {
         this.persistenceService = persistenceService;
         this.sessionService = sessionService;
         this.buffService = buffService;
+        this.modifierTypeRegistry = modifierTypeRegistry;
     }
 
     @PostConstruct
@@ -52,6 +55,7 @@ public class EngineBootstrap {
         log.info("发现 {} 个模块，开始加载…", modules.size());
         for (ModuleDescriptor mod : modules) {
             schemaRegistry.loadFromModPath(mod.path());
+            modifierTypeRegistry.loadFromModPath(mod.path());
         }
 
         // Bind services to JS runtime before loading handlers
@@ -79,6 +83,13 @@ public class EngineBootstrap {
         }
 
         log.info("已从数据库恢复 {} 个持久实体", entityStore.all().size());
+
+        // Fire entity.loaded for each persistent entity so handlers can re-register Modifiers
+        for (Entity entity : entityStore.all()) {
+            GameEvent loadedEvent = new GameEvent("entity.loaded");
+            loadedEvent.set("entity", entity);
+            eventBus.fire("entity.loaded", loadedEvent);
+        }
 
         eventBus.fire("world.init", new GameEvent("world.init"));
         log.info("世界初始化完成，实体数: {}", entityStore.all().size());

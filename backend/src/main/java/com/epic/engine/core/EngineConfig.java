@@ -29,8 +29,10 @@ public class EngineConfig {
     }
 
     @Bean
-    public ScriptRuntime scriptRuntime(EventBus eventBus, EntityStore entityStore) {
-        return new ScriptRuntime(eventBus, entityStore);
+    public ScriptRuntime scriptRuntime(EventBus eventBus, EntityStore entityStore,
+                                        ModifierChainService modifierChainService,
+                                        ModifierTypeRegistry modifierTypeRegistry) {
+        return new ScriptRuntime(eventBus, entityStore, modifierChainService, modifierTypeRegistry);
     }
 
     @Bean
@@ -52,8 +54,9 @@ public class EngineConfig {
     public EngineBootstrap engineBootstrap(ModuleLoader moduleLoader, SchemaRegistry schemaRegistry,
                                            EventBus eventBus, EntityStore entityStore,
                                            ScriptRuntime scriptRuntime, PersistenceService persistenceService,
-                                           SessionService sessionService, BuffService buffService) {
+                                           SessionService sessionService, BuffService buffService,
+                                           ModifierTypeRegistry modifierTypeRegistry) {
         return new EngineBootstrap(moduleLoader, schemaRegistry, eventBus, entityStore, Path.of(modsPath),
-                scriptRuntime, persistenceService, sessionService, buffService);
+                scriptRuntime, persistenceService, sessionService, buffService, modifierTypeRegistry);
     }
 }
