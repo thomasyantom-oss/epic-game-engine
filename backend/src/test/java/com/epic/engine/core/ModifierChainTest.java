@@ -100,4 +100,12 @@ class ModifierChainTest {
         chain.recalculate();
         assertThat(entity.getComponent("Health").getInt("hp")).isEqualTo(100);
     }
+
+    @Test
+    void modifier_hasTypeIdAndLabel() {
+        Modifier m = new Modifier("id1", "equipment", "铁剑", "source1", 50,
+                e -> e.getComponent("Health").set("hp", 10));
+        assertThat(m.typeId()).isEqualTo("equipment");
+        assertThat(m.label()).isEqualTo("铁剑");
+    }
 }
