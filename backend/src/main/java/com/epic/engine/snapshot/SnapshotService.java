@@ -84,7 +84,6 @@ public class SnapshotService {
                 new WorldSnapshot.ActionResult(true, "ok"),
                 bars != null ? bars : List.of(),
                 buffs != null ? buffs : List.of(),
-                buildEquipmentSnapshot(player),
                 buildMapSnapshot(player),
                 buildCombatSnapshot(playerId),
                 actions != null ? actions : List.of(),
@@ -147,36 +146,6 @@ public class SnapshotService {
             }
         }
         return log;
-    }
-
-    private List<WorldSnapshot.EquipmentSlot> buildEquipmentSnapshot(Entity player) {
-        if (!player.hasComponent("EquipmentSlots")) return List.of();
-        Component slots = player.getComponent("EquipmentSlots");
-
-        List<String[]> slotDefs = List.of(
-                new String[]{"weapon", "武器"},
-                new String[]{"armor", "护甲"},
-                new String[]{"accessory", "饰品"}
-        );
-
-        List<WorldSnapshot.EquipmentSlot> result = new ArrayList<>();
-        for (String[] def : slotDefs) {
-            String slotId = def[0];
-            String label = def[1];
-            Object raw = slots.get(slotId);
-            String itemId = raw != null ? raw.toString() : null;
-            String itemName = null;
-            if (itemId != null) {
-                Entity item = entityStore.get(itemId);
-                if (item != null && item.hasComponent("ItemMeta")) {
-                    itemName = item.getComponent("ItemMeta").getString("name");
-                } else {
-                    itemName = itemId;
-                }
-            }
-            result.add(new WorldSnapshot.EquipmentSlot(slotId, label, itemId, itemName));
-        }
-        return result;
     }
 
     private WorldSnapshot.MapSnapshot buildMapSnapshot(Entity player) {
