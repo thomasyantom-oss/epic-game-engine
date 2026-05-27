@@ -1,0 +1,30 @@
+modifier_types:
+  - id: race
+    label: 种族
+    stack_rule: exclusive
+    base_priority: 200
+
+  - id: class
+    label: 职业
+    stack_rule: exclusive
+    base_priority: 180
+
+  - id: subclass
+    label: 子职业
+    stack_rule: exclusive
+    base_priority: 160
+
+  - id: level
+    label: 等级成长
+    stack_rule: exclusive
+    base_priority: 90
+
+  - id: equipment
+    label: 装备
+    stack_rule: additive
+    base_priority: 50
+
+  - id: buff
+    label: 增益/减益
+    stack_rule: independent
+    base_priority: 10
