@@ -377,3 +377,52 @@
 - 标签区块（种族/属性等，后端尚未传入）
 - 等级显示
 - 压缩态 hover 时完整展开（当前只展开高度，内容结构需进一步对齐）
+
+## 2026-05-26 ~ 2026-05-27
+
+### 属性/装备/等级系统 — 后端 Plan A 实现
+
+完成属性改造后端基础架构（spec: `docs/superpowers/specs/2026-05-26-attribute-equipment-level-design.md`，plan: `docs/superpowers/plans/2026-05-26-attribute-system-backend.md`）。
+
+**引擎扩展（Java）：**
+- `Modifier` record — `(typeId, id, label, priority, source, apply: Consumer<Entity>)`
+- `ModifierChain` — base state 快照 + 有序 modifier 列表 + `recalculate()` / `recalculateWithTracking()`
+- `ModifierChainService` — 管理所有 entity 的 chain，`addModifier` → EXCLUSIVE 时先清同类 → 重算；`getContributions()` 返回每个 modifier 的 delta
+- `ModifierDiff` record — `(modifierId, typeId, label, componentDeltas: Map<Comp, Map<field, diff>>)`
+- `ModifierType` / `ModifierTypeRegistry` — 从 YAML 加载 typeId → stackRule
+- `ScriptRuntime` 暴露 `engine.addModifier` / `engine.removeModifier` / `engine.setBase` / `engine.setBaseSelective` 给 JS
+
+**Mod 实现（JS）：**
+- `recalculate_hooks.js` — `entity.before_recalculate` 保存 hp/mp → `entity.after_recalculate` 恢复并 cap；`entity.loaded` 重注册职业 modifier + 装备 modifier + 等级成长 modifier（重启后恢复状态）
+- `leveling.js` — `action.gain_xp`（XP 积累 + 升级 + 给 pendingPoints）/ `action.allocate_point`（消耗一点加到指定 stat，重注册 level_growth modifier）
+- `select.js` — 角色创建时注册职业 modifier，创建 `EquipmentSlots` / `Inventory` / `Experience` 组件
+
+**Bug 修复（顺手修）：**
+- `Entity.getAllComponents()` 返回 `List<Component>`（原为 `Collection`），GraalJS 中 `.get(i)` 整数索引无法访问 Collection
+- `NewCombatIntegrationTest` 三个预存失败：
+  - `setUp()` 补充加载 `basic_attack.js` / `defend.js`
+  - 绑定 `BuffService`（defend.js 调用 `buffs.applyBuff()`）
+  - 命令类型 `"ATTACK"/"DEFEND"` 改为 `"basic_attack"/"defend"`
+
+### 属性/装备/等级系统 — 前端设计
+
+**brainstorm 阶段（完成）：**
+- 设计规范确立：深蓝暗色系 `#1a1a2e`/`#16213e`、霞鹜文楷、2px 粗边框
+- 通过 brainstorm 伴侣可视化设计三个区块：
+  1. **角色属性 Tab**（右上角）：HP/MP 进度条 + 战斗属性行 + 悬停 tooltip（来源明细） + pendingPoints 横幅 + 战斗染色（绿增益/红减益）
+  2. **装备/背包 Tab**（左上角覆盖地图区域）：SVG 角色剪影 + 6 个方形装备槽（头/武器/护甲/副手/饰品/靴子，绝对定位围绕剪影）+ 4 列背包网格 + 整理按钮（稀有度排序 + 淡入动画）+ 拖拽穿戴
+  3. **属性点分配界面**：升级后出现 Tab，逐点 +/- 分配，当前值→预览值→差值实时更新，确认/重置
+
+**前端计划（待实现，共 10 个任务）：**
+- Task 1: `items.yaml` — 物品目录（iron_sword/leather_armor + 稀有度颜色映射）
+- Task 2: `equip.js` — 装备/卸下 action handler + `registerEquipmentModifier`（Plan A 漏做）
+- Task 3: 后端 Snapshot 扩展 — `WorldSnapshot` 新增 `pendingPoints`/`equipment`/`inventory` 字段
+- Task 4: `/api/character/stats` 端点 — 读 `ModifierChainService.getContributions()` 返回 breakdown
+- Task 5: `useTooltip.js` composable — 全局单例 tooltip 状态管理
+- Task 6: `ItemTooltip.vue` — `Teleport` 到 body，fixed 定位，`{name, nameColor, rows, footer, total}` 格式
+- Task 7: `CharacterStatsTab.vue` — 替换现有 StatusBars
+- Task 8: `EquipmentBagPanel.vue` — 装备槽 + 背包 + 拖拽
+- Task 9: `AttributeAllocPanel.vue` — 加点分配 UI
+- Task 10: `SnapshotRenderer.vue` 接线 — 新 Tab、战斗染色 baseline、全局 Tooltip
+
+**plan 文件尚未写出**，下次开始直接写 `docs/superpowers/plans/2026-05-27-attribute-equipment-frontend.md` 并执行。
