@@ -5,6 +5,9 @@ import com.epic.engine.core.EventBus;
 import com.epic.engine.core.GameEvent;
 import com.epic.engine.core.Entity;
 import com.epic.engine.core.Component;
+import com.epic.engine.core.Modifier;
+import com.epic.engine.core.ModifierChainService;
+import com.epic.engine.core.ModifierTypeRegistry;
 import com.epic.engine.snapshot.WorldSnapshot;
 import org.graalvm.polyglot.Context;
 import org.graalvm.polyglot.HostAccess;
@@ -23,14 +26,24 @@ import java.util.Map;
 
 public class ScriptRuntime implements AutoCloseable {
 
+    private ModifierChainService modifierChainService;
+    private ModifierTypeRegistry modifierTypeRegistry;
     private final Context context;
     private final EventBus bus;
     private final EntityStore store;
     private Path moduleContext;
 
     public ScriptRuntime(EventBus bus, EntityStore store) {
+        this(bus, store, null, null);
+    }
+
+    public ScriptRuntime(EventBus bus, EntityStore store,
+                         ModifierChainService modifierChainService,
+                         ModifierTypeRegistry modifierTypeRegistry) {
         this.bus = bus;
         this.store = store;
+        this.modifierChainService = modifierChainService;
+        this.modifierTypeRegistry = modifierTypeRegistry;
         this.context = Context.newBuilder("js")
                 .allowHostAccess(HostAccess.ALL)
                 .allowHostClassLookup(className -> false)
@@ -195,6 +208,63 @@ public class ScriptRuntime implements AutoCloseable {
                         entries.add(entry);
                     }
                 }
+            }
+        }
+
+        @HostAccess.Export
+        public void setBase(String entityId) {
+            if (modifierChainService != null) {
+                modifierChainService.setBase(entityId);
+            }
+        }
+
+        @HostAccess.Export
+        public void setBaseSelective(String entityId, Value componentTypes) {
+            if (modifierChainService == null) return;
+            List<String> types = new java.util.ArrayList<>();
+            for (int i = 0; i < componentTypes.getArraySize(); i++) {
+                types.add(componentTypes.getArrayElement(i).asString());
+            }
+            modifierChainService.setBaseSelective(entityId, types);
+        }
+
+        @HostAccess.Export
+        public void addModifier(String entityId, Value config) {
+            if (modifierChainService == null) return;
+            String id = config.getMember("id").asString();
+            String typeId = config.hasMember("typeId") ? config.getMember("typeId").asString() : null;
+            String label = config.hasMember("label") ? config.getMember("label").asString() : id;
+            Value applyFn = config.getMember("apply");
+
+            int priority;
+            if (config.hasMember("priority")) {
+                priority = config.getMember("priority").asInt();
+            } else if (typeId != null && modifierTypeRegistry != null) {
+                priority = modifierTypeRegistry.getBasePriority(typeId);
+            } else {
+                priority = 0;
+            }
+
+            String source = typeId != null ? typeId + "_" + id : id;
+            Modifier modifier = new Modifier(id, typeId, label, source, priority, entity -> {
+                synchronized (ScriptRuntime.this) {
+                    applyFn.execute(entity);
+                }
+            });
+            modifierChainService.addModifier(entityId, modifier);
+        }
+
+        @HostAccess.Export
+        public void removeModifier(String entityId, String modifierId) {
+            if (modifierChainService != null) {
+                modifierChainService.removeModifier(entityId, modifierId);
+            }
+        }
+
+        @HostAccess.Export
+        public void recalculate(String entityId) {
+            if (modifierChainService != null) {
+                modifierChainService.recalculate(entityId);
             }
         }
     }

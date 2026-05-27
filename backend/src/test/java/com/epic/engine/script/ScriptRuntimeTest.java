@@ -5,6 +5,8 @@ import com.epic.engine.core.EventBus;
 import com.epic.engine.core.GameEvent;
 import com.epic.engine.core.Entity;
 import com.epic.engine.core.Component;
+import com.epic.engine.core.ModifierTypeRegistry;
+import com.epic.engine.core.ModifierChainService;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -97,5 +99,35 @@ class ScriptRuntimeTest {
         bus.fire("test.cancel", new GameEvent("test.cancel"));
 
         assertThat(results).isEmpty();
+    }
+
+    @Test
+    void script_addModifier_recalculatesEntity() {
+        ModifierTypeRegistry typeReg = new ModifierTypeRegistry();
+        ModifierChainService chainService = new ModifierChainService(bus, store, typeReg);
+        runtime = new ScriptRuntime(bus, store, chainService, typeReg);
+
+        Entity player = new Entity("p1");
+        Component stats = new Component("CombatStats");
+        stats.set("attack", 10);
+        player.addComponent(stats);
+        store.add(player);
+
+        String script = """
+            engine.setBase("p1");
+            engine.addModifier("p1", {
+                id: "class_warrior",
+                typeId: "class",
+                label: "战士",
+                priority: 180,
+                apply: function(entity) {
+                    var s = entity.getComponent("CombatStats");
+                    s.set("attack", s.getInt("attack") + 3);
+                }
+            });
+            """;
+        runtime.execute(script, "test.js");
+
+        assertThat(player.getComponent("CombatStats").getInt("attack")).isEqualTo(13);
     }
 }
