@@ -59,9 +59,9 @@ engine.on("action.confirm_character", 100, function(event) {
     var charSchema = schemas.get("character");
     var classSchema = schemas.get(classId);
 
-    // 创建实体，添加基础组件
     var entity = engine.createEntity(charId);
 
+    // 1. 添加 base stat 组件
     var baseComps = charSchema.baseComponents();
     var compTypes = baseComps.keySet().iterator();
     while (compTypes.hasNext()) {
@@ -76,83 +76,95 @@ engine.on("action.confirm_character", 100, function(event) {
         entity.addComponent(comp);
     }
 
-    // 应用职业修正值
-    if (classSchema !== null && classSchema.modifiers() !== null) {
-        var mods = classSchema.modifiers();
-        for (var i = 0; i < mods.size(); i++) {
-            var mod = mods.get(i);
-            var fieldStr = mod.field();
-            var dotIdx = fieldStr.indexOf(".");
-            var compName = fieldStr.substring(0, dotIdx);
-            var fieldName = fieldStr.substring(dotIdx + 1);
-            var valueStr = mod.value();
-            var comp = entity.getComponent(compName);
-            if (comp !== null) {
-                var current = comp.getInt(fieldName);
-                if (valueStr.startsWith("+")) {
-                    comp.set(fieldName, current + parseInt(valueStr.substring(1)));
-                } else {
-                    comp.set(fieldName, parseInt(valueStr));
-                }
-            }
-        }
-    }
+    // 2. 添加标签和到 store（setBase 需要实体在 store 中）
+    entity.addTag("persistent");
+    entity.addTag("player");
+    entity.addTag("session:" + token);
+    store.add(entity);
 
-    // 添加 Character 元数据组件
+    // 3. Snapshot base state（仅包含 stat 组件）
+    engine.setBase(charId);
+
+    // 4. 添加非 stat 组件
     var charComp = engine.newComponent("Character");
     charComp.set("name", name);
     charComp.set("level", 1);
+    charComp.set("xp", 0);
     charComp.set("classId", classId);
     charComp.set("classLabel", classSchema !== null ? classSchema.label() : classId);
     entity.addComponent(charComp);
 
-    // Name 组件用于战斗等界面显示
     var nameComp = engine.newComponent("Name");
     nameComp.set("value", name);
     entity.addComponent(nameComp);
 
-    // 添加 Skills 组件 — 默认技能 + 职业技能
     var skills = engine.newComponent("Skills");
     var skillList = engine.newList();
-
     var atkSkill = engine.newMap();
-    atkSkill.put("id", "basic_attack");
-    atkSkill.put("level", 1);
-    atkSkill.put("cooldown", 0);
+    atkSkill.put("id", "basic_attack"); atkSkill.put("level", 1); atkSkill.put("cooldown", 0);
     skillList.add(atkSkill);
-
     var defSkill = engine.newMap();
-    defSkill.put("id", "defend");
-    defSkill.put("level", 1);
-    defSkill.put("cooldown", 0);
+    defSkill.put("id", "defend"); defSkill.put("level", 1); defSkill.put("cooldown", 0);
     skillList.add(defSkill);
-
     var fleeSkill = engine.newMap();
-    fleeSkill.put("id", "flee");
-    fleeSkill.put("level", 1);
-    fleeSkill.put("cooldown", 0);
+    fleeSkill.put("id", "flee"); fleeSkill.put("level", 1); fleeSkill.put("cooldown", 0);
     skillList.add(fleeSkill);
-
     if (classId === "mage") {
         var mageSkills = ["fireball", "light_field"];
         for (var m = 0; m < mageSkills.length; m++) {
             var ms = engine.newMap();
-            ms.put("id", mageSkills[m]);
-            ms.put("level", 1);
-            ms.put("cooldown", 0);
+            ms.put("id", mageSkills[m]); ms.put("level", 1); ms.put("cooldown", 0);
             skillList.add(ms);
         }
     }
-
     skills.set("list", skillList);
     entity.addComponent(skills);
 
-    // 标签
-    entity.addTag("persistent");
-    entity.addTag("player");
-    entity.addTag("session:" + token);
+    var slotsComp = engine.newComponent("EquipmentSlots");
+    slotsComp.set("weapon", null);
+    slotsComp.set("armor", null);
+    slotsComp.set("accessory", null);
+    entity.addComponent(slotsComp);
 
-    store.add(entity);
+    var invComp = engine.newComponent("Inventory");
+    invComp.set("items", engine.newList());
+    entity.addComponent(invComp);
+
+    var expComp = engine.newComponent("Experience");
+    expComp.set("xp", 0);
+    expComp.set("level", 1);
+    expComp.set("pendingPoints", 0);
+    entity.addComponent(expComp);
+
+    // 5. 注册职业 Modifier（exclusive，替换旧职业）
+    var capturedClassSchema = classSchema;
+    var capturedClassId = classId;
+    engine.addModifier(charId, {
+        typeId: "class",
+        id: "class_" + classId,
+        label: classSchema !== null ? classSchema.label() : classId,
+        apply: function(ent) {
+            if (capturedClassSchema === null || capturedClassSchema.modifiers() === null) return;
+            var mods = capturedClassSchema.modifiers();
+            for (var i = 0; i < mods.size(); i++) {
+                var mod = mods.get(i);
+                var dotIdx = mod.field().indexOf(".");
+                var compName = mod.field().substring(0, dotIdx);
+                var fieldName = mod.field().substring(dotIdx + 1);
+                var valueStr = mod.value();
+                var comp = ent.getComponent(compName);
+                if (comp !== null) {
+                    var current = comp.getInt(fieldName);
+                    if (valueStr.startsWith("+")) {
+                        comp.set(fieldName, current + parseInt(valueStr.substring(1)));
+                    } else {
+                        comp.set(fieldName, parseInt(valueStr));
+                    }
+                }
+            }
+        }
+    });
+
     persistence.save(entity);
     sessions.setActiveCharacter(token, charId);
 });

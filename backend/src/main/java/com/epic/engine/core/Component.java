@@ -1,5 +1,6 @@
 package com.epic.engine.core;
 
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -31,7 +32,7 @@ public class Component {
 
     public void remove(String key) { data.remove(key); }
 
-    public Map<String, Object> getAll() { return Map.copyOf(data); }
+    public Map<String, Object> getAll() { return Collections.unmodifiableMap(data); }
 
     public Component copy() {
         Component copy = new Component(type);
