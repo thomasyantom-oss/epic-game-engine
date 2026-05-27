@@ -1,6 +1,7 @@
 package com.epic.engine.core;
 
 import org.junit.jupiter.api.Test;
+import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 
 class ModifierChainTest {
@@ -107,5 +108,47 @@ class ModifierChainTest {
                 e -> e.getComponent("Health").set("hp", 10));
         assertThat(m.typeId()).isEqualTo("equipment");
         assertThat(m.label()).isEqualTo("铁剑");
+    }
+
+    @Test
+    void recalculateWithTracking_recordsDeltas() {
+        Entity entity = new Entity("p1");
+        Component stats = new Component("CombatStats");
+        stats.set("attack", 10);
+        entity.addComponent(stats);
+
+        ModifierChain chain = new ModifierChain(entity);
+        chain.addModifier(new Modifier("class_warrior", "warrior", "战士", "class", 180,
+                e -> e.getComponent("CombatStats").set("attack", e.getComponent("CombatStats").getInt("attack") + 3)));
+
+        List<ModifierDiff> diffs = chain.recalculateWithTracking();
+
+        assertThat(diffs).hasSize(1);
+        assertThat(diffs.get(0).modifierId()).isEqualTo("class_warrior");
+        assertThat(diffs.get(0).componentDeltas().get("CombatStats").get("attack")).isEqualTo(3L);
+    }
+
+    @Test
+    void recalculate_onlyRestoresBaseStateComponents() {
+        Entity entity = new Entity("p2");
+        Component stats = new Component("CombatStats");
+        stats.set("attack", 10);
+        entity.addComponent(stats);
+
+        ModifierChain chain = new ModifierChain(entity);
+
+        // Add a non-base component AFTER setBase was called (via constructor)
+        Component slots = new Component("EquipmentSlots");
+        slots.set("weapon", "iron_sword");
+        entity.addComponent(slots);
+
+        chain.addModifier(new Modifier("cls", "class", 180,
+                e -> e.getComponent("CombatStats").set("attack", e.getComponent("CombatStats").getInt("attack") + 5)));
+        chain.recalculate();
+
+        // EquipmentSlots should NOT be touched by recalculate
+        assertThat(entity.hasComponent("EquipmentSlots")).isTrue();
+        assertThat(entity.getComponent("EquipmentSlots").getString("weapon")).isEqualTo("iron_sword");
+        assertThat(entity.getComponent("CombatStats").getInt("attack")).isEqualTo(15);
     }
 }
