@@ -105,6 +105,7 @@ class ScriptRuntimeTest {
     void script_addModifier_recalculatesEntity() {
         ModifierTypeRegistry typeReg = new ModifierTypeRegistry();
         ModifierChainService chainService = new ModifierChainService(bus, store, typeReg);
+        runtime.close();
         runtime = new ScriptRuntime(bus, store, chainService, typeReg);
 
         Entity player = new Entity("p1");

@@ -26,8 +26,8 @@ import java.util.Map;
 
 public class ScriptRuntime implements AutoCloseable {
 
-    private ModifierChainService modifierChainService;
-    private ModifierTypeRegistry modifierTypeRegistry;
+    private final ModifierChainService modifierChainService;
+    private final ModifierTypeRegistry modifierTypeRegistry;
     private final Context context;
     private final EventBus bus;
     private final EntityStore store;
@@ -221,7 +221,7 @@ public class ScriptRuntime implements AutoCloseable {
         @HostAccess.Export
         public void setBaseSelective(String entityId, Value componentTypes) {
             if (modifierChainService == null) return;
-            List<String> types = new java.util.ArrayList<>();
+            List<String> types = new ArrayList<>();
             for (int i = 0; i < componentTypes.getArraySize(); i++) {
                 types.add(componentTypes.getArrayElement(i).asString());
             }
@@ -234,6 +234,9 @@ public class ScriptRuntime implements AutoCloseable {
             String id = config.getMember("id").asString();
             String typeId = config.hasMember("typeId") ? config.getMember("typeId").asString() : null;
             String label = config.hasMember("label") ? config.getMember("label").asString() : id;
+            if (!config.hasMember("apply") || config.getMember("apply").isNull()) {
+                throw new IllegalArgumentException("addModifier: 'apply' function is required");
+            }
             Value applyFn = config.getMember("apply");
 
             int priority;
