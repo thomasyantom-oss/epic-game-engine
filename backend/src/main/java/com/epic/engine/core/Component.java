@@ -25,6 +25,8 @@ public class Component {
 
     public String getString(String key) { return (String) data.get(key); }
 
+    public boolean getBoolean(String key) { return Boolean.TRUE.equals(data.get(key)); }
+
     public boolean has(String key) { return data.containsKey(key); }
 
     public void remove(String key) { data.remove(key); }
