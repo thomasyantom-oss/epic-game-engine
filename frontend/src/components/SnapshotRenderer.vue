@@ -29,6 +29,10 @@
             </div>
           </div>
         </template>
+        <template #equipment>
+          <EquipmentPanel :slots="snapshot.equipment"
+                          @unequip="slot => $emit('action', { type: 'unequip', params: { slot } })" />
+        </template>
         <template #settings>
           <SettingsPanel />
         </template>
@@ -77,6 +81,7 @@ import { computed, ref, watch, nextTick } from 'vue'
 import TabPanel from './TabPanel.vue'
 import TextRenderer from './TextRenderer.vue'
 import StatusBars from './StatusBars.vue'
+import EquipmentPanel from './EquipmentPanel.vue'
 import ActionPanel from './ActionPanel.vue'
 import SettingsPanel from './SettingsPanel.vue'
 import MapGrid from './MapGrid.vue'
@@ -97,7 +102,7 @@ const mainTabs = computed(() => {
   return [{ id: 'map', label: '地图' }]
 })
 
-const funcTabs = [{ id: 'status', label: '人物' }, { id: 'settings', label: '设置' }]
+const funcTabs = [{ id: 'status', label: '人物' }, { id: 'equipment', label: '装备' }, { id: 'settings', label: '设置' }]
 
 const hasLog = computed(() => {
   return (props.snapshot?.log && props.snapshot.log.length > 0) || props.snapshot?.combat
