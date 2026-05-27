@@ -30,8 +30,8 @@ public class Entity {
         return components.containsKey(type);
     }
 
-    public Collection<Component> getAllComponents() {
-        return Collections.unmodifiableCollection(components.values());
+    public List<Component> getAllComponents() {
+        return List.copyOf(components.values());
     }
 
     public void addTag(String tag) { tags.add(tag); }

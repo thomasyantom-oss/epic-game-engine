@@ -1,5 +1,6 @@
 package com.epic.engine.combat;
 
+import com.epic.engine.buff.BuffService;
 import com.epic.engine.core.*;
 import com.epic.engine.script.ScriptRuntime;
 import org.junit.jupiter.api.AfterEach;
@@ -24,12 +25,17 @@ class NewCombatIntegrationTest {
         bus = new EventBus();
         store = new EntityStore();
         runtime = new ScriptRuntime(bus, store);
+        runtime.bindService("buffs", new BuffService(bus, store));
 
         Path baseDir = Path.of("../mods/base-rules/handlers/combat");
         runtime.execute(Files.readString(baseDir.resolve("initiative.js")), "initiative.js");
         runtime.execute(Files.readString(baseDir.resolve("damage_calc.js")), "damage_calc.js");
         runtime.execute(Files.readString(baseDir.resolve("death_check.js")), "death_check.js");
         runtime.execute(Files.readString(baseDir.resolve("combat_flow.js")), "combat_flow.js");
+
+        Path skillsDir = Path.of("../mods/base-rules/skills");
+        runtime.execute(Files.readString(skillsDir.resolve("basic_attack.js")), "basic_attack.js");
+        runtime.execute(Files.readString(skillsDir.resolve("defend.js")), "defend.js");
     }
 
     @AfterEach
@@ -42,10 +48,10 @@ class NewCombatIntegrationTest {
         setupCombat();
 
         Map<String, Object> playerCmd = new HashMap<>();
-        playerCmd.put("type", "ATTACK");
+        playerCmd.put("type", "basic_attack");
         playerCmd.put("targetId", "goblin1");
         Map<String, Object> enemyCmd = new HashMap<>();
-        enemyCmd.put("type", "ATTACK");
+        enemyCmd.put("type", "basic_attack");
         enemyCmd.put("targetId", "player1");
         Map<String, Object> commands = new HashMap<>();
         commands.put("player1", playerCmd);
@@ -71,9 +77,9 @@ class NewCombatIntegrationTest {
         store.get("goblin1").getComponent("CombatStats").set("attack", 15);
 
         Map<String, Object> playerCmd = new HashMap<>();
-        playerCmd.put("type", "DEFEND");
+        playerCmd.put("type", "defend");
         Map<String, Object> enemyCmd = new HashMap<>();
-        enemyCmd.put("type", "ATTACK");
+        enemyCmd.put("type", "basic_attack");
         enemyCmd.put("targetId", "player1");
         Map<String, Object> commands = new HashMap<>();
         commands.put("player1", playerCmd);
@@ -97,10 +103,10 @@ class NewCombatIntegrationTest {
         store.get("goblin1").getComponent("Health").set("hp", 1);
 
         Map<String, Object> playerCmd = new HashMap<>();
-        playerCmd.put("type", "ATTACK");
+        playerCmd.put("type", "basic_attack");
         playerCmd.put("targetId", "goblin1");
         Map<String, Object> enemyCmd = new HashMap<>();
-        enemyCmd.put("type", "ATTACK");
+        enemyCmd.put("type", "basic_attack");
         enemyCmd.put("targetId", "player1");
         Map<String, Object> commands = new HashMap<>();
         commands.put("player1", playerCmd);
