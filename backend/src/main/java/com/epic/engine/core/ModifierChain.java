@@ -115,6 +115,7 @@ public class ModifierChain {
             Map<String, Map<String, Long>> before,
             Map<String, Map<String, Long>> after) {
         Map<String, Map<String, Long>> delta = new LinkedHashMap<>();
+
         after.forEach((comp, fields) -> {
             Map<String, Long> compDelta = new LinkedHashMap<>();
             fields.forEach((field, afterVal) -> {
@@ -122,9 +123,23 @@ public class ModifierChain {
                 long diff = afterVal - beforeVal;
                 if (diff != 0) compDelta.put(field, diff);
             });
-            if (!compDelta.isEmpty()) delta.put(comp, compDelta);
+            if (!compDelta.isEmpty()) delta.put(comp, Collections.unmodifiableMap(compDelta));
         });
-        return delta;
+
+        // Detect removals: components/fields present in before but absent in after
+        before.forEach((comp, fields) -> {
+            Map<String, Long> afterFields = after.getOrDefault(comp, Map.of());
+            Map<String, Long> compDelta = new LinkedHashMap<>(
+                    delta.containsKey(comp) ? new LinkedHashMap<>(delta.get(comp)) : Map.of());
+            fields.forEach((field, beforeVal) -> {
+                if (!afterFields.containsKey(field) && beforeVal != 0) {
+                    compDelta.put(field, 0L - beforeVal);
+                }
+            });
+            if (!compDelta.isEmpty()) delta.put(comp, Collections.unmodifiableMap(compDelta));
+        });
+
+        return Collections.unmodifiableMap(delta);
     }
 
     public List<Modifier> getModifiers() {
