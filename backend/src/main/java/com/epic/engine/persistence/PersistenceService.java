@@ -6,12 +6,16 @@ import com.epic.engine.core.EntityStore;
 import com.epic.engine.core.ModifierChainService;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 
 import java.util.*;
 
 @Service
 public class PersistenceService {
+
+    private static final Logger log = LoggerFactory.getLogger(PersistenceService.class);
 
     private final EntityDataRepository repository;
     private final EntityStore entityStore;
@@ -48,6 +52,7 @@ public class PersistenceService {
                         }
                     }
                 } else {
+                    log.warn("Entity {} has no base state in ModifierChain, saving current values", entity.getId());
                     for (Component c : entity.getAllComponents()) {
                         components.put(c.getType(), c.getAll());
                     }

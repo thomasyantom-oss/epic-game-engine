@@ -1,6 +1,7 @@
 package com.epic.engine.persistence;
 
 import com.epic.engine.core.*;
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -16,6 +17,12 @@ class PersistenceServiceTest {
 
     @Autowired PersistenceService persistenceService;
     @Autowired EntityStore entityStore;
+
+    @AfterEach
+    void teardown() {
+        persistenceService.setModifierChainService(null);
+        persistenceService.delete("char_test");
+    }
 
     @Test
     void saveAndLoad_roundTrips() {
