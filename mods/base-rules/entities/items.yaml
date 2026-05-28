@@ -1,0 +1,16 @@
+items:
+  - id: iron_sword
+    meta:
+      name: 铁剑
+      type: weapon
+      rarity: common
+    stats:
+      attack: 8
+
+  - id: leather_armor
+    meta:
+      name: 皮甲
+      type: armor
+      rarity: common
+    stats:
+      defense: 5
