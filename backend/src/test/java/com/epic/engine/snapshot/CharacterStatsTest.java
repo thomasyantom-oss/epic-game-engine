@@ -48,4 +48,32 @@ class CharacterStatsTest {
         assertThat(attackStat).containsKey("final");
         assertThat(attackStat).containsKey("breakdown");
     }
+
+    @Test
+    @SuppressWarnings("unchecked")
+    void snapshot_hasEquipmentAndPendingPoints() {
+        String token = sessionService.createSession();
+        HttpHeaders headers = new HttpHeaders();
+        headers.set("X-Session-Token", token);
+        headers.setContentType(MediaType.APPLICATION_JSON);
+
+        // 创建角色
+        rest.exchange("/api/action", HttpMethod.POST,
+                new HttpEntity<>(Map.of("type", "confirm_character",
+                        "params", Map.of("name", "测试员", "class", "warrior")), headers), Map.class);
+
+        // 获取 snapshot
+        ResponseEntity<Map> resp = rest.exchange(
+                "/api/snapshot", HttpMethod.GET,
+                new HttpEntity<>(headers), Map.class);
+
+        assertThat(resp.getStatusCode()).isEqualTo(HttpStatus.OK);
+        var body = resp.getBody();
+        assertThat(body).containsKey("equipment");
+        assertThat(body).containsKey("pendingPoints");
+
+        var equipment = (Map<String, Object>) body.get("equipment");
+        assertThat(equipment).containsKey("slots");
+        assertThat(equipment).containsKey("inventory");
+    }
 }

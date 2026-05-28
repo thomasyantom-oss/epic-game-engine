@@ -17,7 +17,9 @@ public record WorldSnapshot(
         CombatSnapshot combat,
         List<ActionOption> actions,
         List<LogEntry> log,
-        Map<String, String> colors
+        Map<String, String> colors,
+        Integer pendingPoints,
+        EquipmentData equipment
 ) {
     public record ActionResult(boolean success, String message) {}
     public record CharacterInfo(String id, String name, int level, String classId, String classLabel) {}
@@ -48,24 +50,30 @@ public record WorldSnapshot(
     }
     public record TextSegment(String text, String color) {}
 
+    public record ItemInfo(String id, String name, String type, String rarity, String rarityColor,
+                           Map<String, Integer> stats) {}
+    public record EquipmentData(Map<String, ItemInfo> slots, List<ItemInfo> inventory) {}
+
     public static WorldSnapshot characterSelect(String sessionToken, List<CharacterInfo> characters, int maxSlots, Map<String, String> colors) {
         return new WorldSnapshot("character_select", sessionToken, null,
                 new ActionResult(true, "ok"), characters, maxSlots, null,
-                null, null, null, null, null, null, colors);
+                null, null, null, null, null, null, colors, null, null);
     }
 
     public static WorldSnapshot characterCreate(String sessionToken, FormData form, Map<String, String> colors) {
         return new WorldSnapshot("character_create", sessionToken, null,
                 new ActionResult(true, "ok"), null, null, form,
-                null, null, null, null, null, null, colors);
+                null, null, null, null, null, null, colors, null, null);
     }
 
     public static WorldSnapshot inGame(String sessionToken, String playerId, ActionResult result,
                                         List<StatusBar> statusBars, List<BuffEntry> buffs,
                                         MapSnapshot map, CombatSnapshot combat,
                                         List<ActionOption> actions, List<LogEntry> log,
-                                        Map<String, String> colors) {
+                                        Map<String, String> colors,
+                                        Integer pendingPoints, EquipmentData equipment) {
         return new WorldSnapshot("in_game", sessionToken, playerId, result,
-                null, null, null, statusBars, buffs, map, combat, actions, log, colors);
+                null, null, null, statusBars, buffs, map, combat, actions, log, colors,
+                pendingPoints, equipment);
     }
 }

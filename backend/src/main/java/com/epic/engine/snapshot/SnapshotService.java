@@ -88,7 +88,10 @@ public class SnapshotService {
                 buildCombatSnapshot(playerId),
                 actions != null ? actions : List.of(),
                 buildCombatLog(playerId),
-                buildColorMap());
+                buildColorMap(),
+                null,   // pendingPoints — filled in Task 3
+                null    // equipment — filled in Task 3
+        );
     }
 
     public Map<String, String> buildColorMap() {
