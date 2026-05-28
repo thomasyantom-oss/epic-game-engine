@@ -6,7 +6,7 @@ engine.on("world.init", 80, function(event) {
     var rarityColors = engine.newMap();
     for (var r = 0; r < rarityList.size(); r++) {
         var rar = rarityList.get(r);
-        rarityColors.put(rar.get("id"), rar.get("color"));
+        rarityColors.put(String(rar.get("id")), String(rar.get("color")));
     }
 
     // 加载物品数据
@@ -27,7 +27,9 @@ engine.on("world.init", 80, function(event) {
         metaComp.set("name", meta.get("name"));
         metaComp.set("type", meta.get("type"));
         metaComp.set("rarity", rarity);
-        metaComp.set("rarityColor", rarityColors.get(rarity) !== null ? rarityColors.get(rarity) : "#ffffff");
+        var rarityKey = String(rarity);
+        var rarityColor = rarityColors.get(rarityKey);
+        metaComp.set("rarityColor", rarityColor !== null ? rarityColor : "#ffffff");
         item.addComponent(metaComp);
 
         var statsMap = itemDef.get("stats");
