@@ -10,6 +10,13 @@
             <MapInfoPanel :map="snapshot.map" @poi-action="onPoiAction" />
           </div>
         </template>
+        <template #equip v-if="!snapshot.combat">
+          <EquipmentBagPanel
+            :equipment="snapshot.equipment"
+            :player-id="snapshot.playerId"
+            @action="$emit('action', $event)"
+          />
+        </template>
         <template #battle v-if="snapshot.combat">
           <BattleGrid ref="battleGridRef" :combat="snapshot.combat" :player-id="snapshot.playerId"
                       :commands="combatActions" :animating="isAnimating"
@@ -22,12 +29,13 @@
     <div class="panel-func">
       <TabPanel :tabs="funcTabs" default-tab="status">
         <template #status>
-          <StatusBars :bars="snapshot.statusBars" />
-          <div class="buffs" v-if="snapshot.buffs && snapshot.buffs.length">
-            <div v-for="buff in snapshot.buffs" :key="buff.id" class="buff-item">
-              {{ buff.name }} ({{ buff.remaining }})
-            </div>
-          </div>
+          <CharacterStatsTab
+            :bars="snapshot.statusBars"
+            :buffs="snapshot.buffs"
+            :pending-points="snapshot.pendingPoints"
+            :player-id="snapshot.playerId"
+            @action="$emit('action', $event)"
+          />
         </template>
         <template #settings>
           <SettingsPanel />
@@ -69,6 +77,8 @@
       </TabPanel>
     </div>
 
+    <!-- 全局 Tooltip -->
+    <ItemTooltip />
   </div>
 </template>
 
@@ -76,7 +86,9 @@
 import { computed, ref, watch, nextTick } from 'vue'
 import TabPanel from './TabPanel.vue'
 import TextRenderer from './TextRenderer.vue'
-import StatusBars from './StatusBars.vue'
+import CharacterStatsTab from './CharacterStatsTab.vue'
+import EquipmentBagPanel from './EquipmentBagPanel.vue'
+import ItemTooltip from './ItemTooltip.vue'
 import ActionPanel from './ActionPanel.vue'
 import SettingsPanel from './SettingsPanel.vue'
 import MapGrid from './MapGrid.vue'
@@ -94,7 +106,7 @@ const mainTabs = computed(() => {
   if (props.snapshot?.combat) {
     return [{ id: 'battle', label: '战场' }, { id: 'map', label: '地图' }]
   }
-  return [{ id: 'map', label: '地图' }]
+  return [{ id: 'map', label: '地图' }, { id: 'equip', label: '装备' }]
 })
 
 const funcTabs = [{ id: 'status', label: '人物' }, { id: 'settings', label: '设置' }]
@@ -271,8 +283,6 @@ function onPoiAction(poi) {
 .combatant-row { margin-left: 1rem; }
 .log-scroll { height: 100%; overflow-y: auto; line-height: 1.8; }
 .empty-log { color: var(--text-color); opacity: 0.5; }
-.buffs { margin-top: 0.5rem; }
-.buff-item { font-size: 0.9em; margin: 0.2rem 0; color: var(--text-color); }
 .history-toggle { cursor: pointer; color: var(--link-color); margin-bottom: 0.3rem; }
 .combat-history { border-bottom: 1px solid var(--panel-border-color); margin-bottom: 0.3rem; padding-bottom: 0.3rem; opacity: 0.7; }
 .log-entry { margin-bottom: 0.15rem; }
