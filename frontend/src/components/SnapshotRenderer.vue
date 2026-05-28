@@ -275,7 +275,7 @@ function onPoiAction(poi) {
 .panel-main { grid-column: 1; grid-row: 1; min-height: 0; overflow: hidden; }
 .map-split { display: flex; height: 100%; gap: 0.5rem; }
 .map-split > :first-child { flex: 1; min-width: 0; }
-.map-split > :last-child { width: 8rem; flex-shrink: 0; border-left: 1px solid var(--panel-border-color); }
+.map-split > :last-child { width: 8rem; flex-shrink: 0; border-left: 2px solid var(--panel-border-color); }
 .panel-func { grid-column: 2; grid-row: 1; min-height: 0; }
 .panel-log { grid-column: 1; grid-row: 2; min-height: 0; }
 .panel-nav { grid-column: 2; grid-row: 2; min-height: 0; }
@@ -284,6 +284,6 @@ function onPoiAction(poi) {
 .log-scroll { height: 100%; overflow-y: auto; line-height: 1.8; }
 .empty-log { color: var(--text-color); opacity: 0.5; }
 .history-toggle { cursor: pointer; color: var(--link-color); margin-bottom: 0.3rem; }
-.combat-history { border-bottom: 1px solid var(--panel-border-color); margin-bottom: 0.3rem; padding-bottom: 0.3rem; opacity: 0.7; }
+.combat-history { border-bottom: 2px solid var(--panel-border-color); margin-bottom: 0.3rem; padding-bottom: 0.3rem; opacity: 0.7; }
 .log-entry { margin-bottom: 0.15rem; }
 </style>

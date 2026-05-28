@@ -78,7 +78,7 @@ import AttributeAllocPanel from './AttributeAllocPanel.vue'
 const props = defineProps({
   bars: Array,
   buffs: Array,
-  pendingPoints: Number,
+  pendingPoints: { type: Number, default: null },
   playerId: String
 })
 const emit = defineEmits(['action'])
@@ -86,6 +86,7 @@ const emit = defineEmits(['action'])
 const { showTooltip, moveTooltip, hideTooltip } = useTooltip()
 const showAlloc = ref(false)
 const statsBreakdown = ref(null)
+const fetchingStats = ref(false)
 
 const barById = computed(() => {
   const m = {}
@@ -106,8 +107,10 @@ const statBars = computed(() =>
 watch(() => props.playerId, () => { statsBreakdown.value = null })
 
 async function onStatHover(stat, event) {
-  if (!statsBreakdown.value) {
+  if (!statsBreakdown.value && !fetchingStats.value) {
+    fetchingStats.value = true
     statsBreakdown.value = await getCharacterStats()
+    fetchingStats.value = false
   }
   const key = statIdToKey(stat.id)
   const data = statsBreakdown.value?.[key]
