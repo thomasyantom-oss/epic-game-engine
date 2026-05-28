@@ -7,6 +7,22 @@ items:
     stats:
       attack: 8
 
+  - id: steel_sword
+    meta:
+      name: 钢剑
+      type: weapon
+      rarity: uncommon
+    stats:
+      attack: 15
+
+  - id: fire_staff
+    meta:
+      name: 火焰法杖
+      type: weapon
+      rarity: rare
+    stats:
+      attack: 10
+
   - id: leather_armor
     meta:
       name: 皮甲
@@ -14,3 +30,19 @@ items:
       rarity: common
     stats:
       defense: 5
+
+  - id: chain_mail
+    meta:
+      name: 锁子甲
+      type: armor
+      rarity: uncommon
+    stats:
+      defense: 12
+
+  - id: speed_ring
+    meta:
+      name: 疾速戒指
+      type: accessory
+      rarity: rare
+    stats:
+      speed: 5

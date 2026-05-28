@@ -127,13 +127,22 @@ engine.on("action.confirm_character", 100, function(event) {
     entity.addComponent(slotsComp);
 
     var invComp = engine.newComponent("Inventory");
-    invComp.set("items", engine.newList());
+    var startingItems = engine.newList();
+    startingItems.add("iron_sword");
+    startingItems.add("leather_armor");
+    startingItems.add("speed_ring");
+    if (classId === "mage") {
+        startingItems.add("fire_staff");
+    } else {
+        startingItems.add("steel_sword");
+    }
+    invComp.set("items", startingItems);
     entity.addComponent(invComp);
 
     var expComp = engine.newComponent("Experience");
     expComp.set("xp", 0);
     expComp.set("level", 1);
-    expComp.set("pendingPoints", 0);
+    expComp.set("pendingPoints", 3);
     entity.addComponent(expComp);
 
     // 5. 注册职业 Modifier（exclusive，替换旧职业）

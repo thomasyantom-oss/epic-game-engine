@@ -1,5 +1,15 @@
 // 在 world.init 时加载物品数据到 EntityStore
 engine.on("world.init", 80, function(event) {
+    // 加载稀有度颜色映射
+    var rarityData = engine.loadYaml("item_rarity.yaml");
+    var rarityList = rarityData.get("item_rarities");
+    var rarityColors = engine.newMap();
+    for (var r = 0; r < rarityList.size(); r++) {
+        var rar = rarityList.get(r);
+        rarityColors.put(rar.get("id"), rar.get("color"));
+    }
+
+    // 加载物品数据
     var itemsData = engine.loadYaml("entities/items.yaml");
     var items = itemsData.get("items");
     for (var i = 0; i < items.size(); i++) {
@@ -12,10 +22,12 @@ engine.on("world.init", 80, function(event) {
             store.add(item);
         }
         var meta = itemDef.get("meta");
+        var rarity = meta.get("rarity");
         var metaComp = engine.newComponent("ItemMeta");
         metaComp.set("name", meta.get("name"));
         metaComp.set("type", meta.get("type"));
-        metaComp.set("rarity", meta.get("rarity"));
+        metaComp.set("rarity", rarity);
+        metaComp.set("rarityColor", rarityColors.get(rarity) !== null ? rarityColors.get(rarity) : "#ffffff");
         item.addComponent(metaComp);
 
         var statsMap = itemDef.get("stats");
