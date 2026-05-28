@@ -52,3 +52,15 @@ export async function getSnapshot() {
     saveToken(data)
     return data
 }
+
+export async function getCharacterStats() {
+    try {
+        const response = await fetch(`${BASE_URL}/character/stats`, {
+            headers: getHeaders()
+        })
+        if (!response.ok) return null
+        return await response.json()
+    } catch (e) {
+        return null
+    }
+}
