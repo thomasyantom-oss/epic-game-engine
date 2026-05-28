@@ -89,8 +89,68 @@ public class SnapshotService {
                 actions != null ? actions : List.of(),
                 buildCombatLog(playerId),
                 buildColorMap(),
-                null,   // pendingPoints — filled in Task 3
-                null    // equipment — filled in Task 3
+                buildPendingPoints(playerId),
+                buildEquipmentData(playerId));
+    }
+
+    private Integer buildPendingPoints(String playerId) {
+        Entity player = entityStore.get(playerId);
+        if (player == null || !player.hasComponent("Experience")) return null;
+        Component exp = player.getComponent("Experience");
+        if (!exp.has("pendingPoints")) return null;
+        int pts = exp.getInt("pendingPoints");
+        return pts > 0 ? pts : null;
+    }
+
+    private WorldSnapshot.EquipmentData buildEquipmentData(String playerId) {
+        Entity player = entityStore.get(playerId);
+        if (player == null) return null;
+
+        Map<String, WorldSnapshot.ItemInfo> slots = new java.util.LinkedHashMap<>();
+        Component slotsComp = player.getComponent("EquipmentSlots");
+        if (slotsComp != null) {
+            for (String slotName : new String[]{"weapon", "armor", "accessory"}) {
+                Object itemId = slotsComp.get(slotName);
+                slots.put(slotName, itemId != null ? buildItemInfo(itemId.toString()) : null);
+            }
+        }
+
+        List<WorldSnapshot.ItemInfo> inventory = new ArrayList<>();
+        Component invComp = player.getComponent("Inventory");
+        if (invComp != null) {
+            @SuppressWarnings("unchecked")
+            List<Object> items = (List<Object>) invComp.get("items");
+            if (items != null) {
+                for (Object itemId : items) {
+                    WorldSnapshot.ItemInfo info = buildItemInfo(itemId.toString());
+                    if (info != null) inventory.add(info);
+                }
+            }
+        }
+
+        return new WorldSnapshot.EquipmentData(slots, inventory);
+    }
+
+    private WorldSnapshot.ItemInfo buildItemInfo(String itemId) {
+        Entity item = entityStore.get(itemId);
+        if (item == null || !item.hasComponent("ItemMeta")) return null;
+        Component meta = item.getComponent("ItemMeta");
+
+        Map<String, Integer> statsMap = new java.util.LinkedHashMap<>();
+        Component stats = item.getComponent("ItemStats");
+        if (stats != null) {
+            stats.getAll().forEach((k, v) -> {
+                if (v instanceof Number n) statsMap.put(k, n.intValue());
+            });
+        }
+
+        return new WorldSnapshot.ItemInfo(
+                itemId,
+                meta.getString("name"),
+                meta.getString("type"),
+                meta.getString("rarity"),
+                meta.getString("rarityColor"),
+                statsMap
         );
     }
 
