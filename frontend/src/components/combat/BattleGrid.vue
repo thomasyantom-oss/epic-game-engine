@@ -63,8 +63,8 @@
             :style="cellBgStyle"
             :data-unit-id="cell.marker?.id"
           >
-            <span v-if="cell.marker && cell.marker.alive" class="marker player"
-                  :class="[{ 'shaking': isShaking(cell.marker?.id) }, lungingClass(cell.marker?.id)]">
+            <span v-if="cell.marker && cell.marker.alive" class="marker"
+                  :class="[markerSideClass(cell.marker.side), { 'shaking': isShaking(cell.marker?.id) }, lungingClass(cell.marker?.id)]">
               P{{ cell.marker.index }}
             </span>
             <span v-if="cell.marker?.alive" v-for="(buff, bi) in (cell.marker?.buffs || [])" :key="bi"
@@ -86,8 +86,8 @@
             @mouseenter="onCellHover(cell)"
             @mouseleave="hoveredCell = null"
           >
-            <span v-if="cell.marker && cell.marker.alive" class="marker enemy"
-                  :class="[{ 'shaking': isShaking(cell.marker?.id) }, lungingClass(cell.marker?.id)]">
+            <span v-if="cell.marker && cell.marker.alive" class="marker"
+                  :class="[markerSideClass(cell.marker.side), { 'shaking': isShaking(cell.marker?.id) }, lungingClass(cell.marker?.id)]">
               E{{ cell.marker.index }}
             </span>
             <span v-if="cell.marker?.alive" v-for="(buff, bi) in (cell.marker?.buffs || [])" :key="bi"
@@ -105,23 +105,25 @@
           </template>
         </div>
         <div class="cmd-col cmd-actions" v-if="currentActor && phase === 'COMMAND' && !animating" :class="{ locked: showSkills || step === 'target' }">
-          <ActionLink v-for="cmd in baseActions" :key="cmd.params?.command"
-                      :action="cmd"
-                      @action="selectCommand(cmd)" />
+          <ActionLink v-if="firstMainAction" :action="firstMainAction" @action="selectCommand(firstMainAction)" />
           <span v-if="skillActions.length > 0" class="cmd-item skill-btn"
                 :class="{ active: showSkills }"
-                @click="showSkills = true">▸ 技能</span>
+                @click="showSkills = true">▸技能</span>
+          <ActionLink v-for="cmd in otherMainActions" :key="cmd.params?.command"
+                      :action="cmd"
+                      @action="selectCommand(cmd)" />
+          <ActionLink v-if="fleeAction" :action="fleeAction" @action="selectCommand(fleeAction)" />
         </div>
         <div class="cmd-col cmd-sub" v-if="currentActor && phase === 'COMMAND' && !animating">
           <template v-if="step === 'target'">
             <span class="cmd-item target-hint">{{ targetPrompt }}</span>
-            <span class="cmd-item cancel-item" @click="cancelSelect">▸ 取消</span>
+            <span class="cmd-item cancel-item" @click="cancelSelect">▸取消</span>
           </template>
           <template v-else-if="showSkills">
             <ActionLink v-for="cmd in skillActions" :key="cmd.params?.command"
                         :action="cmd"
                         @action="selectCommand(cmd)" />
-            <span class="cmd-item cancel-item" @click="cancelSub">▸ 取消</span>
+            <span class="cmd-item cancel-item" @click="cancelSub">▸取消</span>
           </template>
         </div>
       </div>
@@ -294,16 +296,22 @@ const playerCompressed = computed(() => playerUnits.value.length > COMPACT_THRES
 const enemyCompressed = computed(() => enemyUnits.value.length > COMPACT_THRESHOLD)
 
 function hpColor(side, unit) {
-  const pct = hpPercent(unit)
-  if (side === 'player') return `rgba(46,125,50,${0.3 + pct / 100 * 0.5})`
-  return `rgba(198,40,40,${0.3 + pct / 100 * 0.5})`
+  const sideMap = { player: 'var(--color-player)', enemy: 'var(--color-enemy)', neutral: 'var(--color-neutral)', ally: 'var(--color-ally)' }
+  return sideMap[side] || 'var(--color-enemy)'
+}
+
+function markerSideClass(side) {
+  const map = { PLAYER: 'player', ENEMY: 'enemy', NEUTRAL: 'neutral', ALLY: 'ally' }
+  return map[side] || 'enemy'
 }
 
 function unitBuffs(unit) {
+  if (!unit.alive) return []
   return (unit.buffs || []).filter(b => b.positive === true)
 }
 
 function unitDebuffs(unit) {
+  if (!unit.alive) return []
   return (unit.buffs || []).filter(b => b.positive === false || b.positive === undefined)
 }
 
@@ -344,8 +352,15 @@ const step = ref('command')
 const selectedCommand = ref(null)
 const showSkills = ref(false)
 
-const baseActions = computed(() =>
-  props.commands.filter(c => (c.params?.category || 'action') !== 'skill')
+const firstMainAction = computed(() =>
+  props.commands.find(c => (c.params?.category || 'action') !== 'skill' && c.params?.command !== 'flee') || null
+)
+const otherMainActions = computed(() => {
+  const first = firstMainAction.value
+  return props.commands.filter(c => (c.params?.category || 'action') !== 'skill' && c.params?.command !== 'flee' && c !== first)
+})
+const fleeAction = computed(() =>
+  props.commands.find(c => c.params?.command === 'flee') || null
 )
 const skillActions = computed(() =>
   props.commands.filter(c => c.params?.category === 'skill')
@@ -432,7 +447,18 @@ function mapUnitsToGrid(units, side) {
     const unitRow = unit.row || 'FRONT'
     const col = side === 'player' ? (playerColMap[unitRow] ?? 2) : (enemyColMap[unitRow] ?? 0)
     const row = unit.slot ?? idx % 3
-    markers.push({ col, row, side, index: idx + 1, alive: unit.alive, id: unit.id, hp: unit.hp, maxHp: unit.maxHp, buffs: unit.buffs || [], unitRow: unitRow, slot: unit.slot ?? idx % 3 })
+    markers.push({
+      col, row,
+      side: unit.side || (side === 'player' ? 'PLAYER' : 'ENEMY'),
+      index: idx + 1,
+      alive: unit.alive,
+      id: unit.id,
+      hp: unit.hp,
+      maxHp: unit.maxHp,
+      buffs: unit.buffs || [],
+      unitRow: unitRow,
+      slot: unit.slot ?? idx % 3
+    })
   })
   return markers
 }
@@ -456,17 +482,17 @@ function selectCommand(action) {
   step.value = 'target'
 }
 
-const targetPrompt = computed(() => {
-  if (!selectedCommand.value) return '选择目标...'
-  const cmd = props.commands.find(c => c.params?.command === selectedCommand.value)
-  return cmd?.params?.prompt || '选择目标...'
-})
-
 function cancelSub() {
   showSkills.value = false
   step.value = 'command'
   selectedCommand.value = null
 }
+
+const targetPrompt = computed(() => {
+  if (!selectedCommand.value) return '选择目标...'
+  const cmd = props.commands.find(c => c.params?.command === selectedCommand.value)
+  return cmd?.params?.prompt || '选择目标...'
+})
 
 const hoveredCell = ref(null)
 
@@ -689,8 +715,8 @@ onUnmounted(() => stopTimer())
 }
 .bstat-icon {
   position: relative;
-  width: 12px;
-  height: 12px;
+  width: 18px;
+  height: 18px;
   flex-shrink: 0;
   cursor: default;
 }
@@ -705,7 +731,7 @@ onUnmounted(() => stopTimer())
   position: absolute;
   left: 50%; top: 40%;
   transform: translate(-50%, -50%);
-  font-size: 6px;
+  font-size: 10px;
   font-weight: bold;
   color: rgba(255,255,255,0.9);
   line-height: 1;
@@ -715,7 +741,7 @@ onUnmounted(() => stopTimer())
 .bstat-remain {
   position: absolute;
   bottom: 0; right: 0;
-  font-size: 5px;
+  font-size: 8px;
   color: rgba(255,255,255,0.6);
   line-height: 1;
   pointer-events: none;
@@ -776,7 +802,8 @@ onUnmounted(() => stopTimer())
 /* 固定宽度：不同数字长度不会影响条的宽度 */
 .stat-bar-num {
   font-size: 0.6em;
-  color: rgba(255, 255, 255, 0.75);
+  color: var(--color-text);
+  opacity: 0.85;
   white-space: nowrap;
   flex-shrink: 0;
   width: 42px;
@@ -836,7 +863,7 @@ onUnmounted(() => stopTimer())
   justify-content: center;
   border: 3px solid #444;
   border-radius: 3px;
-  background-color: #1a1a2e;
+  background-color: var(--panel-bg);
   position: relative;
   overflow: hidden;
 }
@@ -861,8 +888,10 @@ onUnmounted(() => stopTimer())
   font-size: 0.75em;
 }
 
-.marker.player { color: var(--color-player); background: rgba(79, 195, 247, 0.15); }
-.marker.enemy { color: var(--color-enemy); background: rgba(229, 115, 115, 0.15); }
+.marker.player  { color: var(--color-player);  background: color-mix(in srgb, var(--color-player)  15%, transparent); border: 2px solid var(--color-player); }
+.marker.enemy   { color: var(--color-enemy);   background: color-mix(in srgb, var(--color-enemy)   15%, transparent); border: 2px solid var(--color-enemy); }
+.marker.neutral { color: var(--color-neutral); background: color-mix(in srgb, var(--color-neutral) 15%, transparent); border: 2px solid var(--color-neutral); }
+.marker.ally    { color: var(--color-ally);    background: color-mix(in srgb, var(--color-ally)    15%, transparent); border: 2px solid var(--color-ally); }
 
 .corner-hp {
   position: absolute;
@@ -898,11 +927,11 @@ onUnmounted(() => stopTimer())
 }
 
 .cmd-actor {
-  border-right: 1px solid var(--panel-border-color);
+  border-right: 2px solid var(--panel-border-color);
 }
 
 .cmd-actions {
-  border-right: 1px solid var(--panel-border-color);
+  border-right: 2px solid var(--panel-border-color);
   display: grid;
   grid-template-columns: 1fr 1fr;
   gap: 0.3rem;
@@ -911,12 +940,36 @@ onUnmounted(() => stopTimer())
   padding: 0.3rem 0.6rem;
 }
 
+.cmd-actions.locked {
+  opacity: 0.35;
+  pointer-events: none;
+}
+
+.cmd-sub {
+  border-left: 2px solid var(--panel-border-color);
+  overflow-y: auto;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.3rem;
+  align-items: center;
+  justify-items: start;
+  padding: 0.3rem 0.6rem;
+}
+
+.skill-btn {
+  cursor: pointer;
+  color: var(--link-color);
+}
+.skill-btn.active {
+  color: var(--color-highlight);
+}
+
 .actor-avatar {
   width: 2.2rem;
   height: 2.2rem;
-  border: 1px solid var(--color-player);
+  border: 2px solid var(--color-player);
   border-radius: 4px;
-  background: #1a2a3a;
+  background: color-mix(in srgb, var(--color-player) 10%, transparent);
 }
 
 .actor-name {
@@ -940,14 +993,6 @@ onUnmounted(() => stopTimer())
   color: var(--color-enemy);
 }
 
-.skill-btn {
-  cursor: pointer;
-  color: var(--link-color);
-}
-.skill-btn.active {
-  color: var(--color-highlight);
-}
-
 .target-hint {
   color: var(--color-text);
   opacity: 0.5;
@@ -960,25 +1005,10 @@ onUnmounted(() => stopTimer())
 }
 
 .terrain-cell.aoe-hit {
-  background-color: rgba(229, 69, 96, 0.25) !important;
+  background-color: color-mix(in srgb, var(--color-enemy) 25%, transparent) !important;
   border-color: var(--color-enemy);
 }
 
-.cmd-actions.locked {
-  opacity: 0.35;
-  pointer-events: none;
-}
-
-.cmd-sub {
-  border-left: 1px solid var(--panel-border-color);
-  overflow-y: auto;
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 0.3rem;
-  align-items: center;
-  justify-items: start;
-  padding: 0.3rem 0.6rem;
-}
 
 .marker.shaking {
   animation: marker-shake 250ms ease-in-out;
