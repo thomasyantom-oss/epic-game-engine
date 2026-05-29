@@ -367,21 +367,24 @@ function playWithCallback(events, onEvent) {
     const event = events[idx]
     if (event && event.effects) {
       const hp = { ...displayHp.value }
-      let buffChanged = false
       for (const eff of event.effects) {
         if (eff.type === 'hp_change' && eff.target) {
           const amount = eff.data?.amount ?? eff.amount ?? 0
           hp[eff.target] = (hp[eff.target] || 0) + amount
         }
-        if (eff.type === 'buff_applied' || eff.type === 'buff_removed') {
-          buffChanged = true
-        }
       }
       displayHp.value = hp
-      if (buffChanged) {
+      // 只更新有 buff 变化的单位，不全量同步
+      const buffTargets = new Set()
+      for (const eff of event.effects) {
+        if (eff.type === 'buff_applied' || eff.type === 'buff_removed') {
+          if (eff.target) buffTargets.add(eff.target)
+        }
+      }
+      if (buffTargets.size > 0) {
         const buffs = { ...displayBuffs.value }
         for (const c of (props.combat?.combatants || [])) {
-          buffs[c.id] = c.buffs || []
+          if (buffTargets.has(c.id)) buffs[c.id] = c.buffs || []
         }
         displayBuffs.value = buffs
       }
