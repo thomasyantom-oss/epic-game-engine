@@ -69,7 +69,7 @@
           :key="i"
           class="bag-cell"
           :class="{ 'has-item': !!item, 'sorting': sortingAnim }"
-          :style="item ? { borderColor: item.rarityColor + '99' } : {}"
+          :style="item ? { borderColor: item.rarityColor } : {}"
           :draggable="!!item"
           @dragstart="item && onDragStart(item, $event)"
           @dragend="onDragEnd"
@@ -78,10 +78,7 @@
           @mouseleave="hideTooltip"
           @click="item && onBagItemClick(item)"
         >
-          <template v-if="item">
-            <span class="item-icon">{{ ICONS[item.type] || '?' }}</span>
-            <span class="item-name" :style="{ color: item.rarityColor }">{{ item.name }}</span>
-          </template>
+          <span v-if="item" class="item-icon">{{ ICONS[item.type] || '?' }}</span>
         </div>
       </div>
     </div>
@@ -123,6 +120,7 @@ const bagSlots = computed(() => {
 
 function onDragStart(item, event) {
   event.dataTransfer.setData('itemId', item.id)
+  event.dataTransfer.setData('itemType', item.type)
   event.dataTransfer.effectAllowed = 'move'
 }
 
@@ -133,7 +131,10 @@ function onDragEnd() {
 function onDropToSlot(slotName, event) {
   dragOverSlot.value = null
   const itemId = event.dataTransfer.getData('itemId')
-  if (itemId) emit('action', { type: 'equip', params: { playerId: props.playerId, itemId } })
+  const itemType = event.dataTransfer.getData('itemType')
+  if (itemId && itemType === slotName) {
+    emit('action', { type: 'equip', params: { playerId: props.playerId, itemId } })
+  }
 }
 
 function onBagItemClick(item) {
@@ -143,20 +144,21 @@ function onBagItemClick(item) {
 function doSort() {
   sortingAnim.value = true
   setTimeout(() => { sortingAnim.value = false }, 400)
+  emit('action', { type: 'sort_inventory', params: { playerId: props.playerId } })
 }
 
 function showItemTooltip(item, event) {
   const rows = Object.entries(item.stats || {}).map(([k, v]) => ({
     label: STAT_LABELS[k] || k,
     value: '+' + v,
-    valueColor: '#4ade80'
+    valueColor: 'var(--color-rarity_uncommon)'
   }))
   rows.push({ label: '──────', value: '', valueColor: null })
   rows.push({
     label: (RARITY_LABELS[item.rarity] || item.rarity) + ' · ' + (TYPE_LABELS[item.type] || item.type),
-    value: '', valueColor: '#8b949e'
+    value: '', valueColor: 'var(--color-text)'
   })
-  showTooltip({ title: item.name, titleColor: item.rarityColor || '#fff', rows }, event)
+  showTooltip({ title: item.name, titleColor: item.rarityColor || 'var(--color-text)', rows }, event)
 }
 
 const STAT_LABELS = { attack: '攻击', defense: '防御', speed: '速度', magic: '魔法' }
@@ -197,15 +199,15 @@ const TYPE_LABELS = { weapon: '武器', armor: '护甲', accessory: '饰品' }
 .figure-svg { width: 100%; max-width: 60px; opacity: 0.5; }
 
 .equip-slot {
-  width: 52px;
-  height: 52px;
-  border: 2px solid #30363d;
+  width: 64px;
+  height: 64px;
+  border: 2px solid var(--color-border);
   border-radius: 3px;
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  font-size: 0.7rem;
+  font-size: 0.85rem;
   position: relative;
   cursor: default;
   background: rgba(255,255,255,0.03);
@@ -216,15 +218,12 @@ const TYPE_LABELS = { weapon: '武器', armor: '护甲', accessory: '饰品' }
 }
 .equip-slot.equipped { background: rgba(255,255,255,0.06); }
 .equip-slot.disabled { opacity: 0.3; }
-.equip-slot.drag-over { border-color: #60a5fa !important; background: rgba(96,165,250,0.1); }
-.slot-icon { font-size: 1.2rem; line-height: 1; }
-.slot-name { font-size: 0.6rem; text-align: center; line-height: 1.1; margin-top: 2px; max-width: 50px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.slot-label { font-size: 0.65rem; color: #444; }
-.slot-remove {
-  position: absolute; top: 1px; right: 2px;
-  font-size: 0.6rem; color: #888; cursor: pointer; line-height: 1;
-}
-.slot-remove:hover { color: #f87171; }
+.equip-slot.drag-over { border-color: var(--color-highlight) !important; background: color-mix(in srgb, var(--color-highlight) 10%, transparent); }
+.slot-icon { font-size: 1.4rem; line-height: 1; }
+.slot-name { font-size: 0.75rem; text-align: center; line-height: 1.1; margin-top: 2px; max-width: 62px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.slot-label { font-size: 0.75rem; color: var(--color-text); opacity: 0.3; }
+.slot-remove { position: absolute; top: 1px; right: 2px; font-size: 0.6rem; color: var(--color-text); opacity: 0.5; cursor: pointer; line-height: 1; }
+.slot-remove:hover { color: var(--color-enemy); opacity: 1; }
 
 .bag-col {
   flex: 1;
@@ -243,40 +242,39 @@ const TYPE_LABELS = { weapon: '武器', armor: '护甲', accessory: '饰品' }
 .bag-title { font-size: 0.85rem; opacity: 0.7; }
 .sort-btn {
   font-size: 0.75rem;
-  background: rgba(255,255,255,0.08);
-  border: 2px solid rgba(255,255,255,0.2);
-  color: var(--text-color);
+  background: color-mix(in srgb, var(--color-text) 8%, transparent);
+  border: 2px solid color-mix(in srgb, var(--color-text) 20%, transparent);
+  color: var(--color-text);
   padding: 0.15rem 0.5rem;
   border-radius: 2px;
   cursor: pointer;
 }
-.sort-btn:hover { background: rgba(255,255,255,0.14); }
+.sort-btn:hover { background: color-mix(in srgb, var(--color-text) 14%, transparent); }
 
 .bag-grid {
   display: grid;
-  grid-template-columns: repeat(4, 1fr);
-  gap: 0.25rem;
+  grid-template-columns: repeat(8, 1fr);
+  gap: 0.2rem;
   overflow-y: auto;
   flex: 1;
+  align-content: start;
 }
 .bag-cell {
   aspect-ratio: 1;
-  border: 2px solid rgba(255,255,255,0.1);
-  border-radius: 3px;
-  background: rgba(255,255,255,0.03);
+  border: 2px solid color-mix(in srgb, var(--color-text) 10%, transparent);
+  border-radius: 2px;
+  background: rgba(0,0,0,0.35);
   display: flex;
-  flex-direction: column;
   align-items: center;
   justify-content: center;
-  font-size: 0.65rem;
   cursor: default;
   overflow: hidden;
   user-select: none;
-  transition: border-color 0.2s, opacity 0.2s;
+  transition: border-color 0.15s, background 0.15s, opacity 0.2s;
+  box-shadow: inset 0 1px 0 rgba(255,255,255,0.04);
 }
-.bag-cell.has-item { cursor: grab; }
-.bag-cell.has-item:hover { background: rgba(255,255,255,0.08); }
+.bag-cell.has-item { cursor: grab; border-width: 2px; }
+.bag-cell.has-item:hover { background: rgba(255,255,255,0.1); border-color: var(--color-highlight); }
 .bag-cell.sorting { opacity: 0.5; }
-.item-icon { font-size: 1.1rem; line-height: 1; }
-.item-name { font-size: 0.6rem; text-align: center; line-height: 1.2; overflow: hidden; text-overflow: ellipsis; width: 100%; padding: 0 2px; }
+.item-icon { font-size: 1.2rem; line-height: 1; pointer-events: none; }
 </style>
