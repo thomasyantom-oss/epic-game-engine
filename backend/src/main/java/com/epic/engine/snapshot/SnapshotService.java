@@ -327,9 +327,9 @@ public class SnapshotService {
                     // HP/MP 颜色从 colorMap 读，支持后端配置覆盖
                     boolean isPlayer = c.hasTag("player");
                     String hpColor = isPlayer
-                            ? colorMap.getOrDefault("player", "#4ecdc4")
-                            : colorMap.getOrDefault("enemy", "#e94560");
-                    String mpColor = colorMap.getOrDefault("mana", "#4f8ef7");
+                            ? colorMap.getOrDefault("player", "#66cc55")
+                            : colorMap.getOrDefault("enemy", "#e84848");
+                    String mpColor = colorMap.getOrDefault("mana", "#2eb8cc");
                     combatants.add(new WorldSnapshot.CombatantInfo(
                             c.getId(), name, side,
                             health.getInt("hp"), health.getInt("maxHp"),
