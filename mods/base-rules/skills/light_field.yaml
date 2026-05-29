@@ -1,5 +1,6 @@
 id: light_field
 name: "光击阵"
+description: "光击阵，在指定区域布置光能陷阱"
 category: skill
 silenceable: true
 targeting:

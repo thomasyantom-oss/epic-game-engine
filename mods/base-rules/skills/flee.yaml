@@ -1,5 +1,6 @@
 id: flee
 name: "逃跑"
+description: "尝试逃离战斗"
 category: action
 silenceable: false
 targeting:

@@ -1,5 +1,6 @@
 id: pulse_wave
 name: "脉冲波"
+description: "脉冲波，对范围内敌人造成伤害"
 category: skill
 silenceable: true
 targeting:

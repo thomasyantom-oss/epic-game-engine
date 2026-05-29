@@ -1,5 +1,6 @@
 id: curse
 name: "诅咒"
+description: "诅咒，降低目标属性"
 category: skill
 silenceable: true
 targeting:

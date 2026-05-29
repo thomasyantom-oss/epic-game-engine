@@ -1,5 +1,6 @@
 id: war_cry
 name: "战吼"
+description: "战吼，提升我方战斗力"
 category: skill
 silenceable: true
 targeting:

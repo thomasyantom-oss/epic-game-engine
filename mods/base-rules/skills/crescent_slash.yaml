@@ -1,5 +1,6 @@
 id: crescent_slash
 name: "月牙斩"
+description: "月牙斩，对目标造成大范围物理伤害"
 category: skill
 silenceable: true
 targeting:

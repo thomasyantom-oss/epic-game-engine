@@ -1,5 +1,6 @@
 id: piercing_ray
 name: "贯穿射线"
+description: "贯穿射线，穿透目标列造成伤害"
 category: skill
 silenceable: true
 targeting:

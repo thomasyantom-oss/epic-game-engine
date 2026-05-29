@@ -1,5 +1,6 @@
 id: fireball
 name: "火球术"
+description: "对目标造成火焰魔法伤害，附带灼烧效果"
 category: skill
 silenceable: true
 targeting:

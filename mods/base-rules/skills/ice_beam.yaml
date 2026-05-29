@@ -1,5 +1,6 @@
 id: ice_beam
 name: "冰霜射线"
+description: "冰霜射线，对目标造成冰系伤害"
 category: skill
 silenceable: true
 targeting:

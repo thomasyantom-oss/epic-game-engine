@@ -1,5 +1,6 @@
 id: basic_attack
 name: "攻击"
+description: "对目标造成 100% 物理伤害"
 category: action
 silenceable: true
 targeting:

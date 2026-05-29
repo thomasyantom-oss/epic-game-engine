@@ -1,5 +1,6 @@
 id: cross_blast
 name: "十字爆裂"
+description: "十字爆裂，以目标为中心十字范围爆炸"
 category: skill
 silenceable: true
 targeting:

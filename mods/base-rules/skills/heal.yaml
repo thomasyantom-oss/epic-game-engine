@@ -1,5 +1,6 @@
 id: heal
 name: "治愈术"
+description: "治愈术，恢复目标生命值"
 category: skill
 silenceable: true
 targeting:

@@ -1,5 +1,6 @@
 id: cleave
 name: "顺劈斩"
+description: "顺劈斩，横扫前排多个目标"
 category: skill
 silenceable: true
 targeting:

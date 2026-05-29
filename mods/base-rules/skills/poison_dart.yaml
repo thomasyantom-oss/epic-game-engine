@@ -1,5 +1,6 @@
 id: poison_dart
 name: "毒镖"
+description: "毒镖，命中目标并附加中毒状态"
 category: skill
 silenceable: true
 targeting:

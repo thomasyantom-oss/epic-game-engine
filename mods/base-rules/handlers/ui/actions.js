@@ -48,6 +48,10 @@ engine.on("ui.render_actions", 100, function(event) {
                     if (prompt !== null) params.put("prompt", prompt);
                 }
 
+                // Skill description for tooltip
+                var description = skillDef.get("description");
+                if (description !== null) params.put("description", description);
+
                 // AOE offsets for frontend range indicator
                 var aoeOffsets = targeting !== null ? targeting.get("aoe_offsets") : null;
                 if (aoeOffsets !== null) {

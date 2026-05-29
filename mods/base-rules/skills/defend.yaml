@@ -1,5 +1,6 @@
 id: defend
 name: "防御"
+description: "进入防御姿态，减少本回合受到的伤害"
 category: action
 silenceable: true
 targeting:
