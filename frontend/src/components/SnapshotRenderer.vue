@@ -190,6 +190,9 @@ const isAnimating = ref(false)
 const battleGridRef = ref(null)
 const playedCount = ref(0)
 
+// Visible current round entries — show all completed (not animated anymore)
+const visibleLogCount = ref(0)
+
 watch(() => props.snapshot?.combat?.events, async (events) => {
   if (!events || events.length === 0) {
     isAnimating.value = false
@@ -220,9 +223,6 @@ watch(() => props.snapshot?.combat?.events, async (events) => {
   isAnimating.value = false
 }, { immediate: true })
 
-
-// Visible current round entries — show all completed (not animated anymore)
-const visibleLogCount = ref(0)
 
 const visibleCurrentEntries = computed(() => {
   const entries = currentRoundEntries.value
