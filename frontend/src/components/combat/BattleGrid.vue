@@ -105,25 +105,42 @@
           </template>
         </div>
         <div class="cmd-col cmd-actions" v-if="currentActor && phase === 'COMMAND' && !animating" :class="{ locked: showSkills || step === 'target' }">
-          <ActionLink v-if="firstMainAction" :action="firstMainAction" @action="selectCommand(firstMainAction)" />
-          <span v-if="skillActions.length > 0" class="cmd-item skill-btn"
-                :class="{ active: showSkills }"
-                @click="showSkills = true">▸技能</span>
-          <ActionLink v-for="cmd in otherMainActions" :key="cmd.params?.command"
-                      :action="cmd"
-                      @action="selectCommand(cmd)" />
-          <ActionLink v-if="fleeAction" :action="fleeAction" @action="selectCommand(fleeAction)" />
+          <button v-if="firstMainAction"
+                  class="cmd-btn"
+                  :class="{ disabled: firstMainAction.style === 'disabled' }"
+                  @click="selectCommand(firstMainAction)">
+            {{ firstMainAction.label }}
+          </button>
+          <button v-if="skillActions.length > 0"
+                  class="cmd-btn"
+                  :class="{ active: showSkills }"
+                  @click="showSkills = true">技能</button>
+          <button v-for="cmd in otherMainActions" :key="cmd.params?.command"
+                  class="cmd-btn"
+                  :class="{ disabled: cmd.style === 'disabled' }"
+                  @click="selectCommand(cmd)">
+            {{ cmd.label }}
+          </button>
+          <button v-if="fleeAction"
+                  class="cmd-btn"
+                  @click="selectCommand(fleeAction)">
+            {{ fleeAction.label }}
+          </button>
         </div>
         <div class="cmd-col cmd-sub" v-if="currentActor && phase === 'COMMAND' && !animating">
           <template v-if="step === 'target'">
-            <span class="cmd-item target-hint">{{ targetPrompt }}</span>
-            <span class="cmd-item cancel-item" @click="cancelSelect">▸取消</span>
+            <span class="target-hint">{{ targetPrompt }}</span>
+            <button class="cmd-btn cancel-btn" @click="cancelSelect">取消</button>
           </template>
           <template v-else-if="showSkills">
-            <ActionLink v-for="cmd in skillActions" :key="cmd.params?.command"
-                        :action="cmd"
-                        @action="selectCommand(cmd)" />
-            <span class="cmd-item cancel-item" @click="cancelSub">▸取消</span>
+            <button v-for="cmd in skillActions" :key="cmd.params?.command"
+                    class="cmd-btn skill-cmd-btn"
+                    :class="{ disabled: cmd.style === 'disabled' }"
+                    :title="cmd.params?.description || ''"
+                    @click="selectCommand(cmd)">
+              {{ cmd.label }}
+            </button>
+            <button class="cmd-btn cancel-btn" @click="cancelSub">取消</button>
           </template>
         </div>
       </div>
@@ -956,14 +973,6 @@ onUnmounted(() => stopTimer())
   padding: 0.3rem 0.6rem;
 }
 
-.skill-btn {
-  cursor: pointer;
-  color: var(--link-color);
-}
-.skill-btn.active {
-  color: var(--color-highlight);
-}
-
 .actor-avatar {
   width: 2.2rem;
   height: 2.2rem;
@@ -976,28 +985,51 @@ onUnmounted(() => stopTimer())
   color: var(--color-player);
 }
 
-.cmd-item {
+.cmd-btn {
+  font-family: inherit;
+  font-size: 0.82rem;
+  font-weight: 600;
+  padding: 0.3rem 0.6rem;
+  background: color-mix(in srgb, var(--color-text) 4%, transparent);
+  border: 2px solid var(--color-border);
+  border-radius: 3px;
+  color: var(--color-text);
   cursor: pointer;
-  transition: color 0.2s;
+  text-align: center;
+  box-shadow: inset 0 2px 6px rgba(0,0,0,0.5), inset 0 -1px 0 rgba(255,255,255,0.04);
+  transition: border-color 0.15s, background 0.15s, color 0.15s;
+  white-space: nowrap;
+  user-select: none;
 }
-
-.cmd-item:hover {
-  color: var(--link-color);
+.cmd-btn:hover {
+  border-color: var(--color-highlight);
+  background: color-mix(in srgb, var(--color-highlight) 12%, transparent);
+  color: var(--color-highlight);
 }
-
-.cmd-item.active {
-  color: var(--link-color);
+.cmd-btn.active {
+  border-color: var(--color-highlight);
+  background: color-mix(in srgb, var(--color-highlight) 18%, transparent);
+  color: var(--color-highlight);
 }
-
-.cancel-item {
+.cmd-btn.disabled {
+  opacity: 0.35;
+  pointer-events: none;
+}
+.cancel-btn {
+  border-color: color-mix(in srgb, var(--color-enemy) 50%, transparent);
   color: var(--color-enemy);
 }
-
+.cancel-btn:hover {
+  border-color: var(--color-enemy);
+  background: color-mix(in srgb, var(--color-enemy) 12%, transparent);
+  color: var(--color-enemy);
+}
 .target-hint {
+  font-size: 0.82rem;
   color: var(--color-text);
   opacity: 0.5;
-  font-size: 0.85em;
   cursor: default;
+  padding: 0.3rem 0;
 }
 
 .terrain-cell.aoe-border {
