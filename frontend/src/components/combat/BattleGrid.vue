@@ -364,7 +364,7 @@ const cellBgStyle = computed(() => {
 
 function playWithCallback(events, onEvent) {
   return play(events, (idx) => {
-    // Sync HP at hit time (impact animation)
+    // 命中时机：同步 HP + buff（和伤害数字同步出现）
     const event = events[idx]
     if (event && event.effects) {
       const hp = { ...displayHp.value }
@@ -376,20 +376,15 @@ function playWithCallback(events, onEvent) {
       }
       displayHp.value = hp
     }
-    if (onEvent) onEvent(idx)
-  }, (idx) => {
-    // Sync buffs after animation fully completes
-    const event = events[idx]
-    if (event && event.animation) {
-      const hasBuff = event.animation.some(a => a.type === 'buff_up' || a.type === 'debuff_down')
-      if (hasBuff) {
-        const buffs = { ...displayBuffs.value }
-        for (const c of (props.combat?.combatants || [])) {
-          buffs[c.id] = c.buffs || []
-        }
-        displayBuffs.value = buffs
+    // buff 也在命中时同步（火球术命中→灼烧 buff 同时出现）
+    if (event && event.animation && event.animation.some(a => a.type === 'buff_up' || a.type === 'debuff_down')) {
+      const buffs = { ...displayBuffs.value }
+      for (const c of (props.combat?.combatants || [])) {
+        buffs[c.id] = c.buffs || []
       }
+      displayBuffs.value = buffs
     }
+    if (onEvent) onEvent(idx)
   })
   })
 }
