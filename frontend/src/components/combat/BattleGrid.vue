@@ -504,6 +504,7 @@ function selectCommand(action) {
   var style = action.style
   if (style === 'disabled') return
   var cmd = action.params?.command
+  hideTooltip()  // 选完技能立即关闭 tooltip
 
   if (style === 'instant') {
     stopTimer()
