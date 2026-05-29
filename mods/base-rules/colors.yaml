@@ -1,6 +1,30 @@
 colors:
-  player: "#4ecdc4"
-  enemy: "#e94560"
-  damage: "#ffd93d"
-  highlight: "#ffd93d"
-  text: "#ffffff"
+  # 基础文字
+  text: "#c8d0dc"
+
+  # 能量条
+  hp: "#e84848"
+  mp: "#2eb8cc"
+
+  # 阵营
+  player: "#66cc55"
+  enemy: "#e84848"
+  neutral: "#ffcc33"
+  ally: "#55aaff"
+
+  # 语义色
+  damage: "#ffcc33"
+  highlight: "#55aaff"
+  mana: "#2eb8cc"
+
+  # 稀有度
+  rarity_common: "#c8d0dc"
+  rarity_uncommon: "#55dd55"
+  rarity_rare: "#55aaff"
+  rarity_epic: "#cc66ff"
+  rarity_legendary: "#ffcc33"
+
+  # 元素属性
+  element_fire: "#ff7733"
+  element_ice: "#66ddff"
+  element_lightning: "#ffee44"
