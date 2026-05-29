@@ -1,7 +1,15 @@
 <template>
   <div class="game-grid">
     <div class="panel-main">
-      <TabPanel :tabs="mainTabs" :default-tab="snapshot.combat ? 'battle' : 'map'" keep-alive>
+      <!-- BattleGrid 永远挂载，v-show 控制显隐，避免切 tab 销毁导致倒计时/动画中断 -->
+      <div v-show="!!snapshot.combat" class="battle-overlay">
+        <BattleGrid v-if="snapshot.combat || battleMounted"
+                    ref="battleGridRef" :combat="snapshot.combat" :player-id="snapshot.playerId"
+                    :commands="combatActions" :animating="isAnimating"
+                    :terrain-color="currentTerrainColor"
+                    @command="$emit('action', $event)" />
+      </div>
+      <TabPanel :tabs="mainTabs" :default-tab="snapshot.combat ? 'battle' : 'map'">
         <template #map>
           <div class="map-split">
             <MapGrid :map="snapshot.map" :map-size="settings.mapSize || 10"
@@ -10,18 +18,15 @@
             <MapInfoPanel :map="snapshot.map" @poi-action="onPoiAction" />
           </div>
         </template>
-        <template #equip v-if="!snapshot.combat">
+        <template #equip>
           <EquipmentBagPanel
             :equipment="snapshot.equipment"
             :player-id="snapshot.playerId"
             @action="$emit('action', $event)"
           />
         </template>
-        <template #battle v-if="snapshot.combat">
-          <BattleGrid ref="battleGridRef" :combat="snapshot.combat" :player-id="snapshot.playerId"
-                      :commands="combatActions" :animating="isAnimating"
-                      :terrain-color="currentTerrainColor"
-                      @command="$emit('action', $event)" />
+        <template #battle>
+          <!-- 战斗时此 slot 为空，BattleGrid 通过 battle-overlay 显示 -->
         </template>
       </TabPanel>
     </div>
@@ -101,6 +106,9 @@ const emit = defineEmits(['action'])
 const { settings } = useSettings()
 const showHistory = ref(false)
 const logScrollRef = ref(null)
+// 一旦战斗开始就保持 BattleGrid 挂载（避免切 tab 销毁）
+const battleMounted = ref(false)
+watch(() => props.snapshot?.combat, (c) => { if (c) battleMounted.value = true })
 
 const mainTabs = computed(() => {
   if (props.snapshot?.combat) {
@@ -272,7 +280,8 @@ function onPoiAction(poi) {
   gap: 0.5rem;
   height: 100%;
 }
-.panel-main { grid-column: 1; grid-row: 1; min-height: 0; overflow: hidden; }
+.panel-main { grid-column: 1; grid-row: 1; min-height: 0; overflow: hidden; position: relative; }
+.battle-overlay { position: absolute; inset: 0; z-index: 1; }
 .map-split { display: flex; height: 100%; gap: 0.5rem; }
 .map-split > :first-child { flex: 1; min-width: 0; }
 .map-split > :last-child { width: 8rem; flex-shrink: 0; border-left: 2px solid var(--panel-border-color); }

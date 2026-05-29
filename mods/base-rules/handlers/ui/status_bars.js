@@ -8,10 +8,10 @@ engine.on("ui.render_status", 100, function(event) {
     // Read colors from colorMap (set in bootstrap from colors.yaml)
     var configEntity = store.get("_config");
     var colorsComp = configEntity !== null ? configEntity.getComponent("Colors") : null;
-    var textColor   = colorsComp !== null ? colorsComp.getString("text")   : "#c8d0dc";
-    var playerColor = colorsComp !== null ? colorsComp.getString("player") : "#66cc55";
-    var hpColor     = colorsComp !== null ? colorsComp.getString("hp")     : "#e84848";
-    var mpColor     = colorsComp !== null ? colorsComp.getString("mp")     : "#2eb8cc";
+    var textColor   = (colorsComp !== null && colorsComp.has("text"))   ? colorsComp.getString("text")   : "#c8d0dc";
+    var playerColor = (colorsComp !== null && colorsComp.has("player")) ? colorsComp.getString("player") : "#66cc55";
+    var hpColor     = (colorsComp !== null && colorsComp.has("hp"))     ? colorsComp.getString("hp")     : "#e84848";
+    var mpColor     = (colorsComp !== null && colorsComp.has("mp"))     ? colorsComp.getString("mp")     : "#2eb8cc";
 
     if (entity.hasComponent("Character")) {
         var charComp = entity.getComponent("Character");
