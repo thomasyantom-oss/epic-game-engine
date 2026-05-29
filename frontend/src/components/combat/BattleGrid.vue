@@ -367,17 +367,18 @@ function playWithCallback(events, onEvent) {
     const event = events[idx]
     if (event && event.effects) {
       const hp = { ...displayHp.value }
+      let buffChanged = false
       for (const eff of event.effects) {
         if (eff.type === 'hp_change' && eff.target) {
           const amount = eff.data?.amount ?? eff.amount ?? 0
           hp[eff.target] = (hp[eff.target] || 0) + amount
         }
+        if (eff.type === 'buff_applied' || eff.type === 'buff_removed') {
+          buffChanged = true
+        }
       }
       displayHp.value = hp
-    }
-    if (event && event.animation) {
-      console.log('[buff debug] event.animation:', JSON.stringify(event.animation))
-      if (event.animation.some(a => a.type === 'buff_up' || a.type === 'debuff_down')) {
+      if (buffChanged) {
         const buffs = { ...displayBuffs.value }
         for (const c of (props.combat?.combatants || [])) {
           buffs[c.id] = c.buffs || []

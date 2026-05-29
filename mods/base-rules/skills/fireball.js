@@ -77,7 +77,6 @@ engine.on("combat.unit_action", 80, function(event) {
     eventData.put("log", logEntries);
     eventData.put("effects", effects);
     eventData.put("animation", animation);
-    engine.combatEvent(combatId, eventData);
 
     // Apply burning buff
     var burnData = engine.newMap();
@@ -89,4 +88,12 @@ engine.on("combat.unit_action", 80, function(event) {
     burnData.put("permanent", false);
     burnData.put("positive", false);
     buffs.applyBuff(targetId, "burning", burnData);
+
+    // Add buff_applied effect so frontend syncs buff icons at hit time
+    var buffEff = engine.newMap();
+    buffEff.put("type", "buff_applied");
+    buffEff.put("target", targetId);
+    effects.add(buffEff);
+
+    engine.combatEvent(combatId, eventData);
 });
