@@ -1,19 +1,32 @@
 :root {
-    --bg-color: #1a1a2e;
-    --text-color: #ffffff;
-    --panel-bg: #16213e;
-    --panel-border-color: #0f3460;
+    --bg-color: #0d1318;
+    --text-color: #c8d0dc;
+    --panel-bg: #141c24;
+    --panel-border-color: #222c38;
     --panel-border-width: 2px;
     --panel-border-style: solid;
-    --link-color: #e94560;
-    --link-hover-color: #ff6b6b;
+    --link-color: #55aaff;
+    --link-hover-color: #88ccff;
     --font-size: 16px;
     --font-family: "LXGW WenKai", "Noto Serif SC", serif;
 
-    /* Semantic color roles — defaults, overridden by module-provided colors from snapshot */
-    --color-player: #4ecdc4;
-    --color-enemy: #e94560;
-    --color-damage: #ffd93d;
-    --color-text: #ffffff;
-    --color-highlight: #ffd93d;
+    /* Semantic color roles — overridden at runtime by snapshot.colors */
+    --color-player: #66cc55;
+    --color-enemy: #e84848;
+    --color-neutral: #ffcc33;
+    --color-ally: #55aaff;
+    --color-damage: #ffcc33;
+    --color-text: #c8d0dc;
+    --color-highlight: #55aaff;
+    --color-hp: #e84848;
+    --color-mp: #2eb8cc;
+    --color-rarity_common: #c8d0dc;
+    --color-rarity_uncommon: #55dd55;
+    --color-rarity_rare: #55aaff;
+    --color-rarity_epic: #cc66ff;
+    --color-rarity_legendary: #ffcc33;
+    --color-element_fire: #ff7733;
+    --color-element_ice: #66ddff;
+    --color-element_lightning: #ffee44;
+    --color-border: #222c38;
 }
