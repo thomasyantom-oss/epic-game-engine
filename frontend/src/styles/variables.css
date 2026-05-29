@@ -1,14 +1,14 @@
 :root {
-    --bg-color: #0d1318;
+    --bg-color: #080d12;
     --text-color: #c8d0dc;
-    --panel-bg: #141c24;
+    --panel-bg: #0d1318;
     --panel-border-color: #222c38;
     --panel-border-width: 2px;
     --panel-border-style: solid;
     --link-color: #55aaff;
     --link-hover-color: #88ccff;
     --font-size: 16px;
-    --font-family: "LXGW WenKai", "Noto Serif SC", serif;
+    --font-family: "Cascadia Mono", "Cascadia Code", "Consolas", monospace;
 
     /* Semantic color roles — overridden at runtime by snapshot.colors */
     --color-player: #66cc55;

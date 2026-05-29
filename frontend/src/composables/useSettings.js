@@ -1,16 +1,17 @@
 import { reactive, watch } from 'vue'
 
 const STORAGE_KEY = 'epic-settings'
+const SETTINGS_VERSION = 2  // bump to invalidate old localStorage
 
 const themes = {
     dark: {
         id: 'dark',
         label: '夜间模式',
-        bgColor: '#1a1a2e',
-        textColor: '#ffffff',
-        panelBg: '#16213e',
-        panelBorderColor: '#0f3460',
-        linkColor: '#e94560'
+        bgColor: '#080d12',
+        textColor: '#c8d0dc',
+        panelBg: '#0d1318',
+        panelBorderColor: '#222c38',
+        linkColor: '#55aaff'
     },
     stealth: {
         id: 'stealth',
@@ -44,18 +45,22 @@ const themes = {
 const defaults = {
     fontSize: '16px',
     theme: 'dark',
-    bgColor: '#1a1a2e',
-    textColor: '#ffffff',
-    panelBg: '#16213e',
-    panelBorderColor: '#0f3460',
-    linkColor: '#e94560',
+    bgColor: '#080d12',
+    textColor: '#c8d0dc',
+    panelBg: '#0d1318',
+    panelBorderColor: '#222c38',
+    linkColor: '#55aaff',
     mapSize: 10
 }
 
 function loadSettings() {
     const saved = localStorage.getItem(STORAGE_KEY)
     if (saved) {
-        return { ...defaults, ...JSON.parse(saved) }
+        const parsed = JSON.parse(saved)
+        if (parsed._version === SETTINGS_VERSION) {
+            return { ...defaults, ...parsed }
+        }
+        // Old version — discard and use new defaults
     }
     return { ...defaults }
 }
@@ -84,7 +89,7 @@ function applySettings() {
 }
 
 watch(settings, () => {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(settings))
+    localStorage.setItem(STORAGE_KEY, JSON.stringify({ ...settings, _version: SETTINGS_VERSION }))
     applySettings()
 }, { deep: true })
 
