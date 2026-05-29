@@ -57,6 +57,11 @@ engine.on("combat.round_end", 50, function(event) {
         remaining--;
         if (remaining <= 0) {
             buffs.removeBuff(entity.getId(), "burning");
+            // 通知前端同步 buff 图标消失
+            var removeEff = engine.newMap();
+            removeEff.put("type", "buff_removed");
+            removeEff.put("target", entity.getId());
+            effects.add(removeEff);
         } else {
             burning.set("remaining", remaining);
         }
