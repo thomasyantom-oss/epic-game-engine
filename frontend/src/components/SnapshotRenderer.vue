@@ -1,7 +1,7 @@
 <template>
   <div class="game-grid">
     <div class="panel-main">
-      <TabPanel :tabs="mainTabs" :default-tab="snapshot.combat ? 'battle' : 'map'">
+      <TabPanel :tabs="mainTabs" :default-tab="snapshot.combat ? 'battle' : 'map'" keep-alive>
         <template #map>
           <div class="map-split">
             <MapGrid :map="snapshot.map" :map-size="settings.mapSize || 10"

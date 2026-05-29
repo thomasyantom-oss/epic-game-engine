@@ -34,7 +34,7 @@
           <div class="buff-status-row" :style="{ visibility: (unit.buffs && unit.buffs.length) ? 'visible' : 'hidden' }">
             <div class="buff-status-group">
               <div v-for="(b, bi) in unitBuffs(unit)" :key="bi" class="bstat-icon" :title="`${b.id} ×${b.stacks} · ${b.remaining ?? '?'}回合`">
-                <div class="bstat-tri up" :style="{ background: b.color || '#888' }"></div>
+                <div class="bstat-tri up" :style="{ background: b.color || 'var(--color-highlight)' }"></div>
                 <span class="bstat-stack">{{ b.stacks }}</span>
                 <span class="bstat-remain">{{ b.remaining ?? '' }}</span>
               </div>
@@ -42,7 +42,7 @@
             <div class="bstat-divider"></div>
             <div class="buff-status-group">
               <div v-for="(b, bi) in unitDebuffs(unit)" :key="bi" class="bstat-icon" :title="`${b.id} ×${b.stacks} · ${b.remaining ?? '?'}回合`">
-                <div class="bstat-tri down" :style="{ background: b.color || '#888' }"></div>
+                <div class="bstat-tri down" :style="{ background: b.color || 'var(--color-enemy)' }"></div>
                 <span class="bstat-stack bstat-stack-down">{{ b.stacks }}</span>
                 <span class="bstat-remain">{{ b.remaining ?? '' }}</span>
               </div>
@@ -136,7 +136,9 @@
             <button v-for="cmd in skillActions" :key="cmd.params?.command"
                     class="cmd-btn skill-cmd-btn"
                     :class="{ disabled: cmd.style === 'disabled' }"
-                    :title="cmd.params?.description || ''"
+                    @mouseenter="onSkillHover(cmd, $event)"
+                    @mousemove="moveTooltip"
+                    @mouseleave="hideTooltip"
                     @click="selectCommand(cmd)">
               {{ cmd.label }}
             </button>
@@ -204,6 +206,7 @@
 import { computed, ref, watch, onMounted, onUnmounted } from 'vue'
 import AnimationLayer from './AnimationLayer.vue'
 import { useAnimationPlayer } from '../../composables/useAnimationPlayer.js'
+import { useTooltip } from '../../composables/useTooltip.js'
 
 const props = defineProps({
   combat: { type: Object, required: true },
@@ -214,6 +217,21 @@ const props = defineProps({
 })
 
 const emit = defineEmits(['command'])
+
+const { showTooltip, moveTooltip, hideTooltip } = useTooltip()
+
+function onSkillHover(cmd, event) {
+  if (!cmd.params?.description) return
+  showTooltip({
+    title: cmd.label,
+    titleColor: 'var(--color-highlight)',
+    rows: [
+      { label: '消耗', value: cmd.params?.mpCost ? cmd.params.mpCost + ' MP' : '无', valueColor: 'var(--color-mp)' },
+      { label: '──────', value: '', valueColor: null },
+      { label: cmd.params.description, value: '', valueColor: null }
+    ]
+  }, event)
+}
 
 const { playing, activeAnimations, playedEventIndex, play } = useAnimationPlayer()
 
@@ -300,7 +318,7 @@ function lungingClass(unitId) {
 }
 
 function buffColor(buff) {
-  return buff.color || '#999'
+  return buff.color || 'var(--color-text)'
 }
 
 const COMPACT_THRESHOLD = 5
@@ -725,7 +743,7 @@ onUnmounted(() => stopTimer())
 }
 .bstat-divider {
   width: 1px;
-  background: #1e1e2e;
+  background: var(--color-border);
   align-self: stretch;
   flex-shrink: 0;
 }
@@ -877,7 +895,7 @@ onUnmounted(() => stopTimer())
   display: flex;
   align-items: center;
   justify-content: center;
-  border: 3px solid #444;
+  border: 3px solid var(--panel-border-color);
   border-radius: 3px;
   background-color: var(--panel-bg);
   position: relative;
@@ -914,8 +932,7 @@ onUnmounted(() => stopTimer())
   bottom: 2px;
   right: 3px;
   font-size: 0.45em;
-  color: #999;
-  font-weight: bold;
+  color: var(--color-text);
 }
 
 .buff-indicator {
@@ -952,7 +969,7 @@ onUnmounted(() => stopTimer())
   grid-template-columns: 1fr 1fr;
   gap: 0.3rem;
   align-items: center;
-  justify-items: start;
+  justify-items: stretch;
   padding: 0.3rem 0.6rem;
 }
 
@@ -968,7 +985,7 @@ onUnmounted(() => stopTimer())
   grid-template-columns: 1fr 1fr;
   gap: 0.3rem;
   align-items: center;
-  justify-items: start;
+  justify-items: stretch;
   padding: 0.3rem 0.6rem;
 }
 

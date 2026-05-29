@@ -5,30 +5,37 @@ engine.on("ui.render_status", 100, function(event) {
 
     var bars = event.get("bars");
 
-    // Character info as text bars (level, class)
+    // Read colors from colorMap (set in bootstrap from colors.yaml)
+    var configEntity = store.get("_config");
+    var colorsComp = configEntity !== null ? configEntity.getComponent("Colors") : null;
+    var textColor   = colorsComp !== null ? colorsComp.getString("text")   : "#c8d0dc";
+    var playerColor = colorsComp !== null ? colorsComp.getString("player") : "#66cc55";
+    var hpColor     = colorsComp !== null ? colorsComp.getString("hp")     : "#e84848";
+    var mpColor     = colorsComp !== null ? colorsComp.getString("mp")     : "#2eb8cc";
+
     if (entity.hasComponent("Character")) {
         var charComp = entity.getComponent("Character");
         var name = charComp.getString("name");
         var level = charComp.has("level") ? charComp.getInt("level") : 1;
         var classLabel = charComp.has("classLabel") ? charComp.getString("classLabel") : "";
-        bars.add(engine.newStatusBar("name", name, level, level, "#ffd93d", 0));
-        bars.add(engine.newStatusBar("class", classLabel, level, 99, "#b388ff", 0));
+        bars.add(engine.newStatusBar("name", name, level, level, playerColor, 0));
+        bars.add(engine.newStatusBar("class", classLabel, level, 99, textColor, 0));
     }
 
     if (entity.hasComponent("Health")) {
         var health = entity.getComponent("Health");
-        bars.add(engine.newStatusBar("hp", "生命", health.getInt("hp"), health.getInt("maxHp"), "#e74c3c", 1));
+        bars.add(engine.newStatusBar("hp", "生命", health.getInt("hp"), health.getInt("maxHp"), hpColor, 1));
     }
 
     if (entity.hasComponent("Mana")) {
         var mana = entity.getComponent("Mana");
-        bars.add(engine.newStatusBar("mp", "法力", mana.getInt("mp"), mana.getInt("maxMp"), "#3498db", 2));
+        bars.add(engine.newStatusBar("mp", "法力", mana.getInt("mp"), mana.getInt("maxMp"), mpColor, 2));
     }
 
     if (entity.hasComponent("CombatStats")) {
         var stats = entity.getComponent("CombatStats");
-        bars.add(engine.newStatusBar("atk", "攻击", stats.getInt("attack"), stats.getInt("attack"), "#ff7043", 3));
-        bars.add(engine.newStatusBar("def", "防御", stats.getInt("defense"), stats.getInt("defense"), "#66bb6a", 4));
-        bars.add(engine.newStatusBar("spd", "速度", stats.getInt("speed"), stats.getInt("speed"), "#29b6f6", 5));
+        bars.add(engine.newStatusBar("atk", "攻击", stats.getInt("attack"), stats.getInt("attack"), textColor, 3));
+        bars.add(engine.newStatusBar("def", "防御", stats.getInt("defense"), stats.getInt("defense"), textColor, 4));
+        bars.add(engine.newStatusBar("spd", "速度", stats.getInt("speed"), stats.getInt("speed"), textColor, 5));
     }
 });

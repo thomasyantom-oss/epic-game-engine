@@ -10,11 +10,11 @@
                class="figure-cell"
                :style="{ gridColumn: def.col, gridRow: def.row }">
             <svg viewBox="0 0 40 60" class="figure-svg">
-              <ellipse cx="20" cy="8" rx="7" ry="7" fill="none" stroke="#8b949e" stroke-width="2"/>
-              <line x1="20" y1="15" x2="20" y2="38" stroke="#8b949e" stroke-width="2"/>
-              <line x1="8" y1="20" x2="32" y2="20" stroke="#8b949e" stroke-width="2"/>
-              <line x1="20" y1="38" x2="12" y2="56" stroke="#8b949e" stroke-width="2"/>
-              <line x1="20" y1="38" x2="28" y2="56" stroke="#8b949e" stroke-width="2"/>
+              <ellipse cx="20" cy="8" rx="7" ry="7" fill="none" stroke="currentColor" stroke-width="2"/>
+              <line x1="20" y1="15" x2="20" y2="38" stroke="currentColor" stroke-width="2"/>
+              <line x1="8" y1="20" x2="32" y2="20" stroke="currentColor" stroke-width="2"/>
+              <line x1="20" y1="38" x2="12" y2="56" stroke="currentColor" stroke-width="2"/>
+              <line x1="20" y1="38" x2="28" y2="56" stroke="currentColor" stroke-width="2"/>
             </svg>
           </div>
 
@@ -196,7 +196,7 @@ const TYPE_LABELS = { weapon: '武器', armor: '护甲', accessory: '饰品' }
   align-items: center;
   justify-content: center;
 }
-.figure-svg { width: 100%; max-width: 60px; opacity: 0.5; }
+.figure-svg { width: 100%; max-width: 60px; opacity: 0.4; color: var(--color-text); }
 
 .equip-slot {
   width: 64px;

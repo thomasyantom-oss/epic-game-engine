@@ -419,17 +419,18 @@ function formatValue(value) {
 }
 
 .anim-damage-number.damage {
-  color: #ff5252;
-  text-shadow: -1px -1px 0 #000, 1px -1px 0 #000, -1px 1px 0 #000, 1px 1px 0 #000, 0 0 6px rgba(255, 82, 82, 0.5);
+  color: var(--color-damage);
+  text-shadow: -1px -1px 0 #000, 1px -1px 0 #000, -1px 1px 0 #000, 1px 1px 0 #000, 0 0 6px color-mix(in srgb, var(--color-damage) 50%, transparent);
 }
 
 .anim-damage-number.heal {
-  color: #66bb6a;
-  text-shadow: -1px -1px 0 #000, 1px -1px 0 #000, -1px 1px 0 #000, 1px 1px 0 #000, 0 0 6px rgba(102, 187, 106, 0.5);
+  color: var(--color-rarity_uncommon);
+  text-shadow: -1px -1px 0 #000, 1px -1px 0 #000, -1px 1px 0 #000, 1px 1px 0 #000, 0 0 6px color-mix(in srgb, var(--color-rarity_uncommon) 50%, transparent);
 }
 
 .anim-damage-number.miss {
-  color: #999;
+  color: var(--color-text);
+  opacity: 0.5;
   font-size: 0.9em;
   text-shadow: -1px -1px 0 #000, 1px -1px 0 #000, -1px 1px 0 #000, 1px 1px 0 #000;
 }

@@ -118,7 +118,7 @@ async function onStatHover(stat, event) {
     showTooltip({
       title: stat.label,
       titleColor: stat.color,
-      rows: [{ label: '暂无明细', value: '', valueColor: '#888' }]
+      rows: [{ label: '暂无明细', value: '', valueColor: 'var(--color-text)' }]
     }, event)
     return
   }

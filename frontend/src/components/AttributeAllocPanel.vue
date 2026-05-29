@@ -86,7 +86,7 @@ async function confirm() {
   display: flex; justify-content: space-between;
   font-size: 0.8rem; margin-bottom: 0.4rem; opacity: 0.7;
 }
-.remaining.warn { color: #f87171; }
+.remaining.warn { color: var(--color-enemy); }
 
 .alloc-row {
   display: flex; align-items: center; gap: 0.3rem;
@@ -94,20 +94,20 @@ async function confirm() {
 }
 .alloc-label { width: 2rem; opacity: 0.8; }
 .alloc-current { width: 2rem; text-align: right; }
-.alloc-arrow { color: #60a5fa; }
+.alloc-arrow { color: var(--color-highlight); }
 .alloc-preview { width: 2rem; text-align: right; font-weight: bold; }
-.alloc-diff { font-size: 0.75rem; color: #4ade80; width: 2rem; }
+.alloc-diff { font-size: 0.75rem; color: var(--color-rarity_uncommon); width: 2rem; }
 .alloc-btns { margin-left: auto; display: flex; gap: 0.2rem; }
 .alloc-btns button {
   width: 1.4rem; height: 1.4rem;
-  background: rgba(255,255,255,0.08);
-  border: 2px solid rgba(255,255,255,0.2);
+  background: color-mix(in srgb, var(--color-text) 8%, transparent);
+  border: 2px solid color-mix(in srgb, var(--color-text) 20%, transparent);
   color: var(--text-color);
   border-radius: 2px; cursor: pointer;
   font-size: 0.9rem; line-height: 1;
   display: flex; align-items: center; justify-content: center;
 }
-.alloc-btns button:hover:not(:disabled) { background: rgba(255,255,255,0.18); }
+.alloc-btns button:hover:not(:disabled) { background: color-mix(in srgb, var(--color-text) 18%, transparent); }
 .alloc-btns button:disabled { opacity: 0.3; cursor: not-allowed; }
 
 .alloc-actions {
@@ -119,16 +119,16 @@ async function confirm() {
   border: 2px solid;
 }
 .confirm-btn {
-  background: rgba(74, 222, 128, 0.12);
-  border-color: rgba(74, 222, 128, 0.4);
-  color: #4ade80;
+  background: color-mix(in srgb, var(--color-rarity_uncommon) 12%, transparent);
+  border-color: color-mix(in srgb, var(--color-rarity_uncommon) 40%, transparent);
+  color: var(--color-rarity_uncommon);
 }
-.confirm-btn:hover:not(:disabled) { background: rgba(74, 222, 128, 0.22); }
+.confirm-btn:hover:not(:disabled) { background: color-mix(in srgb, var(--color-rarity_uncommon) 22%, transparent); }
 .confirm-btn:disabled { opacity: 0.3; cursor: not-allowed; }
 .reset-btn {
-  background: rgba(255,255,255,0.05);
-  border-color: rgba(255,255,255,0.2);
+  background: color-mix(in srgb, var(--color-text) 5%, transparent);
+  border-color: color-mix(in srgb, var(--color-text) 20%, transparent);
   color: var(--text-color);
 }
-.reset-btn:hover { background: rgba(255,255,255,0.1); }
+.reset-btn:hover { background: color-mix(in srgb, var(--color-text) 10%, transparent); }
 </style>

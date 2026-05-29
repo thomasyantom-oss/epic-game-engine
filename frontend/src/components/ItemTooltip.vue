@@ -29,14 +29,14 @@ const { visible, position, content } = useTooltip()
   z-index: 9999;
   min-width: 160px;
   max-width: 240px;
-  background: #0d1117;
-  border: 2px solid #30363d;
+  background: var(--panel-bg);
+  border: 2px solid var(--panel-border-color);
   border-radius: 4px;
   padding: 0.5rem 0.65rem;
   pointer-events: none;
   font-family: var(--font-family, inherit);
   font-size: 0.85rem;
-  color: var(--text-color, #e6edf3);
+  color: var(--text-color);
   box-shadow: 0 4px 16px rgba(0,0,0,0.6);
 }
 .tt-title {
@@ -45,7 +45,7 @@ const { visible, position, content } = useTooltip()
   margin-bottom: 0.35rem;
 }
 .tt-divider {
-  border-top: 1px solid #30363d;
+  border-top: 1px solid var(--panel-border-color);
   margin: 0.3rem 0;
 }
 .tt-row {
@@ -54,11 +54,12 @@ const { visible, position, content } = useTooltip()
   gap: 1rem;
   line-height: 1.7;
 }
-.tt-label { color: #8b949e; }
+.tt-label { color: var(--text-color); opacity: 0.5; }
 .tt-value { font-weight: bold; }
 .tt-footer {
   margin-top: 0.35rem;
   font-size: 0.8rem;
-  color: #8b949e;
+  color: var(--text-color);
+  opacity: 0.5;
 }
 </style>

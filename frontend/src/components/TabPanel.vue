@@ -10,7 +10,14 @@
       >{{ tab.label }}</span>
     </div>
     <div class="tab-content">
-      <slot :name="activeTab"></slot>
+      <template v-if="keepAlive">
+        <div v-for="tab in tabs" :key="tab.id" v-show="activeTab === tab.id" class="tab-pane">
+          <slot :name="tab.id"></slot>
+        </div>
+      </template>
+      <template v-else>
+        <slot :name="activeTab"></slot>
+      </template>
     </div>
   </div>
 </template>
@@ -26,6 +33,10 @@ const props = defineProps({
   defaultTab: {
     type: String,
     default: ''
+  },
+  keepAlive: {
+    type: Boolean,
+    default: false
   }
 })
 
