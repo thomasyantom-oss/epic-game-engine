@@ -9,13 +9,15 @@ export function useAnimationPlayer() {
   let eventIndex = 0
 
   let onEventCallback = null
+  let onEventDoneCallback = null
 
-  function play(events, onEvent) {
+  function play(events, onEvent, onEventDone) {
     if (!events || events.length === 0) return Promise.resolve()
     playing.value = true
     playedEventIndex.value = -1
     eventIndex = 0
     onEventCallback = onEvent || null
+    onEventDoneCallback = onEventDone || null
     queue = [...events]
     return new Promise(resolve => {
       currentResolve = resolve
@@ -39,6 +41,7 @@ export function useAnimationPlayer() {
       setTimeout(() => {
         playedEventIndex.value = currentIdx
         if (onEventCallback) onEventCallback(currentIdx)
+        if (onEventDoneCallback) onEventDoneCallback(currentIdx)
         playNext()
       }, 300)
       return
@@ -80,6 +83,7 @@ export function useAnimationPlayer() {
 
     setTimeout(() => {
       activeAnimations.value = []
+      if (onEventDoneCallback) onEventDoneCallback(currentIdx)
       setTimeout(playNext, 100)
     }, totalDuration)
   }

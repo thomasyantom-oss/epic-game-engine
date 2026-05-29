@@ -364,8 +364,8 @@ const cellBgStyle = computed(() => {
 
 function playWithCallback(events, onEvent) {
   return play(events, (idx) => {
+    // Sync HP at hit time (impact animation)
     const event = events[idx]
-    // Sync HP per event
     if (event && event.effects) {
       const hp = { ...displayHp.value }
       for (const eff of event.effects) {
@@ -376,7 +376,10 @@ function playWithCallback(events, onEvent) {
       }
       displayHp.value = hp
     }
-    // Sync buffs when a buff/debuff animation fires — use current combatants state
+    if (onEvent) onEvent(idx)
+  }, (idx) => {
+    // Sync buffs after animation fully completes
+    const event = events[idx]
     if (event && event.animation) {
       const hasBuff = event.animation.some(a => a.type === 'buff_up' || a.type === 'debuff_down')
       if (hasBuff) {
@@ -387,7 +390,7 @@ function playWithCallback(events, onEvent) {
         displayBuffs.value = buffs
       }
     }
-    if (onEvent) onEvent(idx)
+  })
   })
 }
 
