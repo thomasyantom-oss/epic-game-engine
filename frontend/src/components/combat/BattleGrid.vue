@@ -239,19 +239,23 @@ const gridAreaRef = ref(null)
 const cellPositions = ref({})
 const prevCombatants = ref(null)
 const displayHp = ref({})
+const displayBuffs = ref({})  // 动画期间缓存旧 buffs，避免图标提前出现
 
 // When combat prop changes with events, cache the "before" state
 watch(() => props.combat, (combat, oldCombat) => {
   if (!combat) return
   const events = combat.events || []
   if (events.length > 0 && oldCombat && oldCombat.combatants) {
-    // Cache old HP values as pre-animation state
+    // Cache old HP and buffs as pre-animation state
     const hp = {}
+    const buffs = {}
     for (const c of oldCombat.combatants) {
       hp[c.id] = c.hp
+      buffs[c.id] = c.buffs || []
     }
     prevCombatants.value = oldCombat.combatants
     displayHp.value = hp
+    displayBuffs.value = buffs
   } else if (events.length > 0) {
     // First render with events — reverse-engineer pre-animation HP
     const hp = {}
@@ -378,6 +382,7 @@ function playWithCallback(events, onEvent) {
 
 function animationDone() {
   displayHp.value = {}
+  displayBuffs.value = {}
 }
 
 defineExpose({ play: playWithCallback, updateCellPositions, animationDone })
@@ -404,11 +409,15 @@ const phase = computed(() => props.combat?.phase || 'COMMAND')
 
 const displayCombatants = computed(() => {
   const combatants = props.combat?.combatants || []
-  if (Object.keys(displayHp.value).length === 0) return combatants
+  const hasDisplayState = Object.keys(displayHp.value).length > 0
+  if (!hasDisplayState) return combatants
   return combatants.map(c => {
     const hp = displayHp.value[c.id]
-    if (hp !== undefined) {
-      return { ...c, hp: Math.max(0, hp), alive: hp > 0 }
+    const buffs = displayBuffs.value[c.id]
+    return {
+      ...c,
+      ...(hp !== undefined ? { hp: Math.max(0, hp), alive: hp > 0 } : {}),
+      ...(buffs !== undefined ? { buffs } : {})
     }
     return c
   })
