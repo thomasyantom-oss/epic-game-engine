@@ -215,7 +215,6 @@ watch(() => props.snapshot?.combat?.events, async (events) => {
     visibleLogCount.value += logCount
   })
   battleGridRef.value.animationDone()
-}
   playedCount.value = events.length
   visibleLogCount.value = 999
   isAnimating.value = false
