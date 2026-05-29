@@ -28,7 +28,21 @@ engine.on("combat.unit_action", 80, function(event) {
         var s1 = engine.newMap(); s1.put("text", casterName); s1.put("color", "player"); segments.add(s1);
         var s2 = engine.newMap(); s2.put("text", " 发出了战吼！全体攻击力提升"); s2.put("color", "text"); segments.add(s2);
         evt.put("segments", segments);
-        evt.put("effects", engine.newList());
+        var effects = engine.newList();
+
+        // Add buff_applied effects for each affected ally
+        var allAlliesForEffects = store.getByTagAsList("combat:" + combatId);
+        for (var j = 0; j < allAlliesForEffects.size(); j++) {
+            var ally2 = allAlliesForEffects.get(j);
+            if (ally2.hasTag("player") && ally2.getComponent("Health").getInt("hp") > 0) {
+                var buffEff = engine.newMap();
+                buffEff.put("type", "buff_applied");
+                buffEff.put("target", ally2.getId());
+                effects.add(buffEff);
+            }
+        }
+
+        evt.put("effects", effects);
 
         var animation = engine.newList();
         var allAllies = store.getByTagAsList("combat:" + combatId);

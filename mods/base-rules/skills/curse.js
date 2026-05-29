@@ -29,7 +29,21 @@ engine.on("combat.unit_action", 80, function(event) {
         var s1 = engine.newMap(); s1.put("text", casterName); s1.put("color", "player"); segments.add(s1);
         var s2 = engine.newMap(); s2.put("text", " 施放了诅咒！全体敌人被削弱"); s2.put("color", "text"); segments.add(s2);
         evt.put("segments", segments);
-        evt.put("effects", engine.newList());
+        var effects = engine.newList();
+
+        // Add buff_applied effects for each affected enemy
+        var allEnemiesForEffects = store.getByTagAsList("combat:" + combatId);
+        for (var j = 0; j < allEnemiesForEffects.size(); j++) {
+            var en2 = allEnemiesForEffects.get(j);
+            if (en2.hasTag("enemy") && en2.getComponent("Health").getInt("hp") > 0) {
+                var buffEff = engine.newMap();
+                buffEff.put("type", "buff_applied");
+                buffEff.put("target", en2.getId());
+                effects.add(buffEff);
+            }
+        }
+
+        evt.put("effects", effects);
 
         var animation = engine.newList();
         var allEnemies = store.getByTagAsList("combat:" + combatId);
