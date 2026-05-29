@@ -22,7 +22,7 @@
         <div class="bar-fill hp-fill"
              :style="{ width: (hpBar.max > 0 ? hpBar.current / hpBar.max * 100 : 0) + '%' }"></div>
       </div>
-      <span class="bar-nums">{{ hpBar.current }}/{{ hpBar.max }}</span>
+      <span class="bar-nums" :style="{ color: hpBar.color }">{{ hpBar.current }}/{{ hpBar.max }}</span>
     </div>
 
     <!-- MP 条 -->
@@ -32,7 +32,7 @@
         <div class="bar-fill mp-fill"
              :style="{ width: (mpBar.max > 0 ? mpBar.current / mpBar.max * 100 : 0) + '%' }"></div>
       </div>
-      <span class="bar-nums">{{ mpBar.current }}/{{ mpBar.max }}</span>
+      <span class="bar-nums" :style="{ color: mpBar.color }">{{ mpBar.current }}/{{ mpBar.max }}</span>
     </div>
 
     <div class="divider"></div>
@@ -103,8 +103,8 @@ const statBars = computed(() =>
     .sort((a, b) => a.priority - b.priority)
 )
 
-// 懒加载 breakdown（每次 playerId 变化时重置）
-watch(() => props.playerId, () => { statsBreakdown.value = null })
+watch(() => props.playerId, () => { statsBreakdown.value = null; fetchingStats.value = false })
+watch(() => props.bars, () => { statsBreakdown.value = null; fetchingStats.value = false })
 
 async function onStatHover(stat, event) {
   if (!statsBreakdown.value && !fetchingStats.value) {
@@ -125,7 +125,7 @@ async function onStatHover(stat, event) {
   const rows = data.breakdown.map(b => ({
     label: b.label,
     value: (b.value > 0 && b.type !== 'base' ? '+' : '') + b.value,
-    valueColor: b.type === 'base' ? null : (b.value > 0 ? '#4ade80' : '#f87171')
+    valueColor: b.type === 'base' ? null : (b.value > 0 ? 'var(--color-rarity_uncommon)' : 'var(--color-enemy)')
   }))
   rows.push({ label: '──────', value: '', valueColor: null })
   rows.push({ label: '合计', value: String(data.final), valueColor: stat.color })
@@ -148,18 +148,18 @@ function statIdToKey(id) {
 .stats-tab { padding: 0.4rem 0.5rem; }
 .char-header { display: flex; align-items: baseline; gap: 0.4rem; margin-bottom: 0.4rem; flex-wrap: wrap; }
 .char-name { font-weight: bold; font-size: 1.05rem; }
-.char-level { font-size: 0.85rem; opacity: 0.7; }
+.char-level { font-size: 0.85rem; color: var(--color-text); }
 .char-class { font-size: 0.85rem; margin-left: auto; }
 
 .pending-banner {
   display: flex; justify-content: space-between; align-items: center;
-  background: rgba(255, 217, 61, 0.12);
-  border: 2px solid rgba(255, 217, 61, 0.4);
+  background: color-mix(in srgb, var(--color-damage) 12%, transparent);
+  border: 2px solid color-mix(in srgb, var(--color-damage) 40%, transparent);
   border-radius: 3px;
   padding: 0.2rem 0.5rem;
   margin-bottom: 0.4rem;
   font-size: 0.85rem;
-  color: #ffd93d;
+  color: var(--color-damage);
 }
 .alloc-link { cursor: pointer; text-decoration: underline; }
 .alloc-link:hover { opacity: 0.8; }
@@ -177,9 +177,9 @@ function statIdToKey(id) {
   overflow: hidden;
 }
 .bar-fill { height: 100%; border-radius: 0; transition: width 0.3s; }
-.hp-fill { background: #e74c3c; }
-.mp-fill { background: #3498db; }
-.bar-nums { font-size: 0.78rem; color: var(--text-color); opacity: 0.8; min-width: 3rem; text-align: right; }
+.hp-fill { background: var(--color-hp); }
+.mp-fill { background: var(--color-mp); }
+.bar-nums { font-size: 0.78rem; min-width: 3rem; text-align: right; }
 
 .divider { border-top: 2px solid var(--panel-border-color, #333); margin: 0.4rem 0; }
 
