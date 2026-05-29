@@ -12,11 +12,12 @@ engine.on("combat.round_end", 50, function(event) {
         var burning = entity.getComponent("Buff_burning");
         if (burning === null) continue;
 
-        var dmg = burning.has("damage") ? burning.getInt("damage") : 3;
+        // 已死亡单位不触发 buff 效果
         var health = entity.getComponent("Health");
-        if (health !== null) {
-            health.set("hp", Math.max(0, health.getInt("hp") - dmg));
-        }
+        if (health === null || health.getInt("hp") <= 0) continue;
+
+        var dmg = burning.has("damage") ? burning.getInt("damage") : 3;
+        health.set("hp", Math.max(0, health.getInt("hp") - dmg));
 
         var entityName = entity.hasComponent("Name") ? entity.getComponent("Name").getString("value") : entity.getId();
         var entitySide = entity.hasTag("player") ? "player" : "enemy";

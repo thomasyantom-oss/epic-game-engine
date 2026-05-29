@@ -10,14 +10,15 @@ engine.on("combat.round_end", 50, function(event) {
         var poison = entity.getComponent("Buff_poison");
         if (poison === null) continue;
 
+        // 已死亡单位不触发 buff 效果
+        var health = entity.getComponent("Health");
+        if (health === null || health.getInt("hp") <= 0) continue;
+
         var stacks = poison.has("stacks") ? poison.getInt("stacks") : 1;
         var dmgPerStack = poison.has("damage") ? poison.getInt("damage") : 3;
         var totalDmg = stacks * dmgPerStack;
 
-        var health = entity.getComponent("Health");
-        if (health !== null) {
-            health.set("hp", Math.max(0, health.getInt("hp") - totalDmg));
-        }
+        health.set("hp", Math.max(0, health.getInt("hp") - totalDmg));
 
         var remaining = poison.has("remaining") ? poison.getInt("remaining") : 3;
         remaining--;
