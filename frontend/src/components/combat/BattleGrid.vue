@@ -202,7 +202,6 @@
 
 <script setup>
 import { computed, ref, watch, onMounted, onUnmounted } from 'vue'
-import ActionLink from '../ActionLink.vue'
 import AnimationLayer from './AnimationLayer.vue'
 import { useAnimationPlayer } from '../../composables/useAnimationPlayer.js'
 
