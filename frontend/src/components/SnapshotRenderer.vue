@@ -200,16 +200,22 @@ watch(() => props.snapshot?.combat?.events, async (events) => {
   playedCount.value = 0
   visibleLogCount.value = 0
   await nextTick()
-  if (battleGridRef.value) {
-    battleGridRef.value.updateCellPositions()
-    await battleGridRef.value.play(events, (idx) => {
-      playedCount.value = idx + 1
-      const event = events[idx]
-      const logCount = event.logCount || 1
-      visibleLogCount.value += logCount
-    })
-    battleGridRef.value.animationDone()
+  if (!battleGridRef.value) {
+    // BattleGrid 不可用（刷新后首次渲染还未完成），跳过动画直接显示结果
+    isAnimating.value = false
+    playedCount.value = events.length
+    visibleLogCount.value = 999
+    return
   }
+  battleGridRef.value.updateCellPositions()
+  await battleGridRef.value.play(events, (idx) => {
+    playedCount.value = idx + 1
+    const event = events[idx]
+    const logCount = event.logCount || 1
+    visibleLogCount.value += logCount
+  })
+  battleGridRef.value.animationDone()
+}
   playedCount.value = events.length
   visibleLogCount.value = 999
   isAnimating.value = false
