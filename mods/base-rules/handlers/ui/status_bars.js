@@ -5,13 +5,13 @@ engine.on("ui.render_status", 100, function(event) {
 
     var bars = event.get("bars");
 
-    // Read colors from colorMap (set in bootstrap from colors.yaml)
-    var configEntity = store.get("_config");
-    var colorsComp = configEntity !== null ? configEntity.getComponent("Colors") : null;
-    var textColor   = (colorsComp !== null && colorsComp.has("text"))   ? colorsComp.getString("text")   : "#c8d0dc";
-    var playerColor = (colorsComp !== null && colorsComp.has("player")) ? colorsComp.getString("player") : "#66cc55";
-    var hpColor     = (colorsComp !== null && colorsComp.has("hp"))     ? colorsComp.getString("hp")     : "#e84848";
-    var mpColor     = (colorsComp !== null && colorsComp.has("mp"))     ? colorsComp.getString("mp")     : "#2eb8cc";
+    // Read colors directly from colors.yaml (hot-reloadable, no caching issues)
+    var colorsYaml = engine.loadYaml("colors.yaml");
+    var c = colorsYaml !== null ? colorsYaml.get("colors") : null;
+    var textColor   = (c !== null && c.get("text")   !== null) ? String(c.get("text"))   : "#c8d0dc";
+    var playerColor = (c !== null && c.get("player") !== null) ? String(c.get("player")) : "#66cc55";
+    var hpColor     = (c !== null && c.get("hp")     !== null) ? String(c.get("hp"))     : "#e84848";
+    var mpColor     = (c !== null && c.get("mp")     !== null) ? String(c.get("mp"))     : "#2eb8cc";
 
     if (entity.hasComponent("Character")) {
         var charComp = entity.getComponent("Character");
