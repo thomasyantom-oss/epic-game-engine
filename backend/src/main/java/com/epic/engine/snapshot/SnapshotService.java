@@ -69,6 +69,16 @@ public class SnapshotService {
 
         @SuppressWarnings("unchecked")
         List<WorldSnapshot.StatusBar> bars = uiEvent.get("bars");
+        // Override bar colors from colorMap to ensure consistency
+        if (bars != null) {
+            Map<String, String> cm = buildColorMap();
+            bars = bars.stream().map(b -> switch (b.id()) {
+                case "hp"   -> new WorldSnapshot.StatusBar(b.id(), b.label(), b.current(), b.max(), cm.getOrDefault("hp",     "#e84848"), b.priority());
+                case "mp"   -> new WorldSnapshot.StatusBar(b.id(), b.label(), b.current(), b.max(), cm.getOrDefault("mp",     "#2eb8cc"), b.priority());
+                case "name" -> new WorldSnapshot.StatusBar(b.id(), b.label(), b.current(), b.max(), cm.getOrDefault("player", "#66cc55"), b.priority());
+                default     -> new WorldSnapshot.StatusBar(b.id(), b.label(), b.current(), b.max(), cm.getOrDefault("text",   "#c8d0dc"), b.priority());
+            }).toList();
+        }
         @SuppressWarnings("unchecked")
         List<WorldSnapshot.BuffEntry> buffs = uiEvent.get("buffs");
 
@@ -324,12 +334,9 @@ public class SnapshotService {
                         mp = mana.has("mp") ? mana.getInt("mp") : 0;
                         maxMp = mana.has("maxMp") ? mana.getInt("maxMp") : 0;
                     }
-                    // HP/MP 颜色从 colorMap 读，支持后端配置覆盖
-                    boolean isPlayer = c.hasTag("player");
-                    String hpColor = isPlayer
-                            ? colorMap.getOrDefault("player", "#66cc55")
-                            : colorMap.getOrDefault("enemy", "#e84848");
-                    String mpColor = colorMap.getOrDefault("mana", "#2eb8cc");
+                    // HP/MP 颜色从 colorMap 读取语义色
+                    String hpColor = colorMap.getOrDefault("hp", "#e84848");
+                    String mpColor = colorMap.getOrDefault("mp", "#2eb8cc");
                     combatants.add(new WorldSnapshot.CombatantInfo(
                             c.getId(), name, side,
                             health.getInt("hp"), health.getInt("maxHp"),

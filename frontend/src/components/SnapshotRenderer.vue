@@ -95,12 +95,17 @@ import MapGrid from './MapGrid.vue'
 import MapInfoPanel from './MapInfoPanel.vue'
 import BattleGrid from './combat/BattleGrid.vue'
 import { useSettings } from '../composables/useSettings.js'
+import { useTooltip } from '../composables/useTooltip.js'
 
 const props = defineProps({ snapshot: Object })
 const emit = defineEmits(['action'])
 const { settings } = useSettings()
+const { hideTooltip } = useTooltip()
 const showHistory = ref(false)
 const logScrollRef = ref(null)
+
+// 战斗结束时清除残留 tooltip
+watch(() => props.snapshot?.combat, (combat) => { if (!combat) hideTooltip() })
 
 const mainTabs = computed(() => {
   if (props.snapshot?.combat) {
