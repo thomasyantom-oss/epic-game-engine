@@ -426,3 +426,73 @@
 - Task 10: `SnapshotRenderer.vue` 接线 — 新 Tab、战斗染色 baseline、全局 Tooltip
 
 **plan 文件尚未写出**，下次开始直接写 `docs/superpowers/plans/2026-05-27-attribute-equipment-frontend.md` 并执行。
+
+## 2026-05-27（续）
+
+### 属性/装备/等级系统 — 前端实现 + Bug 修复轮
+
+完成 Plan `docs/superpowers/plans/2026-05-27-attribute-equipment-frontend.md` 全部 10 个任务，并修复一轮用户测试反馈。
+
+**前端实现（Tasks 1–10）：**
+- `items.yaml` — 6 件物品（铁剑/钢剑/火焰法杖/皮甲/锁子甲/疾速戒指），含稀有度颜色映射
+- `equip.js` — `world.init` 加载物品到 EntityStore（rarityColor 通过 HashMap String key 修复 GraalJS 包装对象问题）；`action.equip`（装备+换装放回背包）、`action.unequip`（卸装放回背包）、`action.sort_inventory`（按 类型→稀有度 排序）
+- `WorldSnapshot` / `SnapshotService` — 新增 `pendingPoints`、`EquipmentData`（slots + inventory）、`ItemInfo` 字段
+- `useTooltip.js` — 模块级单例 tooltip（showTooltip/moveTooltip/hideTooltip，viewport clamp）
+- `ItemTooltip.vue` — Teleport to body，fixed 定位，支持物品属性行和属性 breakdown 行
+- `CharacterStatsTab.vue` — HP/MP 进度条 + 属性行 hover tooltip（懒加载 `/api/character/stats` breakdown）+ pendingPoints 横幅
+- `EquipmentBagPanel.vue` — SVG 人形图 + 装备槽（拖拽+点击穿戴/卸装）+ 背包网格
+- `AttributeAllocPanel.vue` — 逐项 +/- 分配属性点，实时预览差值，确认/重置
+- `SnapshotRenderer.vue` — 接线新组件，非战斗时左上显示装备 Tab，右上角色 Tab 替换原 StatusBars
+
+**Bug 修复（第一轮，7 个问题）：**
+
+1. **背包格子尺寸/字体** — equip-slot 52px→64px，bag-cell 8 列（原 4 列），格内只显示 icon，物品名移入 hover tooltip（WoW 风格）
+2. **装备后不从背包消失** — `equip.js` 修正：穿新装备从背包移除；换装时旧装备放回背包
+3. **防御 hover 缺皮甲加成 / 攻击 hover 值不对** — `CharacterStatsTab.vue` 新增 `watch(props.bars)` 监听，装备变更时清空 `statsBreakdown` 缓存（原只在 `playerId` 变更时清空）
+4. **Buff 随回合递减没生效** — `combat_flow.js` 在推进下一回合前补发 `combat.round_end` 事件（burning.js / poison.js 的 tick 监听此事件，此前从未被触发）
+5. **Buff 角标太小** — `bstat-icon` 12px→18px，`bstat-stack` 6px→10px，`bstat-remain` 5px→8px
+6. **整理按钮无效 / 拖拽无类型检查** — `doSort` 补发 `sort_inventory` action 到后端；`onDragStart` 附带 `itemType`，`onDropToSlot` 检查 `itemType === slotName` 才允许放置
+7. **战斗指令布局** — cmd-actions 2 列网格重新排序：攻击|▸技能 / 防御|逃跑（逃跑右下角）；`▸ 技能` 去掉空格；1px 边框修正为 2px
+
+**死亡单位不显示 Buff：**
+- `unitBuffs` / `unitDebuffs` 对 `!unit.alive` 的单位返回空数组，死亡后 Buff 角标立即消失
+
+## 2026-05-29
+
+### 配色 / 字体 / UI 全面修复
+
+**配色系统重构：**
+- `colors.yaml` 更新为 One Dark 配色，新增 21 个语义色（hp/mp/text/阵营/稀有度/元素）
+- `variables.css` 同步新增所有 CSS 变量，字体改为 Noto Sans SC 无衬线黑体
+- `useSettings.js` 加版本号机制，旧 localStorage 自动失效；dark 主题色值对齐 One Dark
+- `App.vue` / `SnapshotRenderer.vue` 颜色全走 CSS 变量，前端零 hardcode
+- `HotReloader.java` 修复 `reload()` 时 moduleContext 丢失导致 `loadYaml` 路径错误的 bug
+
+**status_bars.js 颜色来源修复：**
+- 颜色从 `_config` entity 的 Colors 组件读取，不再 hardcode
+- 名字用 player 色，职业用 text 色，HP/MP 用对应语义色，属性值用 text 色
+- `SnapshotService.java` 战斗状态栏 HP 颜色改用 `colorMap.get("hp")` 而非 player 色
+
+**战斗按钮 / 指令区：**
+- 指令区按钮改为暗刻样式（border + inset shadow），hover 高亮，去掉 ▸ 前缀
+- 按钮固定宽度（`justify-items: stretch`），不随文字长短伸缩
+- 技能按钮 hover 改为 useTooltip 浮窗（含技能名/MP消耗/描述），不用浏览器原生 title
+- 技能选择后立即隐藏 tooltip；战斗结束切回地图时也隐藏 tooltip
+
+**战斗动画 / Buff 同步：**
+- `useAnimationPlayer` 新增 `onEventDone` callback（动画完全结束时触发）
+- Buff 图标出现时机：技能命中时（`buff_applied` effect 驱动），与伤害数字同步
+- Buff 图标消失时机：最后一跳伤害命中后（`buff_removed` effect 驱动）
+- Buff 同步按 target 单位独立处理，不同单位互不干扰
+- 死亡单位不再触发灼烧/中毒 tick 效果
+- `poison.js` 补全 combatEvent（之前无动画和日志）
+- 所有 buff 技能（fireball/defend/curse/war_cry/poison_dart）添加 `buff_applied` effect
+
+**其他修复：**
+- `TabPanel.vue` 新增 `keepAlive` prop（v-show 保持 slot 存活）
+- 刷新战斗界面时 battleGridRef 不可用则跳过动画，避免 isAnimating 卡死
+- `visibleLogCount` 移到 watch 前，修复 TDZ 初始化错误
+
+**Backlog：**
+- BL-002 战斗回合后端超时自动结算（防止关闭前端跳过战斗）
+
