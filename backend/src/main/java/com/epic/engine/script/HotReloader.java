@@ -20,6 +20,7 @@ public class HotReloader {
     private final Map<String, String> loadedScripts = new ConcurrentHashMap<>();
     private volatile boolean running = false;
     private Thread watchThread;
+    private Path modsPath;
 
     public HotReloader(ScriptRuntime runtime, EventBus bus) {
         this.runtime = runtime;
@@ -31,6 +32,18 @@ public class HotReloader {
         loadedScripts.put(sourceName, newScript);
 
         for (Map.Entry<String, String> entry : loadedScripts.entrySet()) {
+            // Restore moduleContext for each script before executing
+            if (modsPath != null) {
+                Path scriptPath = modsPath.resolve(entry.getKey());
+                Path modDir = scriptPath;
+                while (modDir != null && !modDir.equals(modsPath)) {
+                    if (Files.exists(modDir.resolve("mod.yaml"))) {
+                        runtime.setModuleContext(modDir);
+                        break;
+                    }
+                    modDir = modDir.getParent();
+                }
+            }
             runtime.execute(entry.getValue(), entry.getKey());
         }
     }
@@ -40,6 +53,7 @@ public class HotReloader {
     }
 
     public void startWatching(Path modsPath) {
+        this.modsPath = modsPath;
         running = true;
         watchThread = new Thread(() -> {
             try (WatchService watcher = FileSystems.getDefault().newWatchService()) {

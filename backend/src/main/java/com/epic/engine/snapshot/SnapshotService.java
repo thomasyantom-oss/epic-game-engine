@@ -69,16 +69,6 @@ public class SnapshotService {
 
         @SuppressWarnings("unchecked")
         List<WorldSnapshot.StatusBar> bars = uiEvent.get("bars");
-        // Override bar colors from colorMap to ensure consistency
-        if (bars != null) {
-            Map<String, String> cm = buildColorMap();
-            bars = bars.stream().map(b -> switch (b.id()) {
-                case "hp"   -> new WorldSnapshot.StatusBar(b.id(), b.label(), b.current(), b.max(), cm.getOrDefault("hp",     "#e84848"), b.priority());
-                case "mp"   -> new WorldSnapshot.StatusBar(b.id(), b.label(), b.current(), b.max(), cm.getOrDefault("mp",     "#2eb8cc"), b.priority());
-                case "name" -> new WorldSnapshot.StatusBar(b.id(), b.label(), b.current(), b.max(), cm.getOrDefault("player", "#66cc55"), b.priority());
-                default     -> new WorldSnapshot.StatusBar(b.id(), b.label(), b.current(), b.max(), cm.getOrDefault("text",   "#c8d0dc"), b.priority());
-            }).toList();
-        }
         @SuppressWarnings("unchecked")
         List<WorldSnapshot.BuffEntry> buffs = uiEvent.get("buffs");
 
