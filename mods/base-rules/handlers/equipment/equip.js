@@ -86,10 +86,26 @@ engine.on("action.equip", 100, function(event) {
     var slots = player.getComponent("EquipmentSlots");
     if (slots === null) return;
 
-    // 卸下已装备的旧物品
+    var inv = player.getComponent("Inventory");
+
+    // 卸下已装备的旧物品，放回背包
     var oldItemId = slots.get(slotName);
     if (oldItemId !== null) {
         engine.removeModifier(playerId, "equip_" + oldItemId);
+        if (inv !== null) {
+            inv.get("items").add(String(oldItemId));
+        }
+    }
+
+    // 从背包移除新装备的物品
+    if (inv !== null) {
+        var items = inv.get("items");
+        for (var k = 0; k < items.size(); k++) {
+            if (String(items.get(k)) === String(itemId)) {
+                items.remove(k);
+                break;
+            }
+        }
     }
 
     // 更新装备槽
@@ -116,5 +132,53 @@ engine.on("action.unequip", 100, function(event) {
 
     engine.removeModifier(playerId, "equip_" + itemId);
     slots.set(slotName, null);
+
+    // 放回背包
+    var inv = player.getComponent("Inventory");
+    if (inv !== null) {
+        inv.get("items").add(String(itemId));
+    }
+
+    persistence.save(player);
+});
+
+// 整理背包：按类型（武器/护甲/饰品）→ 稀有度（传说→普通）排序
+engine.on("action.sort_inventory", 100, function(event) {
+    var playerId = event.get("playerId");
+    var player = store.get(playerId);
+    if (player === null) return;
+
+    var inv = player.getComponent("Inventory");
+    if (inv === null) return;
+
+    var items = inv.get("items");
+    var TYPE_ORDER = {"weapon": 0, "armor": 1, "accessory": 2};
+    var RARITY_ORDER = {"legendary": 0, "epic": 1, "rare": 2, "uncommon": 3, "common": 4};
+
+    var arr = [];
+    for (var i = 0; i < items.size(); i++) {
+        arr.push(String(items.get(i)));
+    }
+
+    arr.sort(function(a, b) {
+        var itemA = store.get(a);
+        var itemB = store.get(b);
+        var typeA = itemA !== null && itemA.hasComponent("ItemMeta") ? String(itemA.getComponent("ItemMeta").getString("type")) : "";
+        var typeB = itemB !== null && itemB.hasComponent("ItemMeta") ? String(itemB.getComponent("ItemMeta").getString("type")) : "";
+        var rarityA = itemA !== null && itemA.hasComponent("ItemMeta") ? String(itemA.getComponent("ItemMeta").getString("rarity")) : "";
+        var rarityB = itemB !== null && itemB.hasComponent("ItemMeta") ? String(itemB.getComponent("ItemMeta").getString("rarity")) : "";
+        var typeOrdA = TYPE_ORDER[typeA] !== undefined ? TYPE_ORDER[typeA] : 99;
+        var typeOrdB = TYPE_ORDER[typeB] !== undefined ? TYPE_ORDER[typeB] : 99;
+        if (typeOrdA !== typeOrdB) return typeOrdA - typeOrdB;
+        var rarOrdA = RARITY_ORDER[rarityA] !== undefined ? RARITY_ORDER[rarityA] : 99;
+        var rarOrdB = RARITY_ORDER[rarityB] !== undefined ? RARITY_ORDER[rarityB] : 99;
+        return rarOrdA - rarOrdB;
+    });
+
+    items.clear();
+    for (var j = 0; j < arr.length; j++) {
+        items.add(arr[j]);
+    }
+
     persistence.save(player);
 });

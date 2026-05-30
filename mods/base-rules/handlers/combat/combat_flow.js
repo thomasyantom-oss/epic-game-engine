@@ -38,6 +38,10 @@ engine.on("combat.resolve_round", 100, function(event) {
     if (endEvent.has("ended") && endEvent.get("ended")) {
         state.set("phase", endEvent.get("result"));
     } else {
+        // Fire round_end so buff ticks (burning, poison, etc.) can apply
+        var roundEndEvent = engine.newEvent("combat.round_end");
+        roundEndEvent.set("combatId", combatId);
+        engine.fire("combat.round_end", roundEndEvent);
         // Advance to next round
         state.set("round", state.getInt("round") + 1);
         state.set("phase", "COMMAND");
