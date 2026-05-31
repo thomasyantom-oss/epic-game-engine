@@ -164,7 +164,9 @@ var Skill = {
   // Flat-format animation resolution mirroring combat_events.resolveSkillAnimation.
   // A step whose `target` is "each" (or "field") expands to one entry per results[i].
   // Other steps use actor/target(first-target)/actor_side token replacement as before.
-  resolveAnimation: function(spec, ctx, results) {
+  // damages: optional array of per-target damage values; a step field with value "@damage"
+  //   resolves to -damages[r] (negative, as displayed) for the r-th expanding result.
+  resolveAnimation: function(spec, ctx, results, damages) {
     var out = engine.newList();
     var animDef = spec.animation;
     if (animDef == null) return out;
@@ -182,6 +184,7 @@ var Skill = {
             if (keys[k] === "target") val = results[r].entity.getId();
             else if (val === "actor") val = ctx.actorId;
             else if (val === "actor_side") val = ctx.casterSide;
+            else if (val === "@damage") val = damages ? -(damages[r]) : 0;
             anim.put(keys[k], val);
           }
           out.add(anim);
@@ -253,7 +256,7 @@ var Skill = {
         if (opts && opts.buffApplied) effects.add(this._buffEffect(results[i].entity));
       }
     }
-    var animation = this.resolveAnimation(spec, ctx, results);
+    var animation = this.resolveAnimation(spec, ctx, results, damages);
     var data = engine.newMap();
     data.put("log", log); data.put("effects", effects); data.put("animation", animation);
     engine.combatEvent(ctx.combatId, data);

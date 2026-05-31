@@ -3,22 +3,28 @@ name: "光击阵"
 description: "光击阵，在指定区域布置光能陷阱"
 category: skill
 silenceable: true
+effect: damage_only
+damage:
+  base: attack
+  add: 7
 targeting:
-  aoe_offsets: [[0,0],[-1,0],[1,0],[0,-1],[0,1]]
-  allow_empty: true
+  mode: pattern
+  field: enemy
+  pattern: [[0,0],[-1,0],[1,0],[0,-1],[0,1]]
   steps:
     - prompt: "选择落点"
       filter: any
       count: 1
 animation:
-  - type: flash_sequence
-    target: target
   - type: impact
-    target: target
+    target: each
     color: "#ffee58"
   - type: shake
-    target: target
+    target: each
     intensity: normal
   - type: damage_number
-    target: target
+    target: each
     color: damage
+    value: "@damage"
+log:
+  per_target: "{caster} 对 {target} 造成 {damage} 点伤害"
