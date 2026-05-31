@@ -75,8 +75,13 @@
 ## 3. 数据模型与 ModifierChain
 
 ### 3.1 新组件 / 字段
+两类属性,术语固定:
+- **基础属性(primary)** = 玩家加点拥有的 5 条:力量/敏捷/智力/体质/意志。
+- **二级属性(derived)** = 从基础属性算出来的产物:物理强度/法术强度/精神强度/最大生命/先攻。玩家不直接加。
+
+存储:
 - 新组件 **`PrimaryStats { 力量, 敏捷, 智力, 体质, 意志 }`**——基础属性,加入角色 schema 的 `base_components`。
-- 二级属性 **`物理强度 / 法术强度 / 精神强度`**——新存储字段(放新组件 `DerivedStats` 或扩展 `CombatStats`,字段落位由 plan 决定);`maxHp`→Health,`先攻`→CombatStats.speed。
+- 新组件 **`DerivedStats { 物理强度, 法术强度, 精神强度 }`**——三强度的存储盒子(与 `CombatStats` 分开,基础/派生清晰隔离,快照可单独开"二级属性"块)。`maxHp`→Health,`先攻`→CombatStats.speed。纯代码归类,不影响玩法数值。
 
 ### 3.2 派生 modifier(衍生自衍生)
 - `modifier_types.yaml` 新增 type **`derived`**,**priority 排在所有属性来源之后**(class/level/equipment/buff 都先跑,派生最后跑),保证读到累加后的基础属性值。
@@ -129,8 +134,15 @@ return total;
 - **战吼类(非武器物理)** → `scaling:{物理强度:k}`。
 - **普攻 / 近战攻击** → 吃最终武器伤害(=武器基础×物理强度);#2 用占位武器基础,`damage_calc.js` 同步迁移到物理强度体系。
 
-### 6.1 ⚠️ 数值量级 + 敌人重平衡(本轮落地最需小心)
-普攻从 `attack-defense` 迁到物理强度体系后,**数值量级会变、敌人属性要跟着重铺**(方案 A 本含重平衡)。落地策略:**先用占位归一化把物理伤害落回当前量级保证战斗不崩**,Ch2 武器到位再调真值。spec 实现阶段单列一节处理敌人属性迁移。
+### 6.1 敌人统一走属性派生(玩家/敌人同轴)
+**敌人也由这 5 条基础属性构成**,不单列裸 stat —— 战力与玩家在同一根轴上可比,`computeDamage` 对敌我完全一致(敌人 `物理强度` 同样驱动它的攻击)。
+
+- encounter YAML 从写死 `attack/hp/speed` → **写死敌人的 `PrimaryStats`(力/敏/智/体/意)**;hp/物理强度/先攻经**同一个派生 modifier**算出。
+- 敌人 spawn 路径也注册派生 modifier + `setBase` + recalculate(实现细节 plan 定)。
+- `training_dummy`(attack 0)= 全 0 攻击属性,照样兼容。
+
+### 6.2 ⚠️ 数值量级 + 重平衡(本轮落地最需小心)
+普攻从 `attack-defense` 迁到物理强度体系后,**数值量级会变**(方案 A 本含重平衡)。"重平衡"在此=**给每个敌人设计 `PrimaryStats`**,让派生出的二级落在目标难度,而非重调裸 attack。落地策略:**先用占位归一化把物理伤害落回当前量级保证战斗不崩**,Ch2 武器到位再调真值。实现阶段单列一节处理玩家普攻 + 全部 encounter 的属性迁移。
 
 ---
 
@@ -159,6 +171,7 @@ return total;
 - **衍生自衍生顺序**:class/level/equipment 改了基础属性后,派生 modifier 读到的是**累加后**的值(priority 排序验证)。
 - **computeDamage scaling**:三强度各驱动一条技能,伤害含 scaling 项且向上取整。
 - **5 职业起始值**:每个职业 L1 的基础属性 + 派生预览符合 §2.3 / §4。
+- **敌人属性派生**:encounter 的 `PrimaryStats` 经同一派生 modifier 算出 hp/物理强度/先攻;spawn 路径注册派生 + recalculate 正确。
 - **每级成长**:升级后按职业模板 +5 属性点,二级属性自动重算。
 - **火球迁移不破坏**:fireball golden 重生成后逐字节锁(Feature #1 的 `SkillFidelityTest` 网保护);其余战斗回归(`CombatBugfixTest` / 现有集成测试)绿。
 
