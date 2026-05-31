@@ -149,7 +149,7 @@ engine.on("action.confirm_character", 100, function(event) {
     var expComp = engine.newComponent("Experience");
     expComp.set("xp", 0);
     expComp.set("level", 1);
-    expComp.set("pendingPoints", 3);
+    expComp.set("pendingPoints", 0);   // Feature #2:成长全自动(按职业 growth 模板),手动分配搁置(spec §5);保留字段供 UI/未来专精复用
     entity.addComponent(expComp);
 
     // 5. 注册职业 Modifier（exclusive，替换旧职业）
