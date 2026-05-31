@@ -46,11 +46,22 @@ var Skill = {
       engine.fire("combat.damage_calc", ev);
       return ev.get("damage");
     }
-    var statName = dmgSpec.base || "attack";
-    var base = caster.hasComponent("CombatStats")
-        ? caster.getComponent("CombatStats").getInt(statName) : 5;
-    return base + (dmgSpec.add || 0);
-    // Feature #2 将在此处追加属性加成；战斗、tooltip、AI 均调用此函数。
+    // Feature #2: 伤害 = base 属性(若声明)+ add + Σ⌈强度 × 系数⌉。
+    // scaling 吃 DerivedStats 的三强度(物理/法术/精神强度),非裸基础属性(§1.9 演进)。
+    var statName = dmgSpec.base;
+    var base = (statName && caster.hasComponent("CombatStats"))
+        ? caster.getComponent("CombatStats").getInt(statName) : 0;
+    var total = base + (dmgSpec.add || 0);
+    if (dmgSpec.scaling) {
+        var ds = caster.getComponent("DerivedStats");
+        if (ds !== null) {
+            var keys = Object.keys(dmgSpec.scaling);
+            for (var i = 0; i < keys.length; i++) {
+                total += Math.ceil(ds.getInt(keys[i]) * dmgSpec.scaling[keys[i]]);
+            }
+        }
+    }
+    return total;
   },
 
   _rowOrder: ["FRONT", "MID", "BACK"],

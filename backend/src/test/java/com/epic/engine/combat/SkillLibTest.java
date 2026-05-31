@@ -45,6 +45,9 @@ class SkillLibTest {
         Component n = new Component("Name");
         n.set("value", name);
         e.addComponent(n);
+        Component ds = new Component("DerivedStats");
+        ds.set("物理强度", 0); ds.set("法术强度", 14); ds.set("精神强度", 0);
+        e.addComponent(ds);
         e.addTag(player ? "player" : "enemy");
         e.addTag("combat:b1");
         store.add(e);
@@ -105,6 +108,16 @@ class SkillLibTest {
         mkUnit("goblin","哥布林",false);   // defense 5 in mkUnit
         js("var dmg = Skill.computeDamage(store.get('mage'), store.get('goblin'), {via_damage_calc:true});" +
            "if (dmg !== 5) throw 'dmg='+dmg;");   // 10 attack - 5 defense
+    }
+
+    @Test
+    void computeDamage_scalingSpellPower() {
+        mkUnit("mage","法师",true);
+        mkUnit("goblin","哥布林",false);
+        // add 8 + ⌈法术强度14 × 0.5⌉ = 8 + 7 = 15
+        js("var s = {add:8, scaling:{法术强度:0.5}};" +
+           "var dmg = Skill.computeDamage(store.get('mage'), store.get('goblin'), s);" +
+           "if (dmg !== 15) throw 'dmg='+dmg;");
     }
 
     Entity mkPos(String id, boolean player, String row, int slot) {
