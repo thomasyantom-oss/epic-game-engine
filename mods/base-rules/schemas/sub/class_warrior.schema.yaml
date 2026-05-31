@@ -3,13 +3,10 @@ type: sub
 category: class
 compatible_with: [character]
 label: "战士"
-description: "近战物理攻击者"
+description: "近战物理输出,力量主属性"
+weapon_attr: "力量"
+growth: { 力量: 3, 体质: 2 }
 modifiers:
-  - field: "Health.maxHp"
-    value: "+50"
-  - field: "Health.hp"
-    value: "+50"
-  - field: "CombatStats.attack"
-    value: "+3"
-  - field: "CombatStats.defense"
-    value: "+2"
+  - { field: "PrimaryStats.力量", value: "+11" }
+  - { field: "PrimaryStats.敏捷", value: "+2" }
+  - { field: "PrimaryStats.体质", value: "+9" }

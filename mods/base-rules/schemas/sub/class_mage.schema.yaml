@@ -3,13 +3,11 @@ type: sub
 category: class
 compatible_with: [character]
 label: "法师"
-description: "远程魔法攻击者"
+description: "远程法术输出,智力主属性"
+weapon_attr: "智力"
+growth: { 智力: 3, 敏捷: 1, 体质: 1 }
 modifiers:
-  - field: "Mana.maxMp"
-    value: "+30"
-  - field: "Mana.mp"
-    value: "+30"
-  - field: "CombatStats.attack"
-    value: "+5"
-  - field: "CombatStats.speed"
-    value: "+2"
+  - { field: "PrimaryStats.敏捷", value: "+2" }
+  - { field: "PrimaryStats.智力", value: "+11" }
+  - { field: "PrimaryStats.体质", value: "+4" }
+  - { field: "PrimaryStats.意志", value: "+3" }

@@ -1,0 +1,12 @@
+id: rogue
+type: sub
+category: class
+compatible_with: [character]
+label: "盗贼"
+description: "敏捷物理输出,高先攻"
+weapon_attr: "敏捷"
+growth: { 敏捷: 3, 力量: 1, 体质: 1 }
+modifiers:
+  - { field: "PrimaryStats.力量", value: "+2" }
+  - { field: "PrimaryStats.敏捷", value: "+11" }
+  - { field: "PrimaryStats.体质", value: "+5" }

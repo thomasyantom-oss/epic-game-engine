@@ -21,15 +21,15 @@ class CharacterSchemaTest {
         assertThat(schema).isNotNull();
         assertThat(schema.type()).isEqualTo("main");
         assertThat(schema.requiredSubs()).containsExactly("class");
-        assertThat(schema.baseComponents()).containsKeys("Health", "Mana", "CombatStats", "Position");
+        assertThat(schema.baseComponents()).containsKeys("Health", "Mana", "CombatStats", "PrimaryStats", "DerivedStats", "Position");
     }
 
     @Test
     void classSchemas_loaded() {
         List<Schema> classes = schemaRegistry.getByCategory("class");
-        assertThat(classes).hasSize(2);
+        assertThat(classes).hasSize(5);
         assertThat(classes.stream().map(Schema::id).toList())
-                .containsExactlyInAnyOrder("warrior", "mage");
+                .containsExactlyInAnyOrder("warrior", "mage", "rogue", "druid", "guardian");
     }
 
     @Test
@@ -37,6 +37,6 @@ class CharacterSchemaTest {
         Schema warrior = schemaRegistry.get("warrior");
         assertThat(warrior.label()).isEqualTo("战士");
         assertThat(warrior.modifiers()).isNotEmpty();
-        assertThat(warrior.modifiers().get(0).field()).isEqualTo("Health.maxHp");
+        assertThat(warrior.modifiers().get(0).field()).isEqualTo("PrimaryStats.力量");
     }
 }

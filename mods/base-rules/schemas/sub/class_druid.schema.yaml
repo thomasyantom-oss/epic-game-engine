@@ -1,0 +1,12 @@
+id: druid
+type: sub
+category: class
+compatible_with: [character]
+label: "德鲁伊"
+description: "意志施法者,精神强度驱动"
+weapon_attr: "意志"
+growth: { 意志: 3, 体质: 1, 敏捷: 1 }
+modifiers:
+  - { field: "PrimaryStats.敏捷", value: "+2" }
+  - { field: "PrimaryStats.体质", value: "+6" }
+  - { field: "PrimaryStats.意志", value: "+10" }

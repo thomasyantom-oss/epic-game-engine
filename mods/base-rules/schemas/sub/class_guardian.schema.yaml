@@ -1,0 +1,12 @@
+id: guardian
+type: sub
+category: class
+compatible_with: [character]
+label: "护卫"
+description: "体质坦克,高生命"
+weapon_attr: "体质"
+growth: { 体质: 3, 力量: 1, 意志: 1 }
+modifiers:
+  - { field: "PrimaryStats.力量", value: "+2" }
+  - { field: "PrimaryStats.体质", value: "+14" }
+  - { field: "PrimaryStats.意志", value: "+3" }
