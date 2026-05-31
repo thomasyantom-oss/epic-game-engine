@@ -1,0 +1,33 @@
+[ {
+  "animation" : [ ],
+  "effects" : [ {
+    "amount" : -13,
+    "hp" : 187,
+    "maxHp" : 200,
+    "target" : "goblin1",
+    "type" : "hp_change"
+  }, {
+    "target" : "goblin1",
+    "type" : "buff_applied"
+  } ],
+  "logCount" : 1,
+  "segments" : [ {
+    "color" : "damage",
+    "text" : "13"
+  }, {
+    "color" : "enemy",
+    "text" : "哥布林甲"
+  }, {
+    "color" : "player",
+    "text" : "法师"
+  }, {
+    "color" : "text",
+    "text" : " 点伤害并中毒"
+  }, {
+    "color" : "text",
+    "text" : " 的毒镖命中 "
+  }, {
+    "color" : "text",
+    "text" : "，造成 "
+  } ]
+} ]

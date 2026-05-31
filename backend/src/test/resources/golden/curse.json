@@ -1,0 +1,32 @@
+[ {
+  "animation" : [ {
+    "color" : "#e57373",
+    "target" : "goblin1",
+    "type" : "debuff_down"
+  }, {
+    "color" : "#e57373",
+    "target" : "goblin2",
+    "type" : "debuff_down"
+  }, {
+    "color" : "#e57373",
+    "target" : "goblin3",
+    "type" : "debuff_down"
+  } ],
+  "effects" : [ {
+    "target" : "goblin1",
+    "type" : "buff_applied"
+  }, {
+    "target" : "goblin2",
+    "type" : "buff_applied"
+  }, {
+    "target" : "goblin3",
+    "type" : "buff_applied"
+  } ],
+  "segments" : [ {
+    "color" : "player",
+    "text" : "法师"
+  }, {
+    "color" : "text",
+    "text" : " 施放了诅咒！全体敌人被削弱"
+  } ]
+} ]

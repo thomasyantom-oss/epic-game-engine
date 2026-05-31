@@ -1,0 +1,46 @@
+[ {
+  "animation" : [ {
+    "color" : "#ce93d8",
+    "target" : "goblin1",
+    "type" : "impact"
+  }, {
+    "color" : "#ce93d8",
+    "target" : "mage",
+    "type" : "pulse"
+  }, {
+    "color" : "damage",
+    "target" : "goblin1",
+    "type" : "damage_number",
+    "value" : -16
+  }, {
+    "intensity" : "normal",
+    "target" : "goblin1",
+    "type" : "shake"
+  } ],
+  "effects" : [ {
+    "amount" : -16,
+    "hp" : 184,
+    "maxHp" : 200,
+    "target" : "goblin1",
+    "type" : "hp_change"
+  } ],
+  "segments" : [ {
+    "color" : "damage",
+    "text" : "16"
+  }, {
+    "color" : "enemy",
+    "text" : "哥布林甲"
+  }, {
+    "color" : "player",
+    "text" : "法师"
+  }, {
+    "color" : "text",
+    "text" : " 对 "
+  }, {
+    "color" : "text",
+    "text" : " 点伤害"
+  }, {
+    "color" : "text",
+    "text" : " 造成 "
+  } ]
+} ]

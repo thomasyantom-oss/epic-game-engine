@@ -1,0 +1,53 @@
+[ {
+  "animation" : [ {
+    "color" : "#ff4400",
+    "from" : "mage",
+    "shape" : "circle",
+    "speed" : "fast",
+    "to" : "goblin1",
+    "trail" : "glow",
+    "type" : "projectile"
+  }, {
+    "color" : "#ff4400",
+    "target" : "goblin1",
+    "type" : "impact"
+  }, {
+    "color" : "damage",
+    "target" : "goblin1",
+    "type" : "damage_number"
+  }, {
+    "intensity" : "normal",
+    "target" : "goblin1",
+    "type" : "shake"
+  } ],
+  "effects" : [ {
+    "amount" : -20,
+    "hp" : 180,
+    "maxHp" : 200,
+    "target" : "goblin1",
+    "type" : "hp_change"
+  }, {
+    "target" : "goblin1",
+    "type" : "buff_applied"
+  } ],
+  "logCount" : 1,
+  "segments" : [ {
+    "color" : "damage",
+    "text" : "20"
+  }, {
+    "color" : "enemy",
+    "text" : "哥布林甲"
+  }, {
+    "color" : "player",
+    "text" : "法师"
+  }, {
+    "color" : "text",
+    "text" : " 点伤害"
+  }, {
+    "color" : "text",
+    "text" : " 的火球术命中 "
+  }, {
+    "color" : "text",
+    "text" : "，造成 "
+  } ]
+} ]

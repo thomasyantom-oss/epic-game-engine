@@ -1,0 +1,63 @@
+[ {
+  "animation" : [ {
+    "color" : "#ffee58",
+    "target" : "goblin1",
+    "type" : "impact"
+  }, {
+    "color" : "#ffee58",
+    "target" : "goblin2",
+    "type" : "impact"
+  }, {
+    "color" : "#ffee58",
+    "target" : "mage",
+    "type" : "pulse"
+  }, {
+    "color" : "damage",
+    "target" : "goblin1",
+    "type" : "damage_number",
+    "value" : -18
+  }, {
+    "color" : "damage",
+    "target" : "goblin2",
+    "type" : "damage_number",
+    "value" : -18
+  }, {
+    "intensity" : "heavy",
+    "target" : "goblin1",
+    "type" : "shake"
+  }, {
+    "intensity" : "heavy",
+    "target" : "goblin2",
+    "type" : "shake"
+  } ],
+  "effects" : [ {
+    "data" : {
+      "amount" : -18,
+      "hp" : 182,
+      "maxHp" : 200
+    },
+    "target" : "goblin1",
+    "type" : "hp_change"
+  }, {
+    "data" : {
+      "amount" : -18,
+      "hp" : 182,
+      "maxHp" : 200
+    },
+    "target" : "goblin2",
+    "type" : "hp_change"
+  } ],
+  "segments" : [ {
+    "color" : "damage",
+    "text" : "18"
+  }, {
+    "color" : "player",
+    "text" : "法师"
+  }, {
+    "color" : "text",
+    "text" : " 点伤害"
+  }, {
+    "color" : "text",
+    "text" : " 的十字爆裂命中 2 个目标，各造成 "
+  } ]
+} ]

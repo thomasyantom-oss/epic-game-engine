@@ -1,0 +1,28 @@
+[ {
+  "animation" : [ {
+    "color" : "#66bb6a",
+    "intensity" : "normal",
+    "target" : "mage",
+    "type" : "buff_up",
+    "value" : 15
+  }, {
+    "color" : "heal",
+    "target" : "mage",
+    "type" : "damage_number",
+    "value" : 15
+  } ],
+  "effects" : [ ],
+  "segments" : [ {
+    "color" : "player",
+    "text" : "15"
+  }, {
+    "color" : "player",
+    "text" : "法师"
+  }, {
+    "color" : "text",
+    "text" : " 恢复了 "
+  }, {
+    "color" : "text",
+    "text" : " 点生命"
+  } ]
+} ]

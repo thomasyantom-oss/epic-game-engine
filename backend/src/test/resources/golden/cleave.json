@@ -1,0 +1,42 @@
+[ {
+  "animation" : [ {
+    "area" : [ "cell_0_0", "cell_1_0", "cell_2_0" ],
+    "color" : "#ffffff",
+    "type" : "slash"
+  }, {
+    "color" : "damage",
+    "target" : "goblin1",
+    "type" : "damage_number",
+    "value" : -15
+  }, {
+    "intensity" : "heavy",
+    "target" : "goblin1",
+    "type" : "shake"
+  }, {
+    "side" : "player",
+    "target" : "mage",
+    "type" : "lunge"
+  } ],
+  "effects" : [ {
+    "data" : {
+      "amount" : -15,
+      "hp" : 185,
+      "maxHp" : 200
+    },
+    "target" : "goblin1",
+    "type" : "hp_change"
+  } ],
+  "segments" : [ {
+    "color" : "damage",
+    "text" : "15"
+  }, {
+    "color" : "player",
+    "text" : "法师"
+  }, {
+    "color" : "text",
+    "text" : " 点伤害"
+  }, {
+    "color" : "text",
+    "text" : " 的顺劈斩命中 1 个目标，各造成 "
+  } ]
+} ]
