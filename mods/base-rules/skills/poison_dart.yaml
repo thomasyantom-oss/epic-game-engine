@@ -3,24 +3,27 @@ name: "毒镖"
 description: "毒镖，命中目标并附加中毒状态"
 category: skill
 silenceable: true
+effect: damage_with_debuff
+damage:
+  base: attack
+  add: 3
 targeting:
+  mode: pattern
+  field: enemy
+  pattern: [[0,0]]
   steps:
     - prompt: "选择目标"
       filter: enemy
       count: 1
-animation:
-  - type: projectile
-    from: actor
-    to: target
-    shape: diamond
+debuff:
+  id: poison
+  data:
+    damage: 3
+    remaining: 3
+    stacking: stack
+    maxStacks: 5
     color: "#9c27b0"
-    speed: fast
-  - type: impact
-    target: target
-    color: "#9c27b0"
-  - type: debuff_down
-    target: target
-    color: "#9c27b0"
-  - type: damage_number
-    target: target
-    color: damage
+    permanent: false
+    positive: false
+log:
+  template: "{caster} 的毒镖命中 {target}，造成 {damage} 点伤害并中毒"
