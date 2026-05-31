@@ -31,12 +31,12 @@ Skill.registerEffect("damage_with_debuff", function(ctx, spec, results) {
 
 Skill.registerEffect("debuff_only", function(ctx, spec, results) {
   for (var i = 0; i < results.length; i++) Skill.applyBuffFromSpec(ctx, results[i].entity, spec.debuff);
-  Skill.present(ctx, spec, results, null);
+  Skill.present(ctx, spec, results, null, {buffApplied: true});
 });
 
 Skill.registerEffect("buff_only", function(ctx, spec, results) {
   for (var i = 0; i < results.length; i++) Skill.applyBuffFromSpec(ctx, results[i].entity, spec.buff);
-  Skill.present(ctx, spec, results, null);
+  Skill.present(ctx, spec, results, null, {buffApplied: true});
 });
 
 Skill.registerEffect("heal", function(ctx, spec, results) {

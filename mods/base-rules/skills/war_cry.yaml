@@ -3,10 +3,21 @@ name: "战吼"
 description: "战吼，提升我方战斗力"
 category: skill
 silenceable: true
+effect: buff_only
 targeting:
+  mode: group
+  field: ally
   steps: []
+buff:
+  id: war_cry
+  data:
+    color: "#ffab40"
+    stacking: refresh
+    permanent: false
+    positive: true
+log:
+  template: "{caster} 发出了战吼！全体攻击力提升"
 animation:
   - type: buff_up
-    target: field
+    target: each
     color: "#ffab40"
-    intensity: big

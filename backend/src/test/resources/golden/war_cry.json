@@ -8,6 +8,7 @@
     "target" : "mage",
     "type" : "buff_applied"
   } ],
+  "logCount" : 1,
   "segments" : [ {
     "color" : "player",
     "text" : "法师"

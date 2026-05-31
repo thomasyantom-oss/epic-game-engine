@@ -162,7 +162,8 @@ var Skill = {
   },
 
   // Flat-format animation resolution mirroring combat_events.resolveSkillAnimation.
-  // Single-target token replacement now; multi-target expansion added in a later task.
+  // A step whose `target` is "each" (or "field") expands to one entry per results[i].
+  // Other steps use actor/target(first-target)/actor_side token replacement as before.
   resolveAnimation: function(spec, ctx, results) {
     var out = engine.newList();
     var animDef = spec.animation;
@@ -170,16 +171,33 @@ var Skill = {
     var firstTargetId = results.length > 0 ? results[0].entity.getId() : null;
     for (var i = 0; i < animDef.length; i++) {
       var step = animDef[i];
-      var anim = engine.newMap();
-      var keys = Object.keys(step);
-      for (var k = 0; k < keys.length; k++) {
-        var val = step[keys[k]];
-        if (val === "actor") val = ctx.actorId;
-        else if (val === "target") val = firstTargetId;
-        else if (val === "actor_side") val = ctx.casterSide;
-        anim.put(keys[k], val);
+      var targetVal = step["target"];
+      if (targetVal === "each" || targetVal === "field") {
+        // Expand: one entry per result, replacing "target" with each entity's id
+        for (var r = 0; r < results.length; r++) {
+          var anim = engine.newMap();
+          var keys = Object.keys(step);
+          for (var k = 0; k < keys.length; k++) {
+            var val = step[keys[k]];
+            if (keys[k] === "target") val = results[r].entity.getId();
+            else if (val === "actor") val = ctx.actorId;
+            else if (val === "actor_side") val = ctx.casterSide;
+            anim.put(keys[k], val);
+          }
+          out.add(anim);
+        }
+      } else {
+        var anim = engine.newMap();
+        var keys = Object.keys(step);
+        for (var k = 0; k < keys.length; k++) {
+          var val = step[keys[k]];
+          if (val === "actor") val = ctx.actorId;
+          else if (val === "target") val = firstTargetId;
+          else if (val === "actor_side") val = ctx.casterSide;
+          anim.put(keys[k], val);
+        }
+        out.add(anim);
       }
-      out.add(anim);
     }
     return out;
   },
@@ -204,13 +222,26 @@ var Skill = {
   },
 
   // Emit one combatEvent via engine.combatEvent with log, effects, and animation.
-  // Single-target and per-target log; multi-target animation expansion is a later task.
+  // Log mode:
+  //   single result or per_target absent -> L.template used once (with first/only target)
+  //   multiple results + L.per_target present -> one L.per_target line per result
+  //   multiple results + L.per_target absent (L.template only) -> ONE summary line, per-target effects + animation
   // opts.buffApplied: when true, appends a buff_applied effect entry per result target.
   present: function(ctx, spec, results, damages, opts) {
     var log = engine.newList();
     var effects = engine.newList();
     var L = spec.log || {};
-    if (results.length <= 1) {
+    var summaryMode = results.length > 1 && !L.per_target;
+    if (summaryMode) {
+      // ONE summary log line using L.template (caster only, no per-target substitution needed)
+      var tgt = results.length > 0 ? results[0].entity : ctx.caster;
+      log.add(this._renderLog(L.template, ctx, tgt, damages ? damages[0] : 0));
+      // Per-target effects
+      for (var i = 0; i < results.length; i++) {
+        if (damages) effects.add(this._hpEffect(results[i].entity, damages[i]));
+        if (opts && opts.buffApplied) effects.add(this._buffEffect(results[i].entity));
+      }
+    } else if (results.length <= 1) {
       var tgt = results.length > 0 ? results[0].entity : ctx.caster;
       log.add(this._renderLog(L.template, ctx, tgt, damages ? damages[0] : 0));
       if (damages) effects.add(this._hpEffect(tgt, damages[0]));
