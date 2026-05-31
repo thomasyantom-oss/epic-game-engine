@@ -16,7 +16,7 @@ function registerDerivedModifier(entityId) {
             var p = ent.getComponent("PrimaryStats");
             if (p === null) return;
             var d = ent.getComponent("DerivedStats");
-            var wAttr = p.has("weaponAttr") ? p.get("weaponAttr") : "力量";
+            var wAttr = p.has("weaponAttr") ? p.getString("weaponAttr") : "力量";
             var phys = Math.ceil(p.getInt(wAttr) * weaponMult(wAttr));
             if (d !== null) {
                 d.set("物理强度", phys);
