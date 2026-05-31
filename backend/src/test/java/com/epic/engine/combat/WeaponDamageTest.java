@@ -52,5 +52,7 @@ class WeaponDamageTest {
         Entity r = store.get("h1");
         assertThat(r.getComponent("PrimaryStats").getInt("力量")).isEqualTo(13);   // 10 + 3
         assertThat(r.getComponent("CombatStats").getInt("defense")).isEqualTo(5);  // 0 + 5
+        // 无点号元数据 key(weaponAttr)不被 modifier 误当字段处理,仍是原 String 值
+        assertThat(r.getComponent("PrimaryStats").getString("weaponAttr")).isEqualTo("力量");
     }
 }

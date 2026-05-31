@@ -71,7 +71,7 @@ function registerEquipmentModifier(entityId, itemId) {
                 var fieldName = key.substring(dotIdx + 1);
                 var comp = entity.getComponent(compName);
                 if (comp !== null && comp.has(fieldName)) {
-                    comp.set(fieldName, comp.getInt(fieldName) + statsCopy.get(k));
+                    comp.set(fieldName, comp.getInt(fieldName) + parseInt(statsCopy.get(k)));   // parseInt:防 YAML Long/Double 经 getInt 静默截断
                 }
             }
         }
