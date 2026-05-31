@@ -1,0 +1,19 @@
+[ {
+  "animation" : [ {
+    "color" : "#ffab40",
+    "target" : "mage",
+    "type" : "buff_up"
+  } ],
+  "effects" : [ {
+    "target" : "mage",
+    "type" : "buff_applied"
+  } ],
+  "logCount" : 1,
+  "segments" : [ {
+    "color" : "player",
+    "text" : "法师"
+  }, {
+    "color" : "text",
+    "text" : " 发出了战吼！全体攻击力提升"
+  } ]
+} ]

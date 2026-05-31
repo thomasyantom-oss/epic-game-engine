@@ -3,11 +3,30 @@ name: "火球术"
 description: "对目标造成火焰魔法伤害，附带灼烧效果"
 category: skill
 silenceable: true
+effect: damage_with_debuff
+damage:
+  base: attack
+  add: 10
 targeting:
+  mode: pattern
+  field: enemy
+  pattern: [[0,0]]
   steps:
     - prompt: "选择目标"
       filter: enemy
       count: 1
+debuff:
+  id: burning
+  data:
+    damage: 3
+    remaining: 2
+    stacking: refresh
+    source: "@caster"
+    color: "#ff4400"
+    permanent: false
+    positive: false
+log:
+  template: "{caster} 的火球术命中 {target}，造成 {damage} 点伤害"
 animation:
   - type: projectile
     shape: circle

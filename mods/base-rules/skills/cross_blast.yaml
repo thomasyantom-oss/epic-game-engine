@@ -3,22 +3,30 @@ name: "十字爆裂"
 description: "十字爆裂，以目标为中心十字范围爆炸"
 category: skill
 silenceable: true
+damage:
+  base: attack
+  add: 8
 targeting:
-  aoe_offsets: [[0,0],[-1,0],[1,0],[0,-1],[0,1]]
+  mode: pattern
+  field: enemy
+  pattern: [[0,0],[-1,0],[1,0],[0,-1],[0,1]]
+  aoe_offsets: [[0,0],[-1,0],[1,0],[0,-1],[0,1]]   # frontend range hint (actions.js)
   steps:
     - prompt: "选择目标"
       filter: enemy
       count: 1
+# NOTE: cross_blast is a bespoke skill (cross_blast.js builds + emits its animation directly).
+# This block is decorative/reference only — it is NOT read at runtime. Edit cross_blast.js to change the animation.
 animation:
   - type: pulse
     target: actor
     color: "#ffee58"
   - type: impact
-    target: target
+    target: each
     color: "#ffee58"
   - type: shake
-    target: target
+    target: each
     intensity: heavy
   - type: damage_number
-    target: target
+    target: each
     color: damage

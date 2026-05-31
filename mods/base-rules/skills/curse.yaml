@@ -3,10 +3,22 @@ name: "诅咒"
 description: "诅咒，降低目标属性"
 category: skill
 silenceable: true
+effect: debuff_only
 targeting:
+  mode: group
+  field: enemy
   steps: []
+debuff:
+  id: cursed
+  data:
+    color: "#e57373"
+    stacking: refresh
+    remaining: 3
+    permanent: false
+    positive: false
+log:
+  template: "{caster} 施放了诅咒！全体敌人被削弱"
 animation:
   - type: debuff_down
-    target: field
+    target: each
     color: "#e57373"
-    intensity: big
