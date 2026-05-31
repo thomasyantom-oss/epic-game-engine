@@ -1,19 +1,28 @@
+// Two presentation paths, chosen by whether the spec authored a `log:` block:
+//   NO log  -> dealDamage(skipLog=false): combat_events.js builds the combatEvent and
+//              combat_log.js writes the log line (the engine's default damage flow).
+//   HAS log -> dealDamage(skipLog=true) suppresses those handlers, and present() becomes
+//              the SOLE emitter of the combatEvent + CombatLog entry (custom log text).
+// => Any effect that calls present() MUST set skipLog=true on its dealDamage calls, and
+//    MUST have a `log:` template, or it produces a blank log line.
 Skill.registerEffect("damage_only", function(ctx, spec, results) {
-  var custom = (spec.log != null);
+  var custom = (spec.log != null);   // custom log => present() path; else combat_events path
   var damages = [];
   for (var i = 0; i < results.length; i++) {
     var dmg = Skill.computeDamage(ctx.caster, results[i].entity, spec.damage);
-    Skill.dealDamage(ctx, results[i].entity, dmg, spec.id, custom ? true : false);  // skipLog only when custom
+    Skill.dealDamage(ctx, results[i].entity, dmg, spec.id, custom);  // skipLog only on the present() path
     damages.push(dmg);
   }
   if (custom) Skill.present(ctx, spec, results, damages, null);
 });
 
+// Always takes the present() path (skipLog=true) — present() is the sole emitter, so a
+// `log:` template is required (see the two-paths note above).
 Skill.registerEffect("damage_with_debuff", function(ctx, spec, results) {
   var damages = [];
   for (var i = 0; i < results.length; i++) {
     var dmg = Skill.computeDamage(ctx.caster, results[i].entity, spec.damage);
-    Skill.dealDamage(ctx, results[i].entity, dmg, spec.id);
+    Skill.dealDamage(ctx, results[i].entity, dmg, spec.id, true);  // skipLog: present() emits below
     Skill.applyBuffFromSpec(ctx, results[i].entity, spec.debuff);
     damages.push(dmg);
   }

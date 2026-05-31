@@ -112,8 +112,10 @@ var Skill = {
   },
 
   // Mutate target HP and fire combat.damage_dealt.
-  // skipLog: pass false to let combat_events.js build the presentation (plain-damage path).
-  //          any other value (including undefined) defaults to true (present() path).
+  // skipLog controls ONLY the event flag (it does not call present()):
+  //   false  -> combat_events.js + combat_log.js build the presentation (engine default flow).
+  //   true / omitted (default) -> those handlers are suppressed; the CALLER is then responsible
+  //                               for calling present() to emit the combatEvent + CombatLog entry.
   dealDamage: function(ctx, target, amount, skillId, skipLog) {
     var health = target.getComponent("Health");
     health.set("hp", Math.max(0, health.getInt("hp") - amount));
