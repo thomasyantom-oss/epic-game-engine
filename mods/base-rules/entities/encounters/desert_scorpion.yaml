@@ -5,15 +5,21 @@ enemies:
     name: "巨蝎"
     row: FRONT
     slot: 0
-    hp: 25
-    attack: 8
     defense: 4
-    speed: 2
+    力量: 0
+    敏捷: 8
+    智力: 0
+    体质: 0
+    意志: 0
+    weaponAttr: "敏捷"
   - id: scorpion2
     name: "沙蝎"
     row: FRONT
     slot: 1
-    hp: 18
-    attack: 6
     defense: 3
-    speed: 4
+    力量: 0
+    敏捷: 6
+    智力: 0
+    体质: 0
+    意志: 0
+    weaponAttr: "敏捷"

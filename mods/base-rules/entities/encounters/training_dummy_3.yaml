@@ -5,23 +5,32 @@ enemies:
     name: "快速假人"
     row: FRONT
     slot: 0
-    hp: 999
-    attack: 1
     defense: 0
-    speed: 99
+    力量: 0
+    敏捷: 1
+    智力: 0
+    体质: 97
+    意志: 0
+    weaponAttr: "敏捷"
   - id: dummy2
     name: "木桩假人"
     row: FRONT
     slot: 1
-    hp: 999
-    attack: 0
     defense: 0
-    speed: 1
+    力量: 0
+    敏捷: 0
+    智力: 0
+    体质: 97
+    意志: 0
+    weaponAttr: "敏捷"
   - id: dummy3
     name: "木桩假人"
     row: BACK
     slot: 2
-    hp: 999
-    attack: 0
     defense: 0
-    speed: 1
+    力量: 0
+    敏捷: 0
+    智力: 0
+    体质: 97
+    意志: 0
+    weaponAttr: "敏捷"

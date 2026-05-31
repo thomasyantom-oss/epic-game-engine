@@ -47,15 +47,24 @@ engine.on("combat.start_encounter", 100, function(event) {
         var enemyId = "" + enemyDef.get("id") + "_" + i;
         var enemy = engine.createEntity(enemyId);
 
+        var primary = engine.newComponent("PrimaryStats");
+        var attrs = ["力量","敏捷","智力","体质","意志"];
+        for (var a = 0; a < attrs.length; a++) {
+            primary.set(attrs[a], enemyDef.get(attrs[a]) !== null ? enemyDef.get(attrs[a]) : 0);
+        }
+        primary.set("weaponAttr", enemyDef.get("weaponAttr") !== null ? enemyDef.get("weaponAttr") : "敏捷");
+        enemy.addComponent(primary);
+
+        enemy.addComponent(engine.newComponent("DerivedStats"));
+
         var health = engine.newComponent("Health");
-        health.set("hp", enemyDef.get("hp"));
-        health.set("maxHp", enemyDef.get("hp"));
+        health.set("hp", 1); health.set("maxHp", 1);   // 派生覆盖 maxHp
         enemy.addComponent(health);
 
         var stats = engine.newComponent("CombatStats");
-        stats.set("attack", enemyDef.get("attack"));
-        stats.set("defense", enemyDef.get("defense"));
-        stats.set("speed", enemyDef.get("speed"));
+        stats.set("attack", 0);   // 派生覆盖
+        stats.set("defense", enemyDef.get("defense") !== null ? enemyDef.get("defense") : 0);
+        stats.set("speed", 0);    // 派生覆盖(= 敏捷)
         enemy.addComponent(stats);
 
         var nameComp = engine.newComponent("Name");
@@ -70,6 +79,11 @@ engine.on("combat.start_encounter", 100, function(event) {
         enemy.addTag("enemy");
         enemy.addTag("combat:" + combatId);
         store.add(enemy);
+
+        engine.setBase(enemyId);
+        if (typeof registerDerivedModifier !== 'undefined') registerDerivedModifier(enemyId);
+        var eh = enemy.getComponent("Health");
+        eh.set("hp", eh.getInt("maxHp"));   // 满血
     }
 });
 

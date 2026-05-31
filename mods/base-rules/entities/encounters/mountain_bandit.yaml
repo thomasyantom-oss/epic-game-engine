@@ -5,23 +5,32 @@ enemies:
     name: "山贼头目"
     row: BACK
     slot: 1
-    hp: 35
-    attack: 10
     defense: 3
-    speed: 4
+    力量: 0
+    敏捷: 10
+    智力: 0
+    体质: 1
+    意志: 0
+    weaponAttr: "敏捷"
   - id: bandit2
     name: "山贼"
     row: FRONT
     slot: 0
-    hp: 20
-    attack: 6
     defense: 2
-    speed: 5
+    力量: 0
+    敏捷: 6
+    智力: 0
+    体质: 0
+    意志: 0
+    weaponAttr: "敏捷"
   - id: bandit3
     name: "山贼"
     row: FRONT
     slot: 2
-    hp: 20
-    attack: 6
     defense: 2
-    speed: 5
+    力量: 0
+    敏捷: 6
+    智力: 0
+    体质: 0
+    意志: 0
+    weaponAttr: "敏捷"

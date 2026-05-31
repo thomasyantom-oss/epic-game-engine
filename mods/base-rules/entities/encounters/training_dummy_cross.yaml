@@ -5,39 +5,54 @@ enemies:
     name: "假人(中)"
     row: MID
     slot: 1
-    hp: 999
-    attack: 0
     defense: 0
-    speed: 1
+    力量: 0
+    敏捷: 0
+    智力: 0
+    体质: 97
+    意志: 0
+    weaponAttr: "敏捷"
   - id: dummy_top
     name: "假人(上)"
     row: MID
     slot: 0
-    hp: 999
-    attack: 0
     defense: 0
-    speed: 1
+    力量: 0
+    敏捷: 0
+    智力: 0
+    体质: 97
+    意志: 0
+    weaponAttr: "敏捷"
   - id: dummy_bottom
     name: "假人(下)"
     row: MID
     slot: 2
-    hp: 999
-    attack: 0
     defense: 0
-    speed: 1
+    力量: 0
+    敏捷: 0
+    智力: 0
+    体质: 97
+    意志: 0
+    weaponAttr: "敏捷"
   - id: dummy_front
     name: "假人(前)"
     row: FRONT
     slot: 1
-    hp: 999
-    attack: 0
     defense: 0
-    speed: 1
+    力量: 0
+    敏捷: 0
+    智力: 0
+    体质: 97
+    意志: 0
+    weaponAttr: "敏捷"
   - id: dummy_back
     name: "假人(后)"
     row: BACK
     slot: 1
-    hp: 999
-    attack: 0
     defense: 0
-    speed: 1
+    力量: 0
+    敏捷: 0
+    智力: 0
+    体质: 97
+    意志: 0
+    weaponAttr: "敏捷"
