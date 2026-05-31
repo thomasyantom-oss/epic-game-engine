@@ -60,6 +60,41 @@ class DerivedStatsTest {
         assertThat(e.getComponent("CombatStats").getInt("attack")).isEqualTo(7); // ⌈5×1.28⌉
     }
 
+    // 复现 bug:同 ID 实体移除后重建,旧 ModifierChain 缓存(绑旧 entity)被复用 → 新实体从未被派生。
+    // 模拟敌人首次 spawn → 战斗结束 store.remove → 再次 spawn 同 ID。修复前第二次 maxHp 停在占位值;
+    // 修复后 endCombat 处 engine.clearChain 清缓存 → 第二次重新派生。
+    Entity enemy(String id, int 体质) {
+        Entity e = new Entity(id);
+        Component p = new Component("PrimaryStats");
+        p.set("力量", 0); p.set("敏捷", 0); p.set("智力", 0);
+        p.set("体质", 体质); p.set("意志", 0); p.set("weaponAttr", "力量");
+        e.addComponent(p);
+        e.addComponent(new Component("DerivedStats"));
+        Component h = new Component("Health"); h.set("hp", 1); h.set("maxHp", 1); e.addComponent(h);
+        Component c = new Component("CombatStats"); c.set("attack", 0); c.set("defense", 0); c.set("speed", 0); e.addComponent(c);
+        store.add(e);
+        return e;
+    }
+
+    @Test
+    void respawn_same_id_after_remove_rederives_fresh() {
+        // 首次 spawn:体质 0 → maxHp = 30
+        enemy("e1", 0);
+        js("engine.setBase('e1');");
+        js("registerDerivedModifier('e1');");
+        assertThat(store.get("e1").getComponent("Health").getInt("maxHp")).isEqualTo(30);
+
+        // 战斗结束:移除敌人实体 + 清 ModifierChain 缓存(endCombat 的修法)
+        store.remove("e1");
+        js("engine.clearChain('e1');");
+
+        // 再次 spawn 同 ID,体质 5 → 期望 maxHp = 30 + 5×10 = 80
+        enemy("e1", 5);
+        js("engine.setBase('e1');");
+        js("registerDerivedModifier('e1');");
+        assertThat(store.get("e1").getComponent("Health").getInt("maxHp")).isEqualTo(80);
+    }
+
     @Test
     void derived_reads_post_class_primary_value() {   // 衍生自衍生顺序
         warrior();

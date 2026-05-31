@@ -196,6 +196,7 @@ function endCombat(player, combatId, result) {
         var c = combatants.get(j);
         if (c.hasTag("enemy")) {
             store.remove(c.getId());
+            engine.clearChain(c.getId());
         }
     }
     store.remove(combatId);

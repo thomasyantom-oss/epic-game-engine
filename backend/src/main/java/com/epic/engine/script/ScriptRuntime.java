@@ -223,6 +223,13 @@ public class ScriptRuntime implements AutoCloseable {
         }
 
         @HostAccess.Export
+        public void clearChain(String entityId) {
+            if (modifierChainService != null) {
+                modifierChainService.clearChain(entityId);
+            }
+        }
+
+        @HostAccess.Export
         public void setBaseSelective(String entityId, Value componentTypes) {
             if (modifierChainService == null) return;
             List<String> types = new ArrayList<>();
