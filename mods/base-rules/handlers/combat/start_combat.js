@@ -52,11 +52,13 @@ engine.on("combat.start_encounter", 100, function(event) {
         for (var a = 0; a < attrs.length; a++) {
             primary.set(attrs[a], enemyDef.get(attrs[a]) !== null ? enemyDef.get(attrs[a]) : 0);
         }
+        // 敌人默认敏捷系(物理强度=敏捷);与 derived_stats.js 的安全兜底"力量"不同,此处是有意的游戏设定默认
         primary.set("weaponAttr", enemyDef.get("weaponAttr") !== null ? enemyDef.get("weaponAttr") : "敏捷");
         enemy.addComponent(primary);
 
         enemy.addComponent(engine.newComponent("DerivedStats"));
 
+        // 占位值;真实 maxHp/attack/speed 由下方 registerDerivedModifier 从 PrimaryStats 派生覆盖
         var health = engine.newComponent("Health");
         health.set("hp", 1); health.set("maxHp", 1);   // 派生覆盖 maxHp
         enemy.addComponent(health);
@@ -83,7 +85,7 @@ engine.on("combat.start_encounter", 100, function(event) {
         engine.setBase(enemyId);
         if (typeof registerDerivedModifier !== 'undefined') registerDerivedModifier(enemyId);
         var eh = enemy.getComponent("Health");
-        eh.set("hp", eh.getInt("maxHp"));   // 满血
+        if (eh !== null) eh.set("hp", eh.getInt("maxHp"));   // 满血
     }
 });
 
