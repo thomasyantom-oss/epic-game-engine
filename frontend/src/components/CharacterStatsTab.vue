@@ -134,6 +134,17 @@ async function onStatHover(stat, event) {
 
 function statIdToKey(id) {
   const map = {
+    // 五基础属性
+    str: 'PrimaryStats.力量',
+    agi: 'PrimaryStats.敏捷',
+    int: 'PrimaryStats.智力',
+    con: 'PrimaryStats.体质',
+    wil: 'PrimaryStats.意志',
+    // 三强度
+    phys: 'DerivedStats.物理强度',
+    spell: 'DerivedStats.法术强度',
+    ment: 'DerivedStats.精神强度',
+    // 战斗派生
     atk: 'CombatStats.attack',
     def: 'CombatStats.defense',
     spd: 'CombatStats.speed',
