@@ -163,6 +163,19 @@ function endCombat(player, combatId, result) {
     player.removeTag("combat:" + combatId);
     player.removeComponent("CombatPosition");
     store.reindexTags(player);
+
+    // Strip combat-scoped (non-permanent) buffs so they don't leak into the next encounter
+    var playerComps = player.getAllComponents();
+    var buffIds = [];
+    for (var b = 0; b < playerComps.size(); b++) {
+        var comp = playerComps.get(b);
+        if (!comp.getType().startsWith("Buff_")) continue;
+        var permanent = comp.has("permanent") && comp.getBoolean("permanent");
+        if (!permanent) buffIds.push(comp.getType().substring(5));
+    }
+    for (var bi = 0; bi < buffIds.length; bi++) {
+        buffs.removeBuff(player.getId(), buffIds[bi]);
+    }
     for (var j = 0; j < combatants.size(); j++) {
         var c = combatants.get(j);
         if (c.hasTag("enemy")) {

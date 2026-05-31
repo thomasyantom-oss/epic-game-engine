@@ -5,6 +5,13 @@
     "type" : "buff_up"
   } ],
   "effects" : [ {
+    "buff" : {
+      "color" : "#ffab40",
+      "id" : "war_cry",
+      "positive" : true,
+      "remaining" : -1,
+      "stacks" : 1
+    },
     "target" : "mage",
     "type" : "buff_applied"
   } ],

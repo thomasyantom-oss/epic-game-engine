@@ -386,6 +386,20 @@ function playWithCallback(events, onEvent) {
         for (const c of (props.combat?.combatants || [])) {
           if (buffTargets.has(c.id)) buffs[c.id] = c.buffs || []
         }
+        // Overlay transient buffs carried by the effect itself (e.g. defend: applied + removed in
+        // the same round, so it's absent from the post-resolve snapshot but must show this round).
+        // The serialized Effect nests its full payload under `data` (see hp_change `eff.data.amount`).
+        for (const eff of event.effects) {
+          const embedded = eff.data?.buff ?? eff.buff
+          if (eff.type === 'buff_applied' && embedded && eff.target) {
+            const list = (buffs[eff.target] || []).slice()
+            if (!list.some(b => b.id === embedded.id)) list.push(embedded)
+            buffs[eff.target] = list
+          } else if (eff.type === 'buff_removed' && eff.target) {
+            const rid = eff.data?.buffId ?? eff.buffId ?? embedded?.id
+            if (rid) buffs[eff.target] = (buffs[eff.target] || []).filter(b => b.id !== rid)
+          }
+        }
         displayBuffs.value = buffs
       }
     }
@@ -651,7 +665,7 @@ function stopTimer() {
 function autoAttack() {
   var firstAliveEnemy = enemyUnits.value.find(u => u.alive)
   if (firstAliveEnemy) {
-    emit('command', { type: 'combat_command', params: { command: 'ATTACK', targetId: firstAliveEnemy.id } })
+    emit('command', { type: 'combat_command', params: { command: 'basic_attack', targetId: firstAliveEnemy.id } })
   }
 }
 

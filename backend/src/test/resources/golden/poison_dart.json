@@ -7,6 +7,13 @@
     "target" : "goblin1",
     "type" : "hp_change"
   }, {
+    "buff" : {
+      "color" : "#9c27b0",
+      "id" : "poison",
+      "positive" : false,
+      "remaining" : 3,
+      "stacks" : 1
+    },
     "target" : "goblin1",
     "type" : "buff_applied"
   } ],

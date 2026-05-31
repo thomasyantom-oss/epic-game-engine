@@ -19,18 +19,20 @@ engine.on("combat.unit_action", 80, function(event) {
 
     var effects = engine.newList();
 
-    // Apply defending buff BEFORE combat event
+    // Apply defending buff BEFORE combat event. remaining:1 marks it as single-round and is
+    // surfaced in the buff_applied descriptor below.
     var data = engine.newMap();
     data.put("color", "#66bb6a");
     data.put("permanent", false);
     data.put("positive", true);
+    data.put("remaining", 1);
     buffs.applyBuff(actorId, "defending", data);
 
-    // Add buff_applied effect so frontend syncs buff icons at hit time
-    var buffEff = engine.newMap();
-    buffEff.put("type", "buff_applied");
-    buffEff.put("target", actorId);
-    effects.add(buffEff);
+    // Self-describing buff_applied effect (via the shared Skill helper). The embedded descriptor
+    // lets the frontend render the icon DURING this round's animation even though defending is
+    // removed at round_end and never reaches the post-resolve snapshot — i.e. "当回合生效当回合失效"
+    // yet visible. Same reusable path any data-driven buff skill gets for free.
+    effects.add(Skill._buffEffect(store.get(actorId), "defending"));
 
     // Build animation
     var animation = engine.newList();

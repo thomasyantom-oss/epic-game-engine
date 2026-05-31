@@ -13,12 +13,33 @@
     "type" : "debuff_down"
   } ],
   "effects" : [ {
+    "buff" : {
+      "color" : "#e57373",
+      "id" : "cursed",
+      "positive" : false,
+      "remaining" : 3,
+      "stacks" : 1
+    },
     "target" : "goblin1",
     "type" : "buff_applied"
   }, {
+    "buff" : {
+      "color" : "#e57373",
+      "id" : "cursed",
+      "positive" : false,
+      "remaining" : 3,
+      "stacks" : 1
+    },
     "target" : "goblin2",
     "type" : "buff_applied"
   }, {
+    "buff" : {
+      "color" : "#e57373",
+      "id" : "cursed",
+      "positive" : false,
+      "remaining" : 3,
+      "stacks" : 1
+    },
     "target" : "goblin3",
     "type" : "buff_applied"
   } ],
