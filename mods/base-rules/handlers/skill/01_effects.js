@@ -1,11 +1,12 @@
 Skill.registerEffect("damage_only", function(ctx, spec, results) {
+  var custom = (spec.log != null);
   var damages = [];
   for (var i = 0; i < results.length; i++) {
     var dmg = Skill.computeDamage(ctx.caster, results[i].entity, spec.damage);
-    Skill.dealDamage(ctx, results[i].entity, dmg, spec.id);
+    Skill.dealDamage(ctx, results[i].entity, dmg, spec.id, custom ? true : false);  // skipLog only when custom
     damages.push(dmg);
   }
-  Skill.present(ctx, spec, results, damages);
+  if (custom) Skill.present(ctx, spec, results, damages, null);
 });
 
 Skill.registerEffect("damage_with_debuff", function(ctx, spec, results) {
@@ -16,7 +17,7 @@ Skill.registerEffect("damage_with_debuff", function(ctx, spec, results) {
     Skill.applyBuffFromSpec(ctx, results[i].entity, spec.debuff);
     damages.push(dmg);
   }
-  Skill.present(ctx, spec, results, damages);
+  Skill.present(ctx, spec, results, damages, {buffApplied: true});
 });
 
 Skill.registerEffect("debuff_only", function(ctx, spec, results) {

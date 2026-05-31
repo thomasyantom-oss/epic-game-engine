@@ -108,8 +108,10 @@ var Skill = {
     return out;
   },
 
-  // Mutate target HP and fire combat.damage_dealt (with skipLog=true so present() is sole emitter).
-  dealDamage: function(ctx, target, amount, skillId, opts) {
+  // Mutate target HP and fire combat.damage_dealt.
+  // skipLog: pass false to let combat_events.js build the presentation (plain-damage path).
+  //          any other value (including undefined) defaults to true (present() path).
+  dealDamage: function(ctx, target, amount, skillId, skipLog) {
     var health = target.getComponent("Health");
     health.set("hp", Math.max(0, health.getInt("hp") - amount));
     var ev = engine.newEvent("combat.damage_dealt");
@@ -118,7 +120,7 @@ var Skill = {
     ev.set("damage", amount);
     ev.set("combatId", ctx.combatId);
     ev.set("skillId", skillId);
-    ev.set("skipLog", true);                 // present() is the sole emitter for migrated skills
+    if (skipLog !== false) ev.set("skipLog", true);   // default true; pass false to use combat_events presentation
     engine.fire("combat.damage_dealt", ev);
   },
 
@@ -198,7 +200,8 @@ var Skill = {
 
   // Emit one combatEvent via engine.combatEvent with log, effects, and animation.
   // Single-target and per-target log; multi-target animation expansion is a later task.
-  present: function(ctx, spec, results, damages) {
+  // opts.buffApplied: when true, appends a buff_applied effect entry per result target.
+  present: function(ctx, spec, results, damages, opts) {
     var log = engine.newList();
     var effects = engine.newList();
     var L = spec.log || {};
@@ -206,10 +209,12 @@ var Skill = {
       var tgt = results.length > 0 ? results[0].entity : ctx.caster;
       log.add(this._renderLog(L.template, ctx, tgt, damages ? damages[0] : 0));
       if (damages) effects.add(this._hpEffect(tgt, damages[0]));
+      if (opts && opts.buffApplied) effects.add(this._buffEffect(tgt));
     } else {
       for (var i = 0; i < results.length; i++) {
         log.add(this._renderLog(L.per_target, ctx, results[i].entity, damages ? damages[i] : 0));
         if (damages) effects.add(this._hpEffect(results[i].entity, damages[i]));
+        if (opts && opts.buffApplied) effects.add(this._buffEffect(results[i].entity));
       }
     }
     var animation = this.resolveAnimation(spec, ctx, results);
