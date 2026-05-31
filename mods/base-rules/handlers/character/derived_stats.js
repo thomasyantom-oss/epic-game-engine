@@ -24,11 +24,27 @@ function registerDerivedModifier(entityId) {
                 d.set("精神强度", p.getInt("意志"));
             }
             var h = ent.getComponent("Health");
-            if (h !== null) h.set("maxHp", MAXHP_FLOOR + p.getInt("体质") * 10);   // SET,带底盘
+            if (h !== null) {
+                h.set("maxHp", MAXHP_FLOOR + p.getInt("体质") * 10);   // SET,带底盘
+                // 体质被削(诅咒)→ maxHp 下降时,当前 hp 不得超过新上限;maxHp 回升不补 hp。
+                if (h.getInt("hp") > h.getInt("maxHp")) h.set("hp", h.getInt("maxHp"));
+            }
             var c = ent.getComponent("CombatStats");
             if (c !== null) {
                 c.set("speed", p.getInt("敏捷"));
-                c.set("attack", Math.ceil(PLACEHOLDER_WEAPON_BASE * (1 + phys / 100)));
+                // 武器最终伤害(第二层)：读装备武器绑定属性；无武器走占位物理强度。
+                var atk = Math.ceil(PLACEHOLDER_WEAPON_BASE * (1 + phys / 100));
+                var slots = ent.getComponent("EquipmentSlots");
+                if (slots !== null && slots.get("weapon") !== null) {
+                    var weapon = store.get(slots.get("weapon"));
+                    if (weapon !== null && weapon.hasComponent("ItemStats")) {
+                        var ws = weapon.getComponent("ItemStats");
+                        var wAttrName = ws.has("weaponAttr") ? ws.getString("weaponAttr") : "力量";
+                        var B = ws.has("base") ? ws.getInt("base") : PLACEHOLDER_WEAPON_BASE;
+                        atk = Math.ceil(B * (1 + p.getInt(wAttrName) * weaponMult(wAttrName) / 100));
+                    }
+                }
+                c.set("attack", atk);
             }
         }
     });
