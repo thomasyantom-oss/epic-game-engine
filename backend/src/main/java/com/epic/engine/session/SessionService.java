@@ -18,7 +18,7 @@ public class SessionService {
 
     public SessionService(
             @Value("${epic.session-timeout-minutes:30}") int timeoutMinutes,
-            @Value("${epic.max-character-slots:5}") int maxSlots) {
+            @Value("${epic.max-character-slots:9}") int maxSlots) {
         this.timeoutMinutes = timeoutMinutes;
         this.maxSlots = maxSlots;
     }

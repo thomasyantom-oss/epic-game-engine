@@ -57,7 +57,7 @@ function doDelete() {
 
 const emptySlots = computed(() => {
     const used = (props.characters || []).length
-    const max = props.maxSlots || 5
+    const max = props.maxSlots || 9
     return Math.max(0, max - used)
 })
 </script>
