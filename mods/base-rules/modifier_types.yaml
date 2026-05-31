@@ -28,3 +28,8 @@ modifier_types:
     label: 增益/减益
     stack_rule: independent
     base_priority: 10
+
+  - id: derived
+    label: 派生属性
+    stack_rule: exclusive
+    base_priority: 300        # 高于 race(200) → ModifierChain 升序应用时最后跑,读到累加后的基础属性
