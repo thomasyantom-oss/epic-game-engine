@@ -14,13 +14,13 @@
   "effects" : [ ],
   "segments" : [ {
     "color" : "player",
-    "text" : "15"
-  }, {
-    "color" : "player",
     "text" : "法师"
   }, {
     "color" : "text",
     "text" : " 恢复了 "
+  }, {
+    "color" : "player",
+    "text" : "15"
   }, {
     "color" : "text",
     "text" : " 点生命"

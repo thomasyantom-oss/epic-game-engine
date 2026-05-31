@@ -12,13 +12,13 @@
     "target" : "goblin1",
     "type" : "impact"
   }, {
-    "color" : "damage",
-    "target" : "goblin1",
-    "type" : "damage_number"
-  }, {
     "intensity" : "normal",
     "target" : "goblin1",
     "type" : "shake"
+  }, {
+    "color" : "damage",
+    "target" : "goblin1",
+    "type" : "damage_number"
   } ],
   "effects" : [ {
     "amount" : -20,
@@ -32,22 +32,22 @@
   } ],
   "logCount" : 1,
   "segments" : [ {
-    "color" : "damage",
-    "text" : "20"
-  }, {
-    "color" : "enemy",
-    "text" : "哥布林甲"
-  }, {
     "color" : "player",
     "text" : "法师"
   }, {
     "color" : "text",
-    "text" : " 点伤害"
-  }, {
-    "color" : "text",
     "text" : " 的火球术命中 "
+  }, {
+    "color" : "enemy",
+    "text" : "哥布林甲"
   }, {
     "color" : "text",
     "text" : "，造成 "
+  }, {
+    "color" : "damage",
+    "text" : "20"
+  }, {
+    "color" : "text",
+    "text" : " 点伤害"
   } ]
 } ]

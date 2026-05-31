@@ -4,27 +4,27 @@
     "target" : "goblin1",
     "type" : "impact"
   }, {
+    "intensity" : "normal",
+    "target" : "goblin1",
+    "type" : "shake"
+  }, {
+    "color" : "damage",
+    "target" : "goblin1",
+    "type" : "damage_number",
+    "value" : -17
+  }, {
     "color" : "#ffee58",
     "target" : "goblin2",
     "type" : "impact"
   }, {
-    "color" : "damage",
-    "target" : "goblin1",
-    "type" : "damage_number",
-    "value" : -17
+    "intensity" : "normal",
+    "target" : "goblin2",
+    "type" : "shake"
   }, {
     "color" : "damage",
     "target" : "goblin2",
     "type" : "damage_number",
     "value" : -17
-  }, {
-    "intensity" : "normal",
-    "target" : "goblin1",
-    "type" : "shake"
-  }, {
-    "intensity" : "normal",
-    "target" : "goblin2",
-    "type" : "shake"
   } ],
   "effects" : [ {
     "amount" : -17,
@@ -41,22 +41,22 @@
   } ],
   "logCount" : 2,
   "segments" : [ {
-    "color" : "damage",
-    "text" : "17"
-  }, {
-    "color" : "enemy",
-    "text" : "哥布林乙"
-  }, {
     "color" : "player",
     "text" : "法师"
   }, {
     "color" : "text",
     "text" : " 对 "
   }, {
-    "color" : "text",
-    "text" : " 点伤害"
+    "color" : "enemy",
+    "text" : "哥布林甲"
   }, {
     "color" : "text",
     "text" : " 造成 "
+  }, {
+    "color" : "damage",
+    "text" : "17"
+  }, {
+    "color" : "text",
+    "text" : " 点伤害"
   } ]
 } ]

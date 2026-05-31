@@ -9,40 +9,40 @@
     "target" : "goblin1",
     "type" : "impact"
   }, {
-    "color" : "#81d4fa",
-    "target" : "goblin2",
-    "type" : "impact"
-  }, {
-    "color" : "#81d4fa",
-    "target" : "goblin3",
-    "type" : "impact"
+    "intensity" : "normal",
+    "target" : "goblin1",
+    "type" : "shake"
   }, {
     "color" : "damage",
     "target" : "goblin1",
     "type" : "damage_number",
     "value" : -16
   }, {
-    "color" : "damage",
+    "color" : "#81d4fa",
     "target" : "goblin2",
-    "type" : "damage_number",
-    "value" : -16
-  }, {
-    "color" : "damage",
-    "target" : "goblin3",
-    "type" : "damage_number",
-    "value" : -16
-  }, {
-    "intensity" : "normal",
-    "target" : "goblin1",
-    "type" : "shake"
+    "type" : "impact"
   }, {
     "intensity" : "normal",
     "target" : "goblin2",
     "type" : "shake"
   }, {
+    "color" : "damage",
+    "target" : "goblin2",
+    "type" : "damage_number",
+    "value" : -16
+  }, {
+    "color" : "#81d4fa",
+    "target" : "goblin3",
+    "type" : "impact"
+  }, {
     "intensity" : "normal",
     "target" : "goblin3",
     "type" : "shake"
+  }, {
+    "color" : "damage",
+    "target" : "goblin3",
+    "type" : "damage_number",
+    "value" : -16
   } ],
   "effects" : [ {
     "data" : {
@@ -70,16 +70,16 @@
     "type" : "hp_change"
   } ],
   "segments" : [ {
-    "color" : "damage",
-    "text" : "16"
-  }, {
     "color" : "player",
     "text" : "法师"
   }, {
     "color" : "text",
-    "text" : " 点伤害"
+    "text" : " 的贯穿射线命中 3 个目标，各造成 "
+  }, {
+    "color" : "damage",
+    "text" : "16"
   }, {
     "color" : "text",
-    "text" : " 的贯穿射线命中 3 个目标，各造成 "
+    "text" : " 点伤害"
   } ]
 } ]

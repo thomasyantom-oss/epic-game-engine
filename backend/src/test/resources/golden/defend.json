@@ -1,21 +1,6 @@
 [ {
   "animation" : [ {
     "color" : "#66bb6a",
-    "intensity" : "normal",
-    "target" : "mage",
-    "type" : "buff_up"
-  } ],
-  "effects" : [ ],
-  "segments" : [ {
-    "color" : "player",
-    "text" : "法师"
-  }, {
-    "color" : "text",
-    "text" : " 进行防御"
-  } ]
-}, {
-  "animation" : [ {
-    "color" : "#66bb6a",
     "target" : "mage",
     "type" : "buff_up"
   } ],
@@ -30,5 +15,20 @@
   }, {
     "color" : "text",
     "text" : " 进入防守姿态"
+  } ]
+}, {
+  "animation" : [ {
+    "color" : "#66bb6a",
+    "intensity" : "normal",
+    "target" : "mage",
+    "type" : "buff_up"
+  } ],
+  "effects" : [ ],
+  "segments" : [ {
+    "color" : "player",
+    "text" : "法师"
+  }, {
+    "color" : "text",
+    "text" : " 进行防御"
   } ]
 } ]

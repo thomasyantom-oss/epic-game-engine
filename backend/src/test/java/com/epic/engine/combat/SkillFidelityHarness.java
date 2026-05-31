@@ -102,45 +102,154 @@ public class SkillFidelityHarness implements AutoCloseable {
         e.set("command", cmd);
         bus.fire("combat.unit_action", e);
         Object queue = store.get("battle1").getComponent("CombatEvents").get("queue");
-        // Canonicalize: sort map keys (done by MAPPER) and sort list elements by their
-        // serialized form so that AOE effects iterating over unordered sets are stable.
+        // Canonicalize: sort map keys (done by MAPPER) and neutralize only target
+        // iteration order in per-combat-event effects/animation arrays.
         String raw = MAPPER.writeValueAsString(queue);
         JsonNode node = MAPPER.readTree(raw);
-        JsonNode canonical = canonicalize(node);
+        // Build a name→id lookup from the scene entities for light_field segments fix.
+        Map<String, String> nameToId = buildNameToIdMap();
+        JsonNode canonical = canonicalizeQueue(node, nameToId);
         return MAPPER.writeValueAsString(canonical);
     }
 
     /**
-     * Recursively canonicalize a JSON node:
-     * - ObjectNode: keys are already sorted by ORDER_MAP_ENTRIES_BY_KEYS
-     * - ArrayNode: sort child elements by their own serialized string, then recurse
+     * Build a map from entity display name → entity id, for all entities in the store
+     * that have a Name component. Used to canonicalize per-target segments.
      */
-    private JsonNode canonicalize(JsonNode node) throws Exception {
-        if (node.isArray()) {
-            ArrayNode arr = (ArrayNode) node;
-            List<JsonNode> children = new ArrayList<>();
-            for (JsonNode child : arr) {
-                children.add(canonicalize(child));
+    private Map<String, String> buildNameToIdMap() {
+        Map<String, String> map = new LinkedHashMap<>();
+        for (Entity entity : store.all()) {
+            if (entity.hasComponent("Name")) {
+                String name = (String) entity.getComponent("Name").get("value");
+                if (name != null) map.put(name, entity.getId());
             }
-            // Sort by serialized string for determinism (handles unordered set iteration)
-            children.sort(Comparator.comparing(JsonNode::toString));
-            ArrayNode result = MAPPER.createArrayNode();
-            for (JsonNode child : children) {
-                result.add(child);
-            }
-            return result;
-        } else if (node.isObject()) {
-            ObjectNode obj = (ObjectNode) node;
-            ObjectNode result = MAPPER.createObjectNode();
-            // Iterate in field order (already sorted by Jackson's ORDER_MAP_ENTRIES_BY_KEYS)
-            Iterator<Map.Entry<String, JsonNode>> fields = obj.fields();
-            while (fields.hasNext()) {
-                Map.Entry<String, JsonNode> entry = fields.next();
-                result.set(entry.getKey(), canonicalize(entry.getValue()));
-            }
-            return result;
         }
-        return node;
+        return map;
+    }
+
+    /**
+     * Canonicalize the CombatEvents queue (a JSON array of combat event objects).
+     *
+     * Design principle: the ONLY source of non-determinism is that
+     * EntityStore.getByTagAsList() is backed by ConcurrentHashMap whose iteration
+     * order is arbitrary, so the ORDER OF TARGETS within per-target arrays varies
+     * between runs. Everything else (animation step sequence for a given target,
+     * text-segment order within a log sentence, leading delivery steps) is authored
+     * and meaningful — it must be preserved verbatim.
+     *
+     * Canonicalization rules applied per combat-event object in the queue:
+     *   1. Jackson's ORDER_MAP_ENTRIES_BY_KEYS already sorts object keys — no action.
+     *   2. The "effects" array and the "animation" array are STABLE-sorted by each
+     *      element's "target" field (string). Elements without a "target" field
+     *      (delivery steps like slash/beam, or actor-targeted steps) are assigned the
+     *      sentinel key "" so they sort before any target id and keep their relative
+     *      order among themselves. This neutralises arbitrary entity-iteration order
+     *      while preserving the per-target step sequence (impact→shake→damage_number).
+     *   3. "segments" is NOT reordered — sentence structure is authored and protected.
+     *      EXCEPTION: events with logCount > 1 have per-target log sentences; which
+     *      target's sentence lands in "segments" is non-deterministic. For those events
+     *      we normalise by finding the canonical first target (effects[0].target after
+     *      step 2) and, if the current segments belong to a different target, we
+     *      replace only the target-name text segment (the "enemy"-coloured one) with
+     *      the canonical target's display name. Sentence structure is untouched.
+     *   4. No other array is sorted; no recursive descent into nested structures
+     *      beyond the top-level queue entries.
+     */
+    private JsonNode canonicalizeQueue(JsonNode queue, Map<String, String> nameToId) {
+        if (!queue.isArray()) return queue;
+
+        // Build reverse lookup: id → display name, for per-target segments fix.
+        Map<String, String> idToName = new LinkedHashMap<>();
+        for (Map.Entry<String, String> entry : nameToId.entrySet()) {
+            idToName.put(entry.getValue(), entry.getKey());
+        }
+
+        ArrayNode result = MAPPER.createArrayNode();
+        for (JsonNode eventNode : queue) {
+            if (!eventNode.isObject()) { result.add(eventNode); continue; }
+
+            ObjectNode event = (ObjectNode) eventNode;
+
+            // Step 2a: stable-sort "effects" by target field.
+            if (event.has("effects")) {
+                event.set("effects", stableSortByTarget(event.get("effects")));
+            }
+
+            // Step 2b: stable-sort "animation" by target field.
+            if (event.has("animation")) {
+                event.set("animation", stableSortByTarget(event.get("animation")));
+            }
+
+            // Step 3 (exception): for logCount > 1, canonicalise which target's
+            // sentence is stored in "segments" by using the canonical first-target
+            // (effects[0].target after sorting) and replacing the "enemy"-colored
+            // text segment if it belongs to a different target.
+            int logCount = event.has("logCount") ? event.get("logCount").asInt(0) : 0;
+            if (logCount > 1 && event.has("effects") && event.has("segments")) {
+                JsonNode effects = event.get("effects");
+                if (effects.isArray() && effects.size() > 0) {
+                    JsonNode firstEffect = effects.get(0);
+                    String canonicalTargetId = firstEffect.has("target")
+                            ? firstEffect.get("target").asText() : null;
+                    String canonicalTargetName = canonicalTargetId != null
+                            ? idToName.get(canonicalTargetId) : null;
+
+                    if (canonicalTargetName != null && event.get("segments").isArray()) {
+                        // Replace the "enemy"-coloured text segment with canonical name.
+                        ArrayNode segments = (ArrayNode) event.get("segments");
+                        ArrayNode fixedSegments = MAPPER.createArrayNode();
+                        for (JsonNode seg : segments) {
+                            if (seg.isObject() && seg.has("color")
+                                    && "enemy".equals(seg.get("color").asText())
+                                    && seg.has("text")) {
+                                // Replace target name with canonical one.
+                                ObjectNode fixedSeg = MAPPER.createObjectNode();
+                                Iterator<Map.Entry<String, JsonNode>> fields = seg.fields();
+                                while (fields.hasNext()) {
+                                    Map.Entry<String, JsonNode> f = fields.next();
+                                    if ("text".equals(f.getKey())) {
+                                        fixedSeg.put("text", canonicalTargetName);
+                                    } else {
+                                        fixedSeg.set(f.getKey(), f.getValue());
+                                    }
+                                }
+                                fixedSegments.add(fixedSeg);
+                            } else {
+                                fixedSegments.add(seg);
+                            }
+                        }
+                        event.set("segments", fixedSegments);
+                    }
+                }
+            }
+
+            result.add(event);
+        }
+        return result;
+    }
+
+    /**
+     * Stable-sort an array node by each element's "target" field (string comparison).
+     * Elements without a "target" field get the sentinel key "" (empty string), which
+     * sorts before any entity id, so delivery steps (slash, beam, actor pulse) float
+     * to the front in stable relative order.
+     *
+     * A stable sort (List.sort with Comparator) preserves the relative order of
+     * elements with the same target key, which is exactly what we want:
+     *   - Multiple steps for the same target (impact → shake → damage_number) stay
+     *     in their authored order.
+     *   - Multiple no-target delivery steps stay in their authored order.
+     */
+    private ArrayNode stableSortByTarget(JsonNode array) {
+        if (!array.isArray()) return MAPPER.createArrayNode();
+        List<JsonNode> elements = new ArrayList<>();
+        for (JsonNode el : array) elements.add(el);
+        // Stable sort: List.sort is guaranteed stable in Java.
+        elements.sort(Comparator.comparing(el ->
+                (el.isObject() && el.has("target")) ? el.get("target").asText() : ""));
+        ArrayNode sorted = MAPPER.createArrayNode();
+        for (JsonNode el : elements) sorted.add(el);
+        return sorted;
     }
 
     public String goldenPath(String skill) {

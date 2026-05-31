@@ -12,22 +12,22 @@
   } ],
   "logCount" : 1,
   "segments" : [ {
-    "color" : "damage",
-    "text" : "13"
-  }, {
-    "color" : "enemy",
-    "text" : "哥布林甲"
-  }, {
     "color" : "player",
     "text" : "法师"
   }, {
     "color" : "text",
-    "text" : " 点伤害并中毒"
-  }, {
-    "color" : "text",
     "text" : " 的毒镖命中 "
+  }, {
+    "color" : "enemy",
+    "text" : "哥布林甲"
   }, {
     "color" : "text",
     "text" : "，造成 "
+  }, {
+    "color" : "damage",
+    "text" : "13"
+  }, {
+    "color" : "text",
+    "text" : " 点伤害并中毒"
   } ]
 } ]
