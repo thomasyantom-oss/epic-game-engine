@@ -106,4 +106,46 @@ class SkillLibTest {
         js("var dmg = Skill.computeDamage(store.get('mage'), store.get('goblin'), {via_damage_calc:true});" +
            "if (dmg !== 5) throw 'dmg='+dmg;");   // 10 attack - 5 defense
     }
+
+    Entity mkPos(String id, boolean player, String row, int slot) {
+        Entity e = mkUnit(id, id, player);
+        Component p = new Component("CombatPosition"); p.set("row", row); p.set("slot", slot);
+        e.addComponent(p); return e;
+    }
+
+    @Test
+    void resolveTargets_single() {
+        mkUnit("mage","法师",true);
+        mkPos("g1", false, "FRONT", 0); mkPos("g2", false, "MID", 0);
+        js("var ctx = {caster: store.get('mage'), combatId:'b1', cmd:{targetId:'g1'}};" +
+           "var r = Skill.resolveTargets(ctx, {targeting:{mode:'pattern',field:'enemy',pattern:[[0,0]]}});" +
+           "if (r.length !== 1) throw 'len='+r.length;" +
+           "if (r[0].entity.getId() !== 'g1') throw 'id='+r[0].entity.getId();");
+    }
+
+    @Test
+    void resolveTargets_column() {
+        mkUnit("mage","法师",true);
+        mkPos("g1", false, "FRONT", 0); mkPos("g2", false, "MID", 0); mkPos("g3", false, "BACK", 0);
+        js("var ctx = {caster: store.get('mage'), combatId:'b1', cmd:{targetId:'g2'}};" +
+           "var r = Skill.resolveTargets(ctx, {targeting:{mode:'pattern',field:'enemy',pattern:[[-1,0],[0,0],[1,0]]}});" +
+           "if (r.length !== 3) throw 'len='+r.length;");
+    }
+
+    @Test
+    void resolveTargets_group_allEnemies() {
+        mkUnit("mage","法师",true);
+        mkPos("g1", false, "FRONT", 0); mkPos("g2", false, "MID", 0);
+        js("var ctx = {caster: store.get('mage'), combatId:'b1', cmd:{}};" +
+           "var r = Skill.resolveTargets(ctx, {targeting:{mode:'group',field:'enemy'}});" +
+           "if (r.length !== 2) throw 'len='+r.length;");
+    }
+
+    @Test
+    void resolveTargets_self() {
+        mkUnit("mage","法师",true);
+        js("var ctx = {caster: store.get('mage'), combatId:'b1', cmd:{}};" +
+           "var r = Skill.resolveTargets(ctx, {targeting:{mode:'self'}});" +
+           "if (r.length !== 1 || r[0].entity.getId() !== 'mage') throw 'self';");
+    }
 }
