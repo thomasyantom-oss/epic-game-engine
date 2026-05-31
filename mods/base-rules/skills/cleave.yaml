@@ -3,8 +3,13 @@ name: "顺劈斩"
 description: "顺劈斩，横扫前排多个目标"
 category: skill
 silenceable: true
+damage:
+  base: attack
+  add: 5
 targeting:
-  aoe_offsets: [[-2,0],[-1,0],[0,0],[1,0],[2,0]]
+  mode: pattern
+  field: enemy
+  pattern: [[0,0],[0,-1],[0,1],[0,-2],[0,2]]
   steps:
     - prompt: "选择一排中的任意目标"
       filter: enemy
@@ -14,11 +19,11 @@ animation:
     target: actor
     side: actor_side
   - type: slash
-    area: all
+    area: column
     color: "#ffffff"
   - type: shake
-    target: target
+    target: each
     intensity: heavy
   - type: damage_number
-    target: target
+    target: each
     color: damage
