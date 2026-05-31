@@ -3,7 +3,13 @@ name: "攻击"
 description: "对目标造成 100% 物理伤害"
 category: action
 silenceable: true
+effect: damage_only
+damage:
+  via_damage_calc: true
 targeting:
+  mode: pattern
+  field: enemy
+  pattern: [[0,0]]
   steps:
     - prompt: "选择目标"
       filter: enemy
