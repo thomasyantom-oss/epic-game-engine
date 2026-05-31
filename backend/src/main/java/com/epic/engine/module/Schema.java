@@ -13,7 +13,8 @@ public record Schema(
         String label,
         String description,
         Map<String, Map<String, Object>> baseComponents,
-        List<SchemaModifier> modifiers
+        List<SchemaModifier> modifiers,
+        Map<String, Object> raw
 ) {
     public record SchemaField(
             String name,
@@ -67,6 +68,6 @@ public record Schema(
                 (String) m.get("value")
         )).toList();
 
-        return new Schema(id, type, compatible, fields, requiredSubs, category, label, description, baseComponents, modifiers);
+        return new Schema(id, type, compatible, fields, requiredSubs, category, label, description, baseComponents, modifiers, data);
     }
 }

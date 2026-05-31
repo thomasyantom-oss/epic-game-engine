@@ -39,4 +39,13 @@ class CharacterSchemaTest {
         assertThat(warrior.modifiers()).isNotEmpty();
         assertThat(warrior.modifiers().get(0).field()).isEqualTo("PrimaryStats.力量");
     }
+
+    @Test
+    void schema_raw_exposesCustomFields() {
+        Schema warrior = schemaRegistry.get("warrior");
+        assertThat(warrior.raw().get("weapon_attr")).isEqualTo("力量");
+        Object growth = warrior.raw().get("growth");
+        assertThat(growth).isInstanceOf(java.util.Map.class);
+        assertThat(((java.util.Map<?, ?>) growth).get("力量")).isEqualTo(3);
+    }
 }
