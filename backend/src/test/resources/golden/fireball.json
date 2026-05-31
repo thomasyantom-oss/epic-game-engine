@@ -18,7 +18,8 @@
   }, {
     "color" : "damage",
     "target" : "goblin1",
-    "type" : "damage_number"
+    "type" : "damage_number",
+    "value" : -20
   } ],
   "effects" : [ {
     "amount" : -20,
@@ -27,6 +28,13 @@
     "target" : "goblin1",
     "type" : "hp_change"
   }, {
+    "buff" : {
+      "color" : "#ff4400",
+      "id" : "burning",
+      "positive" : false,
+      "remaining" : 2,
+      "stacks" : 1
+    },
     "target" : "goblin1",
     "type" : "buff_applied"
   } ],

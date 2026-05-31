@@ -117,8 +117,21 @@ var Skill = {
   //   true / omitted (default) -> those handlers are suppressed; the CALLER is then responsible
   //                               for calling present() to emit the combatEvent + CombatLog entry.
   dealDamage: function(ctx, target, amount, skillId, skipLog) {
+    this.applyDamage(target, amount);
+    this.fireDamageDealt(ctx, target, amount, skillId, skipLog);
+  },
+
+  // Mutate target HP only — does NOT fire any event (so no death cascade yet).
+  // present()-path effects call this first, present() the skill animation, THEN
+  // fireDamageDealt() — keeping the skill animation ahead of the death event in the queue.
+  applyDamage: function(target, amount) {
     var health = target.getComponent("Health");
     health.set("hp", Math.max(0, health.getInt("hp") - amount));
+  },
+
+  // Fire combat.damage_dealt (death detection + future on-hit hooks). HP is assumed
+  // already mutated by applyDamage. skipLog: see dealDamage note above.
+  fireDamageDealt: function(ctx, target, amount, skillId, skipLog) {
     var ev = engine.newEvent("combat.damage_dealt");
     ev.set("attackerId", ctx.actorId);
     ev.set("targetId", target.getId());
@@ -153,11 +166,27 @@ var Skill = {
     return eff;
   },
 
-  // Build a buff_applied effect entry.
-  _buffEffect: function(target) {
+  // Build a buff_applied effect entry. When buffId is given, embed a self-describing buff
+  // descriptor read from the freshly-applied Buff_<id> component (mirrors snapshot BuffInfo).
+  // This lets the frontend render the icon DURING this round's animation even for a buff that
+  // is removed before the post-resolve snapshot (e.g. a "当回合即逝" buff like defend) — and is
+  // harmless for persistent buffs (the frontend dedups by id against the snapshot).
+  _buffEffect: function(target, buffId) {
     var eff = engine.newMap();
     eff.put("type", "buff_applied");
     eff.put("target", target.getId());
+    if (buffId) {
+      var comp = target.getComponent("Buff_" + buffId);
+      if (comp !== null) {
+        var desc = engine.newMap();
+        desc.put("id", buffId);
+        desc.put("stacks", comp.has("stacks") ? comp.getInt("stacks") : 1);
+        desc.put("color", comp.has("color") ? comp.get("color") : null);
+        desc.put("positive", comp.has("positive") && comp.getBoolean("positive"));
+        desc.put("remaining", comp.has("remaining") ? comp.getInt("remaining") : -1);
+        eff.put("buff", desc);
+      }
+    }
     return eff;
   },
 
@@ -187,6 +216,10 @@ var Skill = {
             else if (val === "@damage") val = damages ? -(damages[r]) : 0;
             anim.put(keys[k], val);
           }
+          // damage_number without an explicit value gets the per-target damage (negative, as displayed)
+          if (step["type"] === "damage_number" && step["value"] === undefined && damages) {
+            anim.put("value", -(damages[r]));
+          }
           out.add(anim);
         }
       } else {
@@ -197,7 +230,12 @@ var Skill = {
           if (val === "actor") val = ctx.actorId;
           else if (val === "target") val = firstTargetId;
           else if (val === "actor_side") val = ctx.casterSide;
+          else if (val === "@damage") val = damages ? -(damages[0]) : 0;
           anim.put(keys[k], val);
+        }
+        // damage_number without an explicit value gets the first target's damage (negative, as displayed)
+        if (step["type"] === "damage_number" && step["value"] === undefined && damages) {
+          anim.put("value", -(damages[0]));
         }
         out.add(anim);
       }
@@ -234,6 +272,9 @@ var Skill = {
     var log = engine.newList();
     var effects = engine.newList();
     var L = spec.log || {};
+    // The buff a buffApplied effect describes: from spec.debuff or spec.buff (data-driven skills).
+    var buffId = (opts && opts.buffApplied)
+        ? ((spec.debuff && spec.debuff.id) || (spec.buff && spec.buff.id) || null) : null;
     var summaryMode = results.length > 1 && !L.per_target;
     if (summaryMode) {
       // ONE summary log line using L.template (caster only, no per-target substitution needed)
@@ -242,18 +283,22 @@ var Skill = {
       // Per-target effects
       for (var i = 0; i < results.length; i++) {
         if (damages) effects.add(this._hpEffect(results[i].entity, damages[i]));
-        if (opts && opts.buffApplied) effects.add(this._buffEffect(results[i].entity));
+        if (opts && opts.buffApplied) effects.add(this._buffEffect(results[i].entity, buffId));
       }
-    } else if (results.length <= 1) {
-      var tgt = results.length > 0 ? results[0].entity : ctx.caster;
+    } else if (results.length === 0) {
+      // AOE resolved to no targets (e.g. cast on empty ground). Emit only a flavor log if a
+      // template exists — NEVER fabricate a caster-targeted hp/buff effect (that produced NaN).
+      if (L.template) log.add(this._renderLog(L.template, ctx, ctx.caster, 0));
+    } else if (results.length === 1) {
+      var tgt = results[0].entity;
       log.add(this._renderLog(L.template, ctx, tgt, damages ? damages[0] : 0));
       if (damages) effects.add(this._hpEffect(tgt, damages[0]));
-      if (opts && opts.buffApplied) effects.add(this._buffEffect(tgt));
+      if (opts && opts.buffApplied) effects.add(this._buffEffect(tgt, buffId));
     } else {
       for (var i = 0; i < results.length; i++) {
         log.add(this._renderLog(L.per_target, ctx, results[i].entity, damages ? damages[i] : 0));
         if (damages) effects.add(this._hpEffect(results[i].entity, damages[i]));
-        if (opts && opts.buffApplied) effects.add(this._buffEffect(results[i].entity));
+        if (opts && opts.buffApplied) effects.add(this._buffEffect(results[i].entity, buffId));
       }
     }
     var animation = this.resolveAnimation(spec, ctx, results, damages);

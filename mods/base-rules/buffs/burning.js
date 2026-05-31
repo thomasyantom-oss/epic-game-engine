@@ -19,6 +19,15 @@ engine.on("combat.round_end", 50, function(event) {
         var dmg = burning.has("damage") ? burning.getInt("damage") : 3;
         health.set("hp", Math.max(0, health.getInt("hp") - dmg));
 
+        // A DoT kill must go through the normal death flow (death log/animation, LifeState).
+        if (health.getInt("hp") <= 0) {
+            var hpZero = engine.newEvent("entity.hp_zero");
+            hpZero.set("entity", entity);
+            hpZero.set("combatId", combatId);
+            hpZero.set("killerId", burning.has("source") ? burning.get("source") : null);
+            engine.fire("entity.hp_zero", hpZero);
+        }
+
         var entityName = entity.hasComponent("Name") ? entity.getComponent("Name").getString("value") : entity.getId();
         var entitySide = entity.hasTag("player") ? "player" : "enemy";
 

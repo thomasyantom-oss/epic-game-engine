@@ -115,6 +115,10 @@ public class ScriptRuntime implements AutoCloseable {
                 throw new RuntimeException("No module context set");
             }
             Path yamlPath = moduleContext.resolve(relativePath);
+            // Missing file -> null (callers null-check, e.g. unknown skill command). Malformed YAML still throws.
+            if (!Files.exists(yamlPath)) {
+                return null;
+            }
             Yaml yaml = new Yaml();
             try (InputStream is = Files.newInputStream(yamlPath)) {
                 return yaml.load(is);

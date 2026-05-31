@@ -133,46 +133,9 @@ engine.on("combat.damage_dealt", 60, function(event) {
     combat.getComponent("CombatEvents").get("queue").add(evt);
 });
 
-// Record defend events
-engine.on("combat.unit_action", 200, function(event) {
-    var cmd = event.get("command");
-    var actorId = event.get("actorId");
-    var combatId = event.get("combatId");
-
-    var cmdType = cmd.get("type");
-    var cmdTypeStr = (typeof cmdType === "string") ? cmdType : cmdType.toString();
-
-    if (cmdTypeStr === "defend") {
-        var combat = store.get(combatId);
-        if (combat === null || !combat.hasComponent("CombatEvents")) return;
-
-        var actor = store.get(actorId);
-        var actorName = actor.hasComponent("Name") ? actor.getComponent("Name").getString("value") : actorId;
-        var actorSide = actor.hasTag("player") ? "player" : "enemy";
-
-        var evt = engine.newMap();
-        var segments = engine.newList();
-        var s1 = engine.newMap(); s1.put("text", actorName); s1.put("color", actorSide); segments.add(s1);
-        var s2 = engine.newMap(); s2.put("text", " 进行防御"); s2.put("color", "text"); segments.add(s2);
-        evt.put("segments", segments);
-        evt.put("effects", engine.newList());
-
-        // Animation from skill YAML
-        var animation = resolveSkillAnimation("defend", actorId, actorId);
-        if (animation === null) animation = engine.newList();
-        evt.put("animation", animation);
-
-        combat.getComponent("CombatEvents").get("queue").add(evt);
-
-        // Also write to CombatLog
-        if (combat.hasComponent("CombatLog")) {
-            var logEntry = engine.newList();
-            var l1 = engine.newMap(); l1.put("text", actorName); l1.put("color", actorSide); logEntry.add(l1);
-            var l2 = engine.newMap(); l2.put("text", " 进行防御"); l2.put("color", "text"); logEntry.add(l2);
-            combat.getComponent("CombatLog").get("entries").add(logEntry);
-        }
-    }
-});
+// NOTE: defend presentation (log + buff_up animation + buff_applied effect) is owned solely by
+// the bespoke skills/defend.js handler. A second recorder used to live here (prio 200) and
+// produced a duplicate "进行防御" log line + a second buff_up animation — removed.
 
 // Record death events
 engine.on("combat.unit_death", 60, function(event) {
