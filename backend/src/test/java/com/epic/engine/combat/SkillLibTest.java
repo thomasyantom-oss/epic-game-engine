@@ -8,6 +8,7 @@ import org.junit.jupiter.api.*;
 import java.nio.file.*;
 
 import static org.assertj.core.api.Assertions.assertThatCode;
+import com.epic.engine.core.Entity;
 
 class SkillLibTest {
     EventBus bus;
@@ -79,5 +80,30 @@ class SkillLibTest {
             "var s2 = Skill.loadSpec('fireball');" +
             "if (s1 !== s2) throw 'not cached (different object)';"
         )).doesNotThrowAnyException();
+    }
+
+    @Test
+    void computeDamage_flatAdd() {
+        mkUnit("mage","法师",true);
+        mkUnit("goblin","哥布林",false);
+        js("var dmg = Skill.computeDamage(store.get('mage'), store.get('goblin'), {base:'attack', add:8});" +
+           "if (dmg !== 18) throw 'dmg='+dmg;");   // attack 10 + 8
+    }
+
+    @Test
+    void computeDamage_isPure_noHpChange() {
+        mkUnit("mage","法师",true);
+        Entity g = mkUnit("goblin","哥布林",false);
+        js("Skill.computeDamage(store.get('mage'), store.get('goblin'), {base:'attack', add:8});");
+        // pure: calling computeDamage must NOT mutate target hp
+        org.assertj.core.api.Assertions.assertThat(g.getComponent("Health").getInt("hp")).isEqualTo(100);
+    }
+
+    @Test
+    void computeDamage_viaDamageCalc_subtractsDefense() {
+        mkUnit("mage","法师",true);
+        mkUnit("goblin","哥布林",false);   // defense 5 in mkUnit
+        js("var dmg = Skill.computeDamage(store.get('mage'), store.get('goblin'), {via_damage_calc:true});" +
+           "if (dmg !== 5) throw 'dmg='+dmg;");   // 10 attack - 5 defense
     }
 }
