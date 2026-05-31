@@ -84,6 +84,11 @@ public class SkillFidelityHarness implements AutoCloseable {
         s.set("defense", def);
         s.set("speed", spd);
         e.addComponent(s);
+        Component ds = new Component("DerivedStats");
+        ds.set("物理强度", 0);
+        ds.set("法术强度", atk);   // 复用 atk 参数当法强:mage(atk=10) → 火球 8+⌈10×0.5⌉=13
+        ds.set("精神强度", 0);
+        e.addComponent(ds);
         Component n = new Component("Name");
         n.set("value", name);
         e.addComponent(n);

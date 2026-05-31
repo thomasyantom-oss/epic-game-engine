@@ -5,8 +5,8 @@ category: skill
 silenceable: true
 effect: damage_only
 damage:
-  base: attack
   add: 8
+  scaling: { 法术强度: 0.5 }
 targeting:
   mode: pattern
   field: enemy
