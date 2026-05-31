@@ -65,6 +65,15 @@ engine.on("map.move", 100, function(event) {
     event.set("newX", newX);
     event.set("newY", newY);
 
+    // 位置是可变状态:把当前 Position 同步进 base 快照(避免后续 recalc 的
+    // restoreBaseState 把玩家拉回出生点),并持久化真实位置到 H2(重启不重置)。
+    var posTypes = engine.newList();
+    posTypes.add("Position");
+    engine.setBaseSelective(entityId, posTypes);
+    if (typeof persistence !== 'undefined') {
+        persistence.save(entity); // save 内部会跳过非 persistent 实体
+    }
+
     var enterEvent = engine.newEvent("map.enter_area");
     enterEvent.set("entityId", entityId);
     enterEvent.set("x", newX);

@@ -57,6 +57,46 @@ class PersistenceServiceTest {
     }
 
     @Test
+    void move_thenSetBaseSelectivePosition_persistsMovedPositionNotSpawn() {
+        // Simulates the movement.js fix: after a player moves, Position must be
+        // re-snapshotted into the base state and persisted, so neither a recalc
+        // (restoreBaseState) nor a server restart resets the player to spawn.
+        ModifierTypeRegistry typeReg = new ModifierTypeRegistry();
+        EventBus bus = new EventBus();
+        ModifierChainService chainService = new ModifierChainService(bus, entityStore, typeReg);
+
+        Entity player = new Entity("char_test");
+        Component pos = new Component("Position");
+        pos.set("map", "world_map");
+        pos.set("x", 4);
+        pos.set("y", 3);
+        player.addComponent(pos);
+        player.addTag("persistent");
+        entityStore.add(player);
+
+        // Initial base snapshot at spawn (4,3)
+        chainService.setBaseSelective("char_test", List.of("Position"));
+
+        // Player moves east to (5,3) — movement.js updates the live component...
+        pos.set("x", 5);
+        // ...and the fix re-snapshots Position into base + persists.
+        chainService.setBaseSelective("char_test", List.of("Position"));
+
+        // A recalc must NOT pull the player back to spawn.
+        chainService.recalculate("char_test");
+        assertThat(player.getComponent("Position").getInt("x")).isEqualTo(5);
+
+        persistenceService.setModifierChainService(chainService);
+        persistenceService.save(player);
+
+        // Restart round-trip: loaded Position must be the moved value, not spawn (4).
+        Entity loaded = persistenceService.load("char_test");
+        assertThat(loaded.getComponent("Position").getInt("x")).isEqualTo(5);
+        assertThat(loaded.getComponent("Position").getInt("y")).isEqualTo(3);
+        assertThat(loaded.getComponent("Position").getString("map")).isEqualTo("world_map");
+    }
+
+    @Test
     void save_withChain_savesBaseStateValues() {
         ModifierTypeRegistry typeReg = new ModifierTypeRegistry();
         EventBus bus = new EventBus();
