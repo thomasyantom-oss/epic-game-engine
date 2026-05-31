@@ -92,5 +92,115 @@ var Skill = {
       }
     }
     return out;
+  },
+
+  // Mutate target HP and fire combat.damage_dealt (with skipLog=true so present() is sole emitter).
+  dealDamage: function(ctx, target, amount, skillId, opts) {
+    var health = target.getComponent("Health");
+    health.set("hp", Math.max(0, health.getInt("hp") - amount));
+    var ev = engine.newEvent("combat.damage_dealt");
+    ev.set("attackerId", ctx.actorId);
+    ev.set("targetId", target.getId());
+    ev.set("damage", amount);
+    ev.set("combatId", ctx.combatId);
+    ev.set("skillId", skillId);
+    ev.set("skipLog", true);                 // present() is the sole emitter for migrated skills
+    engine.fire("combat.damage_dealt", ev);
+  },
+
+  // Apply a buff from a buff spec object (id + data map), resolving "@caster" references.
+  applyBuffFromSpec: function(ctx, target, buffSpec) {
+    var data = engine.newMap();
+    var src = buffSpec.data || {};
+    var keys = Object.keys(src);
+    for (var i = 0; i < keys.length; i++) {
+      var v = src[keys[i]];
+      if (v === "@caster") v = ctx.actorId;   // resolve caster reference
+      data.put(keys[i], v);
+    }
+    buffs.applyBuff(target.getId(), buffSpec.id, data);
+  },
+
+  // Build a flat hp_change effect entry (after HP has already been mutated by dealDamage).
+  _hpEffect: function(target, amount) {
+    var eff = engine.newMap();
+    eff.put("target", target.getId());
+    eff.put("type", "hp_change");
+    eff.put("amount", -amount);
+    eff.put("hp", target.getComponent("Health").getInt("hp"));
+    eff.put("maxHp", target.getComponent("Health").getInt("maxHp"));
+    return eff;
+  },
+
+  // Build a buff_applied effect entry.
+  _buffEffect: function(target) {
+    var eff = engine.newMap();
+    eff.put("type", "buff_applied");
+    eff.put("target", target.getId());
+    return eff;
+  },
+
+  // Flat-format animation resolution mirroring combat_events.resolveSkillAnimation.
+  // Single-target token replacement now; multi-target expansion added in a later task.
+  resolveAnimation: function(spec, ctx, results) {
+    var out = engine.newList();
+    var animDef = spec.animation;
+    if (animDef == null) return out;
+    var firstTargetId = results.length > 0 ? results[0].entity.getId() : null;
+    for (var i = 0; i < animDef.length; i++) {
+      var step = animDef[i];
+      var anim = engine.newMap();
+      var keys = Object.keys(step);
+      for (var k = 0; k < keys.length; k++) {
+        var val = step[keys[k]];
+        if (val === "actor") val = ctx.actorId;
+        else if (val === "target") val = firstTargetId;
+        else if (val === "actor_side") val = ctx.casterSide;
+        anim.put(keys[k], val);
+      }
+      out.add(anim);
+    }
+    return out;
+  },
+
+  // Build a segment list from a "{caster}/{target}/{damage}" template.
+  _renderLog: function(tmpl, ctx, target, amount) {
+    var seg = engine.newList();
+    if (tmpl == null) return seg;
+    var targetName = target.hasComponent("Name") ? target.getComponent("Name").getString("value") : target.getId();
+    var targetSide = target.hasTag("player") ? "player" : "enemy";
+    var parts = tmpl.split(/(\{caster\}|\{target\}|\{damage\})/);
+    for (var i = 0; i < parts.length; i++) {
+      var p = parts[i]; if (p === "") continue;
+      var s = engine.newMap();
+      if (p === "{caster}") { s.put("text", ctx.casterName); s.put("color", ctx.casterSide); }
+      else if (p === "{target}") { s.put("text", targetName); s.put("color", targetSide); }
+      else if (p === "{damage}") { s.put("text", "" + amount); s.put("color", "damage"); }
+      else { s.put("text", p); s.put("color", "text"); }
+      seg.add(s);
+    }
+    return seg;
+  },
+
+  // Emit one combatEvent via engine.combatEvent with log, effects, and animation.
+  // Single-target and per-target log; multi-target animation expansion is a later task.
+  present: function(ctx, spec, results, damages) {
+    var log = engine.newList();
+    var effects = engine.newList();
+    var L = spec.log || {};
+    if (results.length <= 1) {
+      var tgt = results.length > 0 ? results[0].entity : ctx.caster;
+      log.add(this._renderLog(L.template, ctx, tgt, damages ? damages[0] : 0));
+      if (damages) effects.add(this._hpEffect(tgt, damages[0]));
+    } else {
+      for (var i = 0; i < results.length; i++) {
+        log.add(this._renderLog(L.per_target, ctx, results[i].entity, damages ? damages[i] : 0));
+        if (damages) effects.add(this._hpEffect(results[i].entity, damages[i]));
+      }
+    }
+    var animation = this.resolveAnimation(spec, ctx, results);
+    var data = engine.newMap();
+    data.put("log", log); data.put("effects", effects); data.put("animation", animation);
+    engine.combatEvent(ctx.combatId, data);
   }
 };

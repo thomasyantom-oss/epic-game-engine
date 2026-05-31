@@ -148,4 +148,16 @@ class SkillLibTest {
            "var r = Skill.resolveTargets(ctx, {targeting:{mode:'self'}});" +
            "if (r.length !== 1 || r[0].entity.getId() !== 'mage') throw 'self';");
     }
+
+    @Test
+    void dealDamage_mutatesHp_andFiresDamageDealtWithSkipLog() {
+        mkUnit("mage","法师",true);
+        Entity g = mkUnit("goblin","哥布林",false);
+        js("globalThis.__skip = null;" +
+           "engine.on('combat.damage_dealt', 5, function(e){ globalThis.__skip = e.has('skipLog'); });" +
+           "var ctx = {actorId:'mage', combatId:'b1', caster: store.get('mage')};" +
+           "Skill.dealDamage(ctx, store.get('goblin'), 30, 'fireball');" +
+           "if (globalThis.__skip !== true) throw 'skipLog not set';");
+        org.assertj.core.api.Assertions.assertThat(g.getComponent("Health").getInt("hp")).isEqualTo(70);
+    }
 }
