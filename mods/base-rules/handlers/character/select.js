@@ -82,6 +82,13 @@ engine.on("action.confirm_character", 100, function(event) {
     entity.addTag("session:" + token);
     store.add(entity);
 
+    // 主属性的武器属性(决定物理强度吃哪条基础属性)——必须在 setBase 前写入,
+    // 才能进 base 快照并随持久化保存。
+    var primaryComp = entity.getComponent("PrimaryStats");
+    if (primaryComp !== null && classSchema !== null && classSchema.raw().get("weapon_attr") !== null) {
+        primaryComp.set("weaponAttr", classSchema.raw().get("weapon_attr"));
+    }
+
     // 3. Snapshot base state（仅包含 stat 组件）
     engine.setBase(charId);
 
@@ -173,6 +180,14 @@ engine.on("action.confirm_character", 100, function(event) {
             }
         }
     });
+
+    // 注册派生 modifier(priority 300,在 class 之后跑)→ 自动 recalculate 算出二级属性 + maxHp
+    if (typeof registerDerivedModifier !== 'undefined') {
+        registerDerivedModifier(charId);
+    }
+    // 新建角色满血(base hp 仅 30,maxHp 由体质派生)
+    var hpComp = entity.getComponent("Health");
+    if (hpComp !== null) hpComp.set("hp", hpComp.getInt("maxHp"));
 
     persistence.save(entity);
     sessions.setActiveCharacter(token, charId);

@@ -189,10 +189,11 @@ class SkillLibTest {
     void computeDamage_reusableForTooltip_noMutation() {
         mkUnit("mage","法师",true);
         Entity g = mkUnit("goblin","哥布林",false);
-        // fireball.yaml: damage.base=attack, damage.add=10 → mage attack(10) + 10 = 20
+        // fireball.yaml: add=8, scaling={法术强度:0.5}; mage DerivedStats.法术强度=14
+        // → 8 + ⌈14×0.5⌉ = 8 + 7 = 15
         js("var spec = Skill._toJs(engine.loadYaml('skills/fireball.yaml'));" +
            "var preview = Skill.computeDamage(store.get('mage'), store.get('goblin'), spec.damage);" +
-           "if (preview !== 20) throw 'preview='+preview;");
+           "if (preview !== 15) throw 'preview='+preview;");
         // Pure: calling computeDamage must NOT mutate target hp
         org.assertj.core.api.Assertions.assertThat(g.getComponent("Health").getInt("hp")).isEqualTo(100);
     }

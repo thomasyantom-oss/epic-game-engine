@@ -77,4 +77,11 @@ engine.on("entity.loaded", 100, function(event) {
     if (exp !== null && exp.getInt("level") > 1 && typeof registerLevelGrowthModifier !== 'undefined') {
         registerLevelGrowthModifier(entity.getId(), exp.getInt("level"));
     }
+
+    if (typeof registerDerivedModifier !== 'undefined' && entity.getComponent("PrimaryStats") !== null) {
+        registerDerivedModifier(entity.getId());
+    }
+    // 重载满血(持久化的是 base hp=30;maxHp 由体质派生)
+    var loadedHp = entity.getComponent("Health");
+    if (loadedHp !== null) loadedHp.set("hp", loadedHp.getInt("maxHp"));
 });
