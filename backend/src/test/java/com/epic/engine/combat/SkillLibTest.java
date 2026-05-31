@@ -160,4 +160,27 @@ class SkillLibTest {
            "if (globalThis.__skip !== true) throw 'skipLog not set';");
         org.assertj.core.api.Assertions.assertThat(g.getComponent("Health").getInt("hp")).isEqualTo(70);
     }
+
+    // ── Test 1: extensibility ──────────────────────────────────────────────
+    // Proves: adding a new effect type requires only Skill.registerEffect — zero engine changes.
+    @Test
+    void newEffect_registersWithoutEngineChange() {
+        js("Skill.registerEffect('smoke_test', function(ctx,spec,results){ globalThis.__ran = true; });" +
+           "if (typeof Skill.effects['smoke_test'] !== 'function') throw 'not registered';");
+    }
+
+    // ── Test 2: tooltip/AI reuse ───────────────────────────────────────────
+    // Proves: computeDamage is pure — same function used in live combat can compute a tooltip
+    // preview without any side-effect (target hp is unchanged after the call).
+    @Test
+    void computeDamage_reusableForTooltip_noMutation() {
+        mkUnit("mage","法师",true);
+        Entity g = mkUnit("goblin","哥布林",false);
+        // fireball.yaml: damage.base=attack, damage.add=10 → mage attack(10) + 10 = 20
+        js("var spec = Skill._toJs(engine.loadYaml('skills/fireball.yaml'));" +
+           "var preview = Skill.computeDamage(store.get('mage'), store.get('goblin'), spec.damage);" +
+           "if (preview !== 20) throw 'preview='+preview;");
+        // Pure: calling computeDamage must NOT mutate target hp
+        org.assertj.core.api.Assertions.assertThat(g.getComponent("Health").getInt("hp")).isEqualTo(100);
+    }
 }
