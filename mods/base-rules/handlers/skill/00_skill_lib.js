@@ -70,11 +70,14 @@ var Skill = {
       return [{ entity: ctx.caster, cell: this._cellOf(ctx.caster) }];
     }
     var field = t.field;                       // "enemy" | "ally"
+    var casterIsPlayer = ctx.casterSide !== undefined
+        ? (ctx.casterSide === "player")
+        : (ctx.caster !== null && ctx.caster.hasTag("player"));
     var combatants = store.getByTagAsList("combat:" + ctx.combatId);
     var live = [];
     for (var i = 0; i < combatants.size(); i++) {
       var e = combatants.get(i);
-      var isAlly = e.hasTag("player");
+      var isAlly = casterIsPlayer ? e.hasTag("player") : !e.hasTag("player");
       var sideMatch = (field === "ally") ? isAlly : !isAlly;
       if (!sideMatch) continue;
       if (!e.hasComponent("Health") || e.getComponent("Health").getInt("hp") <= 0) continue;

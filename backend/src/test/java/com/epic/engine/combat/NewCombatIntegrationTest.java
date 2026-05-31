@@ -33,8 +33,14 @@ class NewCombatIntegrationTest {
         runtime.execute(Files.readString(baseDir.resolve("death_check.js")), "death_check.js");
         runtime.execute(Files.readString(baseDir.resolve("combat_flow.js")), "combat_flow.js");
 
+        // Load skill lib + dispatcher (replaces the old bespoke basic_attack.js)
+        Path sklDir = Path.of("../mods/base-rules/handlers/skill");
+        runtime.setModuleContext(Path.of("../mods/base-rules"));
+        runtime.execute(Files.readString(sklDir.resolve("00_skill_lib.js")), "00_skill_lib.js");
+        runtime.execute(Files.readString(sklDir.resolve("01_effects.js")), "01_effects.js");
+        runtime.execute(Files.readString(sklDir.resolve("02_dispatch.js")), "02_dispatch.js");
+
         Path skillsDir = Path.of("../mods/base-rules/skills");
-        runtime.execute(Files.readString(skillsDir.resolve("basic_attack.js")), "basic_attack.js");
         runtime.execute(Files.readString(skillsDir.resolve("defend.js")), "defend.js");
     }
 
