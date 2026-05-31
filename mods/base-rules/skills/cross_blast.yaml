@@ -10,10 +10,13 @@ targeting:
   mode: pattern
   field: enemy
   pattern: [[0,0],[-1,0],[1,0],[0,-1],[0,1]]
+  aoe_offsets: [[0,0],[-1,0],[1,0],[0,-1],[0,1]]   # frontend range hint (actions.js)
   steps:
     - prompt: "选择目标"
       filter: enemy
       count: 1
+# NOTE: cross_blast is a bespoke skill (cross_blast.js builds + emits its animation directly).
+# This block is decorative/reference only — it is NOT read at runtime. Edit cross_blast.js to change the animation.
 animation:
   - type: pulse
     target: actor

@@ -11,6 +11,8 @@ targeting:
   mode: pattern
   field: enemy
   pattern: [[0,0],[-1,0],[1,0],[0,-1],[0,1]]
+  aoe_offsets: [[0,0],[-1,0],[1,0],[0,-1],[0,1]]   # frontend range hint (actions.js)
+  allow_empty: true                                 # light field can target empty cells
   steps:
     - prompt: "选择落点"
       filter: any
