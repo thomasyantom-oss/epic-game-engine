@@ -44,6 +44,8 @@ engine.on("world.init", 80, function(event) {
 });
 
 // 注册装备 Modifier 的辅助函数（供 entity.loaded 重用）
+// stats 用全限定字段 "组件.字段"(如 "CombatStats.defense":+5 / "PrimaryStats.力量":+3)。
+// 无点号的 key(weaponAttr / base)是武器元数据，由 derived_stats 读取，不作为 modifier。
 function registerEquipmentModifier(entityId, itemId) {
     var item = store.get(itemId);
     if (item === null || !item.hasComponent("ItemStats")) return;
@@ -52,20 +54,24 @@ function registerEquipmentModifier(entityId, itemId) {
     var statsKeys = stats.getAll().keySet().iterator();
     while (statsKeys.hasNext()) {
         var k = statsKeys.next();
-        statsCopy.put(k, stats.getInt(k));
+        statsCopy.put(k, stats.get(k));
     }
     engine.addModifier(entityId, {
         typeId: "equipment",
         id: "equip_" + itemId,
         label: item.getComponent("ItemMeta").getString("name"),
         apply: function(entity) {
-            var combatStats = entity.getComponent("CombatStats");
-            if (combatStats === null) return;
             var keys = statsCopy.keySet().iterator();
             while (keys.hasNext()) {
                 var k = keys.next();
-                if (combatStats.has(k)) {
-                    combatStats.set(k, combatStats.getInt(k) + statsCopy.get(k));
+                var key = "" + k;
+                var dotIdx = key.indexOf(".");
+                if (dotIdx < 0) continue;   // weaponAttr / base：武器元数据，derived 读，非 modifier
+                var compName = key.substring(0, dotIdx);
+                var fieldName = key.substring(dotIdx + 1);
+                var comp = entity.getComponent(compName);
+                if (comp !== null && comp.has(fieldName)) {
+                    comp.set(fieldName, comp.getInt(fieldName) + statsCopy.get(k));
                 }
             }
         }
