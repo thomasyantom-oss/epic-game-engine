@@ -9,13 +9,18 @@ function registerLevelGrowthModifier(entityId, level) {
         id: "level_growth",
         label: level + "级成长",
         apply: function(entity) {
-            var health = entity.getComponent("Health");
-            if (health !== null) {
-                health.set("maxHp", health.getInt("maxHp") + capturedLevel * 5);
-            }
-            var stats = entity.getComponent("CombatStats");
-            if (stats !== null) {
-                stats.set("attack", stats.getInt("attack") + capturedLevel);
+            var ch = entity.getComponent("Character");
+            var p = entity.getComponent("PrimaryStats");
+            if (ch === null || p === null) return;
+            var classSchema = schemas.get(ch.getString("classId"));
+            if (classSchema === null) return;
+            var growth = classSchema.raw().get("growth");
+            if (growth === null) return;
+            var gained = capturedLevel - 1;   // L1 不加,每升一级加一份模板
+            var keys = growth.keySet().iterator();
+            while (keys.hasNext()) {
+                var stat = keys.next();
+                p.set(stat, p.getInt(stat) + growth.get(stat) * gained);
             }
         }
     });
@@ -39,7 +44,6 @@ engine.on("action.gain_xp", 100, function(event) {
         currentLevel++;
         exp.set("level", currentLevel);
         exp.set("xp", currentXp);
-        exp.set("pendingPoints", exp.getInt("pendingPoints") + 3);
 
         var charComp = player.getComponent("Character");
         if (charComp !== null) charComp.set("level", currentLevel);
