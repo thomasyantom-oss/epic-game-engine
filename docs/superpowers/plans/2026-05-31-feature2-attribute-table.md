@@ -10,6 +10,28 @@
 
 ---
 
+## 📍 执行进度(2026-05-31,subagent-driven,分支 `feature/ch1-f2-attribute-table`)
+
+**全套后端测试 106/106 绿。** 已完成并提交:
+
+- ✅ **Task 1**(`55a8538`+`bb6b781`)derived modifier + 派生公式 + 衍生自衍生顺序。**关键已验证事实:ModifierChain 升序应用(priority 小的先跑),`derived`=300 最后跑。** review ✅。
+- ✅ **Task 2**(`f4825e8`)computeDamage 接 scaling(吃三强度,Math.ceil)。review ✅。
+- ✅ **Task 3**(`06770b8`)火球/冰霜迁到 `scaling:{法术强度:0.5}` + golden 重生成(伤害 13,diff 仅数值无结构漂移)。review ✅。
+- ✅ **Task 4**(`de71165`)5 职业 schema 属性驱动(L1 数值全部核对正确)。review ✅。
+- ✅ **Task 4.5(计划外,已插入)**(`4fa92a3`)`Schema.raw()` 通用访问器 —— 引擎原本**丢弃**未知 YAML 顶层字段,加了 `Map raw` 保留全量,mod 用 `classSchema.raw().get("weapon_attr")` 读自定义字段(保持引擎通用,无游戏概念泄漏)。review ✅。
+- ✅ **Task 5**(`a2cb465`)创建/加载注册派生 modifier + weaponAttr(**必须在 setBase 前写入**才进 base 快照/持久化)+ 满血。**实测**:战士 28/3/3·attack7·HP150/150,法师 物14/法14/精6·HP100/100,重载正确。**顺手修了 Task 3 遗留的 4 个测试**(SkillCombatIntegrationTest/CombatBugfixTest/SkillLibTooltip 的 mage 缺 DerivedStats → fireball 伤害断言 20→15)。**review 待补**(实测+全绿已覆盖)。
+
+**关键发现(下一轮注意):**
+- 持久化 `PersistenceService.save` 存的是 **base 快照**(`getBaseState`),不是已派生值 → 加性 class/level modifier 重载**不会翻倍**;但要保存的字段(如 weaponAttr)必须在 `setBase` 前写入。base `Health.hp` 现为 30,故创建/重载都显式 `hp=maxHp` 满血。
+
+**剩余(未开始):**
+- ⬜ **Task 6** 等级成长改往 PrimaryStats 加点(`leveling.js`,用 `classSchema.raw().get("growth")`)。
+- ⬜ **Task 7** 敌人 spawn 走属性派生 + 8 个 encounter 改写(`start_combat.js`)。**注意**:`registerDerivedModifier` 在 character/ handler,需确认 combat/ 里可见(跨文件全局函数,先例 `registerEquipmentModifier`)。
+- ⬜ **Task 8** 前端 `maxSlots` 5→9。
+- ⬜ **Task 9** 全量回归 + Task 5 补 review + 更新 `prompt.md` 交棒 Feature #3。
+
+---
+
 ## ⚠️ 实现决策(执行前请 review)
 
 1. **maxHp 保留基础血量底盘:`maxHp = 30 + 体质×10`(SET 语义,floor 常量 30)。** 用户要求:体质可被特殊设计削减,但削到 0 也不暴毙——底盘 30 保命。用 **SET**(非 ADD)是为对重算/持久化重载**幂等**(ADD 会在 reload 时把 base 当成已派生值再加一遍 → 翻倍)。floor 写成 `derived_stats.js` 的常量 `MAXHP_FLOOR=30`,玩家/敌人统一。**副作用**:所有敌人下限 30 HP(哥布林 20→30,首版可接受;floor 想调小直接改常量)。
