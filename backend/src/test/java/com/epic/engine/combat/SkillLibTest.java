@@ -1,0 +1,83 @@
+package com.epic.engine.combat;
+
+import com.epic.engine.buff.BuffService;
+import com.epic.engine.core.*;
+import com.epic.engine.script.ScriptRuntime;
+import org.junit.jupiter.api.*;
+
+import java.nio.file.*;
+
+import static org.assertj.core.api.Assertions.assertThatCode;
+
+class SkillLibTest {
+    EventBus bus;
+    EntityStore store;
+    ScriptRuntime rt;
+
+    @BeforeEach
+    void setUp() throws Exception {
+        bus = new EventBus();
+        store = new EntityStore();
+        rt = new ScriptRuntime(bus, store);
+        rt.setModuleContext(Path.of("../mods/base-rules"));
+        rt.bindService("buffs", new BuffService(bus, store));
+        rt.execute(Files.readString(Path.of("../mods/base-rules/handlers/combat/damage_calc.js")), "damage_calc.js");
+        rt.execute(Files.readString(Path.of("../mods/base-rules/handlers/skill/00_skill_lib.js")), "00_skill_lib.js");
+    }
+
+    @AfterEach
+    void tearDown() {
+        rt.close();
+    }
+
+    Entity mkUnit(String id, String name, boolean player) {
+        Entity e = new Entity(id);
+        Component h = new Component("Health");
+        h.set("hp", 100);
+        h.set("maxHp", 100);
+        e.addComponent(h);
+        Component s = new Component("CombatStats");
+        s.set("attack", 10);
+        s.set("defense", 5);
+        s.set("speed", 5);
+        e.addComponent(s);
+        Component n = new Component("Name");
+        n.set("value", name);
+        e.addComponent(n);
+        e.addTag(player ? "player" : "enemy");
+        e.addTag("combat:b1");
+        store.add(e);
+        return e;
+    }
+
+    /** Run a JS snippet that throws a string on assertion failure. */
+    void js(String script) {
+        rt.execute("(function(){ " + script + " })();", "assert.js");
+    }
+
+    @Test
+    void context_resolvesCasterFields() {
+        mkUnit("mage", "法师", true);
+        assertThatCode(() -> js(
+            "var ev = engine.newEvent('combat.unit_action');" +
+            "ev.set('actorId','mage'); ev.set('combatId','b1');" +
+            "var cmd = {}; cmd.type='fireball'; ev.set('command', cmd);" +
+            "var c = Skill.context(ev);" +
+            "if (c.actorId !== 'mage') throw 'actorId='+c.actorId;" +
+            "if (c.combatId !== 'b1') throw 'combatId='+c.combatId;" +
+            "if (c.casterName !== '法师') throw 'name='+c.casterName;" +
+            "if (c.casterSide !== 'player') throw 'side='+c.casterSide;"
+        )).doesNotThrowAnyException();
+    }
+
+    @Test
+    void loadSpec_loadsAndCaches() {
+        assertThatCode(() -> js(
+            "var s1 = Skill.loadSpec('fireball');" +
+            "if (s1 === null) throw 'fireball spec null';" +
+            "if (s1.get('id') !== 'fireball') throw 'id='+s1.get('id');" +
+            "var s2 = Skill.loadSpec('fireball');" +
+            "if (s1 !== s2) throw 'not cached (different object)';"
+        )).doesNotThrowAnyException();
+    }
+}
