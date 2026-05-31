@@ -15,15 +15,18 @@ class SkillFidelityTest {
 
     @Test
     void allSkills_matchGolden() throws Exception {
-        StringBuilder diffs = new StringBuilder();
+        StringBuilder diffs = new StringBuilder();      // real failures only
+        StringBuilder captures = new StringBuilder();   // informational: newly captured baselines
         for (String[] c : CASES) {
             try (SkillFidelityHarness h = new SkillFidelityHarness()) {
                 String actual = h.fire(c[0], c[1]);
                 Path golden = Path.of(h.goldenPath(c[0]));
                 if (!Files.exists(golden)) {
+                    // First run for this skill: capture the baseline. This is NOT a failure —
+                    // the captured file becomes the answer key for subsequent runs.
                     Files.createDirectories(golden.getParent());
                     Files.writeString(golden, actual);
-                    diffs.append("CAPTURED new golden: ").append(c[0]).append("\n");
+                    captures.append("CAPTURED new golden: ").append(c[0]).append("\n");
                 } else {
                     String expected = Files.readString(golden);
                     if (!expected.equals(actual)) {
@@ -34,6 +37,7 @@ class SkillFidelityTest {
                 }
             }
         }
+        if (captures.length() > 0) System.out.println(captures);
         assertThat(diffs.toString()).isEmpty();
     }
 }

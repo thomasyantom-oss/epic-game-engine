@@ -31,6 +31,8 @@ public class SkillFidelityHarness implements AutoCloseable {
                 "combat_flow.js", "combat_events.js", "combat_log.js"}) {
             runtime.execute(Files.readString(h.resolve(f)), f);
         }
+        // Pre-load the future skill engine if present. The handlers/skill/ dir does not
+        // exist before the refactor (Tasks 2-6 create it); absent files are safely skipped.
         Path skl = Path.of("../mods/base-rules/handlers/skill");
         if (Files.isDirectory(skl)) {
             for (String f : new String[]{"00_skill_lib.js", "01_effects.js", "02_dispatch.js"}) {
@@ -46,7 +48,10 @@ public class SkillFidelityHarness implements AutoCloseable {
         }
     }
 
-    public void scene() {
+    // Private: callers must use fire(), which resets the scene each call. The harness is
+    // single-use per fire (the test builds a fresh instance per skill) — reusing one
+    // instance across multiple fire() calls is not supported (TagIndex retains stale refs).
+    private void scene() {
         store.clear();
         addUnit("mage",    "法师",     100, 10, 5, 6, true,  "FRONT", 0);
         addUnit("goblin1", "哥布林甲", 200,  6, 2, 3, false, "FRONT", 0);
