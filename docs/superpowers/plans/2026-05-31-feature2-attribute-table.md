@@ -10,10 +10,10 @@
 
 ---
 
-## ⚠️ 实现决策(执行前请 review —— 对 spec 的两处数值微调)
+## ⚠️ 实现决策(执行前请 review)
 
-1. **maxHp 公式 `50 + 体质×10` → `体质×10`(base 0)。** 原公式让任何敌人下限 50 HP,与「20 血哥布林也由属性构成」冲突。改为纯 `体质×10`,玩家 `体质` 相应翻倍(战士体质 15→150,法师 10→100…)。语义不变(体质=血),只挪了系数。
-2. **占位 attack 归一化常数 `占位武器基础 = 10`。** `普攻/物理 attack = ⌈10 ×(1 + 物理强度%)⌉`。这是 #2 没有武器时的占位,会把全部物理攻击压到 ~10–15 区间(物理强度 0 → attack 10 下限)。**Ch2 真武器到位后替换**。敌人 encounter 的属性值是首版近似,combat 能跑、不追求精确平衡。
+1. **maxHp 保留基础血量底盘:`maxHp = 30 + 体质×10`(SET 语义,floor 常量 30)。** 用户要求:体质可被特殊设计削减,但削到 0 也不暴毙——底盘 30 保命。用 **SET**(非 ADD)是为对重算/持久化重载**幂等**(ADD 会在 reload 时把 base 当成已派生值再加一遍 → 翻倍)。floor 写成 `derived_stats.js` 的常量 `MAXHP_FLOOR=30`,玩家/敌人统一。**副作用**:所有敌人下限 30 HP(哥布林 20→30,首版可接受;floor 想调小直接改常量)。
+2. **占位 attack 归一化 `占位武器基础 = 5`。** `物理 attack = ⌈5 ×(1 + 物理强度%)⌉`,把物理攻击压到 ~6–8 区间(贴近现值)。#2 没有武器时的占位,**Ch2 真武器替换**。敌人 encounter 数值首版近似,combat 能跑。
 3. **三强度 scaling 系数**:法术/精神技能本轮统一用 `0.5`(火球 = 8 + ⌈法强×0.5⌉)。
 4. 其余全部遵循 spec `docs/superpowers/specs/2026-05-31-feature2-attribute-table-design.md`。
 
@@ -23,20 +23,20 @@ weaponMult(attr) = (attr === "力量") ? 2 : 1
 物理强度 = PrimaryStats[weaponAttr] × weaponMult(weaponAttr)
 法术强度 = 智力
 精神强度 = 意志
-maxHp    = 体质 × 10
+maxHp    = 30(MAXHP_FLOOR) + 体质 × 10          # SET 语义,幂等
 先攻(speed) = 敏捷
-attack(占位最终武器伤害) = ⌈10 ×(1 + 物理强度/100)⌉
+attack(占位最终武器伤害) = ⌈5 ×(1 + 物理强度/100)⌉
 defense  = 不派生,保留 base 3(Ch2/#3 接手)
 ```
 
 **5 职业 L1 属性(base PrimaryStats 全 3,class modifier 加非负 delta):**
 | 职业 | weaponAttr | 力/敏/智/体/意 | class delta(力/敏/智/体/意) | L1 派生 |
 |---|---|---|---|---|
-| 战士 | 力量 | 14/5/3/15/3 | +11/+2/0/+12/0 | 物理28·attack13·HP150·先攻5 |
-| 法师 | 智力 | 3/5/14/10/6 | 0/+2/+11/+7/+3 | 法强14·物理14·attack12·HP100·精神6 |
-| 盗贼 | 敏捷 | 5/14/3/11/3 | +2/+11/0/+8/0 | 物理14·attack12·HP110·先攻14 |
-| 德鲁伊 | 意志 | 3/5/3/12/13 | 0/+2/0/+9/+10 | 精神13·物理13·attack12·HP120 |
-| 护卫 | 体质 | 5/3/3/20/6 | +2/0/0/+17/+3 | 物理20·attack12·HP200·精神6 |
+| 战士 | 力量 | 14/5/3/12/3 | +11/+2/0/+9/0 | 物理28·attack7·HP150·先攻5 |
+| 法师 | 智力 | 3/5/14/7/6 | 0/+2/+11/+4/+3 | 法强14·物理14·attack6·HP100·精神6 |
+| 盗贼 | 敏捷 | 5/14/3/8/3 | +2/+11/0/+5/0 | 物理14·attack6·HP110·先攻14 |
+| 德鲁伊 | 意志 | 3/5/3/9/13 | 0/+2/0/+6/+10 | 精神13·物理13·attack6·HP120 |
+| 护卫 | 体质 | 5/3/3/17/6 | +2/0/0/+14/+3 | 物理20·attack6·HP200·精神6 |
 
 **每级成长模板(+5 属性点/级):** 战士 3力2体 · 法师 3智1敏1体 · 盗贼 3敏1力1体 · 德鲁伊 3意1体1敏 · 护卫 3体1力1意。
 
@@ -99,7 +99,7 @@ class DerivedStatsTest {
         Entity e = new Entity("w1");
         Component p = new Component("PrimaryStats");
         p.set("力量", 14); p.set("敏捷", 5); p.set("智力", 3);
-        p.set("体质", 15); p.set("意志", 3); p.set("weaponAttr", "力量");
+        p.set("体质", 12); p.set("意志", 3); p.set("weaponAttr", "力量");
         e.addComponent(p);
         e.addComponent(new Component("DerivedStats"));
         Component h = new Component("Health"); h.set("hp", 1); h.set("maxHp", 1); e.addComponent(h);
@@ -119,9 +119,9 @@ class DerivedStatsTest {
         assertThat(d.getInt("物理强度")).isEqualTo(28);   // 力量14 × 2
         assertThat(d.getInt("法术强度")).isEqualTo(3);    // 智力3
         assertThat(d.getInt("精神强度")).isEqualTo(3);    // 意志3
-        assertThat(e.getComponent("Health").getInt("maxHp")).isEqualTo(150); // 体质15×10
+        assertThat(e.getComponent("Health").getInt("maxHp")).isEqualTo(150); // 30 + 体质12×10
         assertThat(e.getComponent("CombatStats").getInt("speed")).isEqualTo(5); // 敏捷
-        assertThat(e.getComponent("CombatStats").getInt("attack")).isEqualTo(13); // ⌈10×1.28⌉
+        assertThat(e.getComponent("CombatStats").getInt("attack")).isEqualTo(7); // ⌈5×1.28⌉
     }
 
     @Test void derived_reads_post_class_primary_value() {   // 衍生自衍生顺序
@@ -161,10 +161,12 @@ Expected: FAIL —— `derived_stats.js` 不存在 / `registerDerivedModifier is
 // 武器对应属性的倍率:力量 ×2(纯输出补偿),其余 ×1。
 function weaponMult(attr) { return attr === "力量" ? 2 : 1; }
 
-var PLACEHOLDER_WEAPON_BASE = 10;   // #2 占位武器基础;Ch2 真武器替换
+var PLACEHOLDER_WEAPON_BASE = 5;    // #2 占位武器基础;Ch2 真武器替换
+var MAXHP_FLOOR = 30;               // 基础血量底盘:体质削到 0 也有此血量,不暴毙
 
 // 共享:给实体注册「派生」modifier(exclusive,priority 300 → 最后跑)。
 // 读 PrimaryStats → 写 DerivedStats(三强度)+ Health.maxHp + CombatStats.speed/attack。
+// 全部 SET 语义(非累加),对重算/持久化重载幂等(ModifierChain 每次先 restoreBaseState 再 apply)。
 function registerDerivedModifier(entityId) {
     engine.addModifier(entityId, {
         typeId: "derived",
@@ -182,7 +184,7 @@ function registerDerivedModifier(entityId) {
                 d.set("精神强度", p.getInt("意志"));
             }
             var h = ent.getComponent("Health");
-            if (h !== null) h.set("maxHp", p.getInt("体质") * 10);
+            if (h !== null) h.set("maxHp", MAXHP_FLOOR + p.getInt("体质") * 10);   // SET,带底盘
             var c = ent.getComponent("CombatStats");
             if (c !== null) {
                 c.set("speed", p.getInt("敏捷"));
@@ -370,7 +372,7 @@ growth: { 力量: 3, 体质: 2 }
 modifiers:
   - { field: "PrimaryStats.力量", value: "+11" }
   - { field: "PrimaryStats.敏捷", value: "+2" }
-  - { field: "PrimaryStats.体质", value: "+12" }
+  - { field: "PrimaryStats.体质", value: "+9" }
 ```
 `class_mage.schema.yaml`:
 ```yaml
@@ -385,7 +387,7 @@ growth: { 智力: 3, 敏捷: 1, 体质: 1 }
 modifiers:
   - { field: "PrimaryStats.敏捷", value: "+2" }
   - { field: "PrimaryStats.智力", value: "+11" }
-  - { field: "PrimaryStats.体质", value: "+7" }
+  - { field: "PrimaryStats.体质", value: "+4" }
   - { field: "PrimaryStats.意志", value: "+3" }
 ```
 
@@ -404,7 +406,7 @@ growth: { 敏捷: 3, 力量: 1, 体质: 1 }
 modifiers:
   - { field: "PrimaryStats.力量", value: "+2" }
   - { field: "PrimaryStats.敏捷", value: "+11" }
-  - { field: "PrimaryStats.体质", value: "+8" }
+  - { field: "PrimaryStats.体质", value: "+5" }
 ```
 `class_druid.schema.yaml`:
 ```yaml
@@ -418,7 +420,7 @@ weapon_attr: "意志"
 growth: { 意志: 3, 体质: 1, 敏捷: 1 }
 modifiers:
   - { field: "PrimaryStats.敏捷", value: "+2" }
-  - { field: "PrimaryStats.体质", value: "+9" }
+  - { field: "PrimaryStats.体质", value: "+6" }
   - { field: "PrimaryStats.意志", value: "+10" }
 ```
 `class_guardian.schema.yaml`:
@@ -433,7 +435,7 @@ weapon_attr: "体质"
 growth: { 体质: 3, 力量: 1, 意志: 1 }
 modifiers:
   - { field: "PrimaryStats.力量", value: "+2" }
-  - { field: "PrimaryStats.体质", value: "+17" }
+  - { field: "PrimaryStats.体质", value: "+14" }
   - { field: "PrimaryStats.意志", value: "+3" }
 ```
 
@@ -613,7 +615,10 @@ git commit -m "feat(attr): 等级成长改为按职业模板自动加基础属�
 
 - [ ] **Step 2: 迁移 encounter YAML(8 个)**
 
-每个敌人从 `hp/attack/defense/speed` → `PrimaryStats + defense`。换算:`体质 = hp/10`,`敏捷 = 原 attack`(weaponAttr 默认敏捷 ×1 → attack ≈ ⌈10×(1+敏捷/100)⌉,见下)。**注意占位 attack 公式让攻击落在 ~10–15**,首版近似即可。
+每个敌人从 `hp/attack/defense/speed` → `PrimaryStats + defense`。换算(maxHp = 30 + 体质×10,floor 30):
+- `体质 = max(0, ⌈(原 hp − 30) / 10⌉)` —— 原 hp ≤ 30 的弱怪 → 体质 0 → 血量落到底盘 30(首版可接受,floor 想改见顶部决策)。
+- `敏捷 = 原 attack`(weaponAttr 默认敏捷 ×1 → 物理强度=敏捷 → attack = ⌈5×(1+敏捷/100)⌉,落 ~6–8)。
+- `defense = 原 defense` 直接保留;其余基础属性 0。
 
 `forest_goblin.yaml`:
 ```yaml
@@ -626,9 +631,9 @@ enemies:
     slot: 0
     defense: 2
     力量: 0
-    敏捷: 5
+    敏捷: 5          # → attack ⌈5×1.05⌉=6
     智力: 0
-    体质: 2          # → hp 20
+    体质: 0          # 原 hp 20 ≤ 30 → 体质 0 → maxHp 30(底盘)
     意志: 0
     weaponAttr: "敏捷"
   - id: goblin2
@@ -637,15 +642,15 @@ enemies:
     slot: 0
     defense: 1
     力量: 0
-    敏捷: 7
+    敏捷: 7          # → attack ⌈5×1.07⌉=6
     智力: 0
-    体质: 2          # → hp 20
+    体质: 0          # 原 hp 15 → 体质 0 → maxHp 30
     意志: 0
     weaponAttr: "敏捷"
 ```
 对其余 7 个 encounter(`desert_scorpion` / `lake_slime` / `mountain_bandit` / `training_dummy` / `training_dummy_3` / `training_dummy_9` / `training_dummy_cross`)做同样迁移:
-- `体质 = ⌈原 hp / 10⌉`,`敏捷 = 原 attack`,`defense = 原 defense`,其余基础属性 0,`weaponAttr: "敏捷"`。
-- 训练假人(attack 0)→ `敏捷: 0`、`体质 = ⌈hp/10⌉`、`weaponAttr: "敏捷"`,攻击占位会变成 `⌈10×1⌉=10`,但假人不行动(AI 不攻击)故无影响;若希望假人真 0 攻击,给它 `攻击占位` 不触发即可(假人本就不出手)。
+- `体质 = max(0, ⌈(原 hp − 30)/10⌉)`,`敏捷 = 原 attack`,`defense = 原 defense`,其余基础属性 0,`weaponAttr: "敏捷"`。
+- 训练假人(attack 0)→ `敏捷: 0`、`体质` 按其原 hp 换算(如 training_dummy hp 高 → 体质 = ⌈(hp−30)/10⌉)、`weaponAttr: "敏捷"`。假人不行动(AI 不攻击),占位 attack `⌈5×1⌉=5` 无影响。
 
 - [ ] **Step 3: 现有战斗集成测试回归**
 
