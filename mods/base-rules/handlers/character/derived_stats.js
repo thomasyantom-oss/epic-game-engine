@@ -41,7 +41,8 @@ function registerDerivedModifier(entityId) {
                         var ws = weapon.getComponent("ItemStats");
                         var wAttrName = ws.has("weaponAttr") ? ws.getString("weaponAttr") : "力量";
                         var B = ws.has("base") ? ws.getInt("base") : PLACEHOLDER_WEAPON_BASE;
-                        atk = Math.ceil(B * (1 + p.getInt(wAttrName) * weaponMult(wAttrName) / 100));
+                        var wAttrVal = p.has(wAttrName) ? p.getInt(wAttrName) : 0;   // 防武器绑定的属性名实体没有 → 避免 NPE
+                        atk = Math.ceil(B * (1 + wAttrVal * weaponMult(wAttrName) / 100));
                     }
                 }
                 c.set("attack", atk);
