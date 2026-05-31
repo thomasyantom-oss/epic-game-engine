@@ -10,6 +10,20 @@ var Skill = {
   effects: {},
   registerEffect: function(name, fn) { this.effects[name] = fn; },
 
+  _toJs: function(v) {
+    if (v === null || v === undefined) return v;
+    if (typeof v.entrySet === "function") {            // java.util.Map
+      var o = {}; var it = v.keySet().iterator();
+      while (it.hasNext()) { var k = it.next(); o[k] = this._toJs(v.get(k)); }
+      return o;
+    }
+    if (typeof v.size === "function" && typeof v.get === "function") { // java.util.List
+      var a = []; for (var i = 0; i < v.size(); i++) a.push(this._toJs(v.get(i)));
+      return a;
+    }
+    return v;
+  },
+
   context: function(event) {
     var actorId = event.get("actorId");
     var combatId = event.get("combatId");
