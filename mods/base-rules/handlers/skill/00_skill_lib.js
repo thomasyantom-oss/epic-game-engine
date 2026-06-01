@@ -46,8 +46,8 @@ var Skill = {
       engine.fire("combat.damage_calc", ev);
       return ev.get("damage");
     }
-    // Feature #2: 伤害 = base 属性(若声明)+ add + Σ⌈强度 × 系数⌉。
-    // scaling 吃 DerivedStats 的三强度(物理/法术/精神强度),非裸基础属性(§1.9 演进)。
+    // 伤害 = base 属性(若声明)+ add + Σ⌈属性 × 系数⌉。
+    // scaling 两级查找:先 DerivedStats(三强度)再 PrimaryStats(裸基础属性),见 lookupStat。
     var statName = dmgSpec.base;
     var base = (statName && caster.hasComponent("CombatStats"))
         ? caster.getComponent("CombatStats").getInt(statName) : 0;
@@ -61,8 +61,9 @@ var Skill = {
     return total;
   },
 
-  // 两级查找一个属性值：先 DerivedStats 再 PrimaryStats，取不到返回 0。
+  // 两级查找一个属性值：先 DerivedStats 再 PrimaryStats，取不到(或无 caster)返回 0。
   lookupStat: function(caster, key) {
+    if (caster === null || caster === undefined) return 0;
     var ds = caster.getComponent("DerivedStats");
     if (ds !== null && ds.has(key)) return ds.getInt(key);
     var ps = caster.getComponent("PrimaryStats");
