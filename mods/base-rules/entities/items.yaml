@@ -1,48 +1,28 @@
 items:
-  - id: iron_sword
-    meta:
-      name: 铁剑
-      type: weapon
-      rarity: common
-    stats:
-      attack: 8
+  # ── 5 把初始武器(每职业一把,B 统一 5)──
+  - id: greatsword
+    meta: { name: 双手剑, type: weapon, rarity: common }
+    stats: { weaponAttr: "力量", base: 5 }
+  - id: dagger
+    meta: { name: 匕首, type: weapon, rarity: common }
+    stats: { weaponAttr: "敏捷", base: 5 }
+  - id: staff
+    meta: { name: 法杖, type: weapon, rarity: common }
+    stats: { weaponAttr: "智力", base: 5 }
+  - id: gauntlet
+    meta: { name: 拳套, type: weapon, rarity: common }
+    stats: { weaponAttr: "体质", base: 5 }
+  - id: totem
+    meta: { name: 图腾, type: weapon, rarity: common }
+    stats: { weaponAttr: "意志", base: 5 }
 
-  - id: steel_sword
-    meta:
-      name: 钢剑
-      type: weapon
-      rarity: uncommon
-    stats:
-      attack: 15
-
-  - id: fire_staff
-    meta:
-      name: 火焰法杖
-      type: weapon
-      rarity: rare
-    stats:
-      attack: 10
-
+  # ── 护甲 / 饰品:全限定字段 ──
   - id: leather_armor
-    meta:
-      name: 皮甲
-      type: armor
-      rarity: common
-    stats:
-      defense: 5
-
+    meta: { name: 皮甲, type: armor, rarity: common }
+    stats: { "CombatStats.defense": 5 }
   - id: chain_mail
-    meta:
-      name: 锁子甲
-      type: armor
-      rarity: uncommon
-    stats:
-      defense: 12
-
+    meta: { name: 锁子甲, type: armor, rarity: uncommon }
+    stats: { "CombatStats.defense": 12 }
   - id: speed_ring
-    meta:
-      name: 疾速戒指
-      type: accessory
-      rarity: rare
-    stats:
-      speed: 5
+    meta: { name: 疾速戒指, type: accessory, rarity: rare }
+    stats: { "CombatStats.speed": 5 }

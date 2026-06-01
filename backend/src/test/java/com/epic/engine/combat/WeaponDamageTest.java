@@ -102,6 +102,17 @@ class WeaponDamageTest {
         assertThat(store.get("n1").getComponent("CombatStats").getInt("attack")).isEqualTo(6);
     }
 
+    // items.yaml 通过 world.init 加载出 5 把武器,各带 weaponAttr
+    @Test
+    void items_yaml_loads_five_weapons() {
+        js("var ev = engine.newEvent('world.init'); engine.fire('world.init', ev);");
+        String[] ids = {"greatsword","dagger","staff","gauntlet","totem"};
+        for (String id : ids) {
+            assertThat(store.get(id)).as(id).isNotNull();
+            assertThat(store.get(id).getComponent("ItemStats").getString("weaponAttr")).isNotNull();
+        }
+    }
+
     // 体质被削 → maxHp 下降时 hp clamp 到新上限(回升不补 hp 由「clamp 只降」自然保证)
     @Test
     void hp_clamps_when_maxhp_drops() {

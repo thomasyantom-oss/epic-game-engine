@@ -135,14 +135,11 @@ engine.on("action.confirm_character", 100, function(event) {
 
     var invComp = engine.newComponent("Inventory");
     var startingItems = engine.newList();
-    startingItems.add("iron_sword");
+    // 给每个职业发全部 5 把武器，用户逐一测试不同武器在不同职业手上的表现
+    var weapons = ["greatsword", "dagger", "staff", "gauntlet", "totem"];
+    for (var wi = 0; wi < weapons.length; wi++) startingItems.add(weapons[wi]);
     startingItems.add("leather_armor");
     startingItems.add("speed_ring");
-    if (classId === "mage") {
-        startingItems.add("fire_staff");
-    } else {
-        startingItems.add("steel_sword");
-    }
     invComp.set("items", startingItems);
     entity.addComponent(invComp);
 
