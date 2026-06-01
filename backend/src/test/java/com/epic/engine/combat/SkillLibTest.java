@@ -223,8 +223,8 @@ class SkillLibTest {
     void computeDamage_reusableForTooltip_noMutation() {
         mkUnit("mage","法师",true);
         Entity g = mkUnit("goblin","哥布林",false);
-        // fireball.yaml: add=8, scaling={法术强度:0.5}; mage DerivedStats.法术强度=14
-        // → 8 + ⌈14×0.5⌉ = 8 + 7 = 15
+        // fireball.yaml: add=10, scaling={智力:0.2}; 给 mage PrimaryStats.智力=25 → 10 + ⌈25×0.2⌉ = 15
+        js("var p = engine.newComponent('PrimaryStats'); p.set('智力',25); store.get('mage').addComponent(p);");
         js("var spec = Skill._toJs(engine.loadYaml('skills/fireball.yaml'));" +
            "var preview = Skill.computeDamage(store.get('mage'), store.get('goblin'), spec.damage);" +
            "if (preview !== 15) throw 'preview='+preview;");

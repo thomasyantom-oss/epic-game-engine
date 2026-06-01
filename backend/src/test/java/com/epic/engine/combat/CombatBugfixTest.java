@@ -94,7 +94,7 @@ class CombatBugfixTest {
             }
         }
         assertThat(dmgNum).as("fireball event has a damage_number animation step").isNotNull();
-        // fireball: add=8 + ⌈法术强度14×0.5⌉=7 → 15 damage
+        // fireball: add=10 + ⌈智力25×0.2⌉=5 → 15 damage
         assertThat(dmgNum.get("value")).as("damage_number carries a numeric value").isEqualTo(-15);
     }
 
@@ -102,7 +102,7 @@ class CombatBugfixTest {
     @Test
     @SuppressWarnings("unchecked")
     void fireballKill_skillAnimationPlaysBeforeDeath() {
-        // goblin hp 15: fireball deals exactly 15 (add=8 + ⌈法术强度14×0.5⌉=7) -> dies from the hit itself
+        // goblin hp 15: fireball deals exactly 15 (add=10 + ⌈智力25×0.2⌉=5) -> dies from the hit itself
         setupCombat(6, 3, 15);
 
         resolveRound(cmd("fireball", "goblin1"), cmd("basic_attack", "mage"));
@@ -184,7 +184,7 @@ class CombatBugfixTest {
     // ── Bug 1b: a burning kill on the last enemy ends combat THIS round ─────────
     @Test
     void burningKill_endsCombatSameRound() {
-        // goblin hp 17: fireball deals 15 (add=8 + ⌈法术强度14×0.5⌉=7) -> 2, burning tick deals 3 -> dead this round
+        // goblin hp 17: fireball deals 15 (add=10 + ⌈智力25×0.2⌉=5) -> 2, burning tick deals 6 (3+⌈智力25×0.1⌉=3) -> dead this round
         setupCombat(6, 3, 17);
 
         resolveRound(cmd("fireball", "goblin1"), cmd("basic_attack", "mage"));
@@ -334,6 +334,10 @@ class CombatBugfixTest {
         Component mDerived = new Component("DerivedStats");
         mDerived.set("物理强度", 0); mDerived.set("法术强度", 14); mDerived.set("精神强度", 3);
         mage.addComponent(mDerived);
+        Component mPrim = new Component("PrimaryStats");
+        mPrim.set("力量", 5); mPrim.set("敏捷", 6); mPrim.set("智力", 25);
+        mPrim.set("体质", 7); mPrim.set("意志", 3); mPrim.set("weaponAttr", "智力");
+        mage.addComponent(mPrim);
         Component mName = new Component("Name");
         mName.set("value", "法师");
         mage.addComponent(mName);

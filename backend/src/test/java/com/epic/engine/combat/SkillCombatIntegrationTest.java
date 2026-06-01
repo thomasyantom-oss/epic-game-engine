@@ -98,7 +98,7 @@ class SkillCombatIntegrationTest {
         Entity combat = store.get("battle1");
 
         // ── Fireball assertion ────────────────────────────────────────────────
-        // fireball.yaml: add=8, scaling={法术强度:0.5}; mage DerivedStats.法术强度=14
+        // fireball.yaml: add=10, scaling={智力:0.2}; mage PrimaryStats.智力=25 → 10+⌈25×0.2⌉=15
         // → 8 + ⌈14×0.5⌉ = 8 + 7 = 15 damage, ignores defense
         // goblin starts at 50 hp; after fireball: 50 - 15 = 35
         // (burning.js NOT loaded → no tick damage, exact value is deterministic)
@@ -141,6 +141,10 @@ class SkillCombatIntegrationTest {
         Component mDerived = new Component("DerivedStats");
         mDerived.set("物理强度", 0); mDerived.set("法术强度", 14); mDerived.set("精神强度", 3);
         mage.addComponent(mDerived);
+        Component mPrim = new Component("PrimaryStats");
+        mPrim.set("力量", 5); mPrim.set("敏捷", 6); mPrim.set("智力", 25);
+        mPrim.set("体质", 7); mPrim.set("意志", 3); mPrim.set("weaponAttr", "智力");
+        mage.addComponent(mPrim);
         Component mName = new Component("Name");
         mName.set("value", "法师");
         mage.addComponent(mName);
