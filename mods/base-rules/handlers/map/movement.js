@@ -67,9 +67,10 @@ engine.on("map.move", 100, function(event) {
 
     // 位置是可变状态:把当前 Position 同步进 base 快照(避免后续 recalc 的
     // restoreBaseState 把玩家拉回出生点),并持久化真实位置到 H2(重启不重置)。
-    var posTypes = engine.newList();
-    posTypes.add("Position");
-    engine.setBaseSelective(entityId, posTypes);
+    // 注意:必须用 updateBase(只更新 Position 这一项),不能用 setBaseSelective——
+    // 后者会清空整个 base 只留 Position,导致 PrimaryStats/CombatStats 不再被 restoreBaseState
+    // 复位,累加型 modifier(职业/装备)从此每次 recalc 无限叠加(移动后换装/战斗属性暴涨的真凶)。
+    engine.updateBase(entityId, "Position");
     if (typeof persistence !== 'undefined') {
         persistence.save(entity); // save 内部会跳过非 persistent 实体
     }

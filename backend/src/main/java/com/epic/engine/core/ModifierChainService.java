@@ -41,6 +41,12 @@ public class ModifierChainService {
         getOrCreate(entityId).setBaseSelective(componentTypes);
     }
 
+    public void updateBase(String entityId, String componentType) {
+        ModifierChain chain = chains.get(entityId);
+        if (chain == null) return;
+        chain.updateBase(componentType);
+    }
+
     public void addModifier(String entityId, Modifier modifier) {
         ModifierChain chain = getOrCreate(entityId);
         String stackRule = typeRegistry.getStackRule(modifier.typeId());

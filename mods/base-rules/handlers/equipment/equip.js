@@ -97,7 +97,7 @@ engine.on("action.equip", 100, function(event) {
     // 卸下已装备的旧物品，放回背包
     var oldItemId = slots.get(slotName);
     if (oldItemId !== null) {
-        engine.removeModifier(playerId, "equip_" + oldItemId);
+        engine.removeModifier(playerId, "equip_" + oldItemId);   // 触发 recalculate → restoreBaseState 会替换组件实例
         if (inv !== null) {
             inv.get("items").add(String(oldItemId));
         }
@@ -114,8 +114,13 @@ engine.on("action.equip", 100, function(event) {
         }
     }
 
+    // 重新取 EquipmentSlots:上面 removeModifier 的 recalculate 可能已替换组件实例,旧引用已失效。
+    slots = player.getComponent("EquipmentSlots");
     // 更新装备槽
     slots.set(slotName, itemId);
+    // EquipmentSlots 是结构性状态:重新快照进 base,否则 registerEquipmentModifier 触发的
+    // recalculate→restoreBaseState 会把它覆盖回旧值(weapon=null),导致 derived 读不到武器。
+    engine.updateBase(playerId, "EquipmentSlots");
 
     // 注册新 Modifier（内部触发 recalculate）
     registerEquipmentModifier(playerId, itemId);
@@ -138,6 +143,7 @@ engine.on("action.unequip", 100, function(event) {
 
     engine.removeModifier(playerId, "equip_" + itemId);
     slots.set(slotName, null);
+    engine.updateBase(playerId, "EquipmentSlots");
 
     // 放回背包
     var inv = player.getComponent("Inventory");

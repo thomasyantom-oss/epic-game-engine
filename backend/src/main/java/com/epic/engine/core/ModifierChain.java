@@ -42,11 +42,22 @@ public class ModifierChain {
         }
     }
 
+    // 把单个组件的当前实时状态重新快照进 base(不动其它组件)。
+    // 用于结构性状态(如 EquipmentSlots)被直接改写后,需让其在后续 recalculate 的
+    // restoreBaseState 中存活,而非被旧 base 覆盖回去。
+    public void updateBase(String componentType) {
+        Component comp = entity.getComponent(componentType);
+        if (comp != null) baseState.put(componentType, comp.copy());
+        else baseState.remove(componentType);
+    }
+
     public Map<String, Component> getBaseState() {
         return Collections.unmodifiableMap(baseState);
     }
 
     public void addModifier(Modifier modifier) {
+        // id 唯一:同 id 重复注册视为替换(防 entity.loaded 重载/重复注册导致累加型 modifier 叠加膨胀)。
+        modifiers.removeIf(m -> m.id().equals(modifier.id()));
         modifiers.add(modifier);
         modifiers.sort(Modifier::compareTo);
     }
@@ -71,13 +82,9 @@ public class ModifierChain {
         for (Map.Entry<String, Component> entry : baseState.entrySet()) {
             entity.addComponent(entry.getValue().copy());
         }
-        // Restore base tags
-        for (String tag : new ArrayList<>(entity.getTags())) {
-            entity.removeTag(tag);
-        }
-        for (String tag : baseTags) {
-            entity.addTag(tag);
-        }
+        // 注意:不复位标签。标签是运行时结构性状态(如战斗中的 combat:xxx),
+        // modifier 只改组件字段、从不动标签。若在此复位会把进入战斗后才加的 combat 标签
+        // 抹掉——任何战斗中触发 recalc 的技能(如战吼施加 buff)都会让单位"退出战斗"。
     }
 
     public void recalculate() {

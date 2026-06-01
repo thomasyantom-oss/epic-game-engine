@@ -93,6 +93,7 @@ public class EngineBootstrap {
 
         eventBus.fire("world.init", new GameEvent("world.init"));
         log.info("世界初始化完成，实体数: {}", entityStore.all().size());
+        log.info("=== EPIC BUILD: base-snapshot 修复已加载 (movement updateBase / tag-reset / dedup) ===");
 
         // Start JS hot reloader
         hotReloader = new HotReloader(scriptRuntime, eventBus);
