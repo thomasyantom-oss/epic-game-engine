@@ -1,6 +1,8 @@
 package com.epic.engine.snapshot;
 
 import com.epic.engine.core.*;
+import com.epic.engine.module.Schema;
+import com.epic.engine.module.SchemaRegistry;
 import com.epic.engine.session.SessionData;
 import com.epic.engine.session.SessionService;
 import org.springframework.stereotype.Service;
@@ -16,17 +18,19 @@ public class SnapshotService {
     private final EventBus eventBus;
     private final EntityStore entityStore;
     private final SessionService sessionService;
+    private final SchemaRegistry schemaRegistry;
 
-    public SnapshotService(EventBus eventBus, EntityStore entityStore, SessionService sessionService) {
+    public SnapshotService(EventBus eventBus, EntityStore entityStore, SessionService sessionService, SchemaRegistry schemaRegistry) {
         this.eventBus = eventBus;
         this.entityStore = entityStore;
         this.sessionService = sessionService;
+        this.schemaRegistry = schemaRegistry;
     }
 
     public WorldSnapshot buildSnapshot(String token) {
         SessionData session = sessionService.getSession(token);
         if (session == null) {
-            return WorldSnapshot.characterSelect(token, List.of(), sessionService.getMaxSlots(), buildColorMap());
+            return WorldSnapshot.characterSelect(token, List.of(), sessionService.getMaxSlots(), buildColorMap(), buildClassPreviews());
         }
 
         if (session.activeCharacterId() != null && sessionService.isTimedOut(token)) {
@@ -51,7 +55,7 @@ public class SnapshotService {
         List<WorldSnapshot.CharacterInfo> characters = event.get("characters");
 
         return WorldSnapshot.characterSelect(token, characters != null ? characters : List.of(),
-                sessionService.getMaxSlots(), buildColorMap());
+                sessionService.getMaxSlots(), buildColorMap(), buildClassPreviews());
     }
 
     private WorldSnapshot buildInGameSnapshot(String token, String playerId) {
@@ -152,6 +156,25 @@ public class SnapshotService {
                 meta.getString("rarityColor"),
                 statsMap
         );
+    }
+
+    @SuppressWarnings("unchecked")
+    List<WorldSnapshot.ClassPreview> buildClassPreviews() {
+        List<WorldSnapshot.ClassPreview> out = new ArrayList<>();
+        for (Schema s : schemaRegistry.getByCategory("class")) {
+            Map<String, Object> raw = s.raw();
+            Map<String, Object> growth = raw.get("growth") instanceof Map
+                    ? (Map<String, Object>) raw.get("growth") : Map.of();
+            Map<String, String> mods = new LinkedHashMap<>();
+            if (s.modifiers() != null) {
+                for (Schema.SchemaModifier m : s.modifiers()) {
+                    mods.put(m.field(), m.value());
+                }
+            }
+            String portrait = raw.get("portrait") != null ? String.valueOf(raw.get("portrait")) : null;
+            out.add(new WorldSnapshot.ClassPreview(s.id(), s.label(), s.description(), growth, mods, portrait));
+        }
+        return out;
     }
 
     public Map<String, String> buildColorMap() {

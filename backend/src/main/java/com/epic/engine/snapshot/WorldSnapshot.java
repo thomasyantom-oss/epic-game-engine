@@ -19,10 +19,14 @@ public record WorldSnapshot(
         List<LogEntry> log,
         Map<String, String> colors,
         Integer pendingPoints,
-        EquipmentData equipment
+        EquipmentData equipment,
+        List<ClassPreview> classPreviews
 ) {
     public record ActionResult(boolean success, String message) {}
     public record CharacterInfo(String id, String name, int level, String classId, String classLabel) {}
+    public record ClassPreview(String id, String label, String description,
+                               Map<String, Object> growth, Map<String, String> modifiers,
+                               String portrait) {}
     public record FormData(List<FormField> fields) {}
     public record FormField(String name, String label, String type, boolean required, List<FormOption> options) {}
     public record FormOption(String value, String label, String description) {}
@@ -54,16 +58,16 @@ public record WorldSnapshot(
                            Map<String, Integer> stats) {}
     public record EquipmentData(Map<String, ItemInfo> slots, List<ItemInfo> inventory) {}
 
-    public static WorldSnapshot characterSelect(String sessionToken, List<CharacterInfo> characters, int maxSlots, Map<String, String> colors) {
+    public static WorldSnapshot characterSelect(String sessionToken, List<CharacterInfo> characters, int maxSlots, Map<String, String> colors, List<ClassPreview> classPreviews) {
         return new WorldSnapshot("character_select", sessionToken, null,
                 new ActionResult(true, "ok"), characters, maxSlots, null,
-                null, null, null, null, null, null, colors, null, null);
+                null, null, null, null, null, null, colors, null, null, classPreviews);
     }
 
-    public static WorldSnapshot characterCreate(String sessionToken, FormData form, Map<String, String> colors) {
+    public static WorldSnapshot characterCreate(String sessionToken, FormData form, Map<String, String> colors, List<ClassPreview> classPreviews) {
         return new WorldSnapshot("character_create", sessionToken, null,
                 new ActionResult(true, "ok"), null, null, form,
-                null, null, null, null, null, null, colors, null, null);
+                null, null, null, null, null, null, colors, null, null, classPreviews);
     }
 
     public static WorldSnapshot inGame(String sessionToken, String playerId, ActionResult result,
@@ -74,6 +78,6 @@ public record WorldSnapshot(
                                         Integer pendingPoints, EquipmentData equipment) {
         return new WorldSnapshot("in_game", sessionToken, playerId, result,
                 null, null, null, statusBars, buffs, map, combat, actions, log, colors,
-                pendingPoints, equipment);
+                pendingPoints, equipment, null);
     }
 }

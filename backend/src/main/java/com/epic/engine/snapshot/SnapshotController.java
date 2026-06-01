@@ -48,7 +48,7 @@ public class SnapshotController {
         // Check if handler wants to show a form (character creation)
         if (actionEvent.has("form")) {
             WorldSnapshot.FormData form = actionEvent.get("form");
-            return WorldSnapshot.characterCreate(token, form, snapshotService.buildColorMap());
+            return WorldSnapshot.characterCreate(token, form, snapshotService.buildColorMap(), snapshotService.buildClassPreviews());
         }
 
         return snapshotService.buildSnapshot(token);
