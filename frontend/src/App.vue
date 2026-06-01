@@ -4,11 +4,13 @@
     <CharacterSelect v-if="phase === 'character_select'"
       :characters="snapshot.characters"
       :max-slots="snapshot.maxSlots"
+      :class-previews="snapshot.classPreviews"
       @select="selectCharacter"
       @create="createCharacter"
       @delete="deleteCharacter" />
     <CharacterCreate v-else-if="phase === 'character_create'"
       :form="snapshot.form"
+      :class-previews="snapshot.classPreviews"
       @confirm="confirmCharacter"
       @cancel="cancelCreate" />
     <SnapshotRenderer v-else-if="phase === 'in_game'"
