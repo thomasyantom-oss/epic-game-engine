@@ -4,12 +4,12 @@
     "intensity" : "normal",
     "target" : "mage",
     "type" : "buff_up",
-    "value" : 15
+    "value" : 11
   }, {
     "color" : "heal",
     "target" : "mage",
     "type" : "damage_number",
-    "value" : 15
+    "value" : 11
   } ],
   "effects" : [ ],
   "segments" : [ {
@@ -20,7 +20,7 @@
     "text" : " 恢复了 "
   }, {
     "color" : "player",
-    "text" : "15"
+    "text" : "11"
   }, {
     "color" : "text",
     "text" : " 点生命"

@@ -11,15 +11,15 @@
     "color" : "damage",
     "target" : "goblin1",
     "type" : "damage_number",
-    "value" : -16
+    "value" : -11
   }, {
     "color" : "#ce93d8",
     "target" : "mage",
     "type" : "pulse"
   } ],
   "effects" : [ {
-    "amount" : -16,
-    "hp" : 184,
+    "amount" : -11,
+    "hp" : 189,
     "maxHp" : 200,
     "target" : "goblin1",
     "type" : "hp_change"
@@ -38,7 +38,7 @@
     "text" : " 造成 "
   }, {
     "color" : "damage",
-    "text" : "16"
+    "text" : "11"
   }, {
     "color" : "text",
     "text" : " 点伤害"

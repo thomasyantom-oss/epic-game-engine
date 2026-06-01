@@ -1,8 +1,8 @@
 [ {
   "animation" : [ ],
   "effects" : [ {
-    "amount" : -13,
-    "hp" : 187,
+    "amount" : -11,
+    "hp" : 189,
     "maxHp" : 200,
     "target" : "goblin1",
     "type" : "hp_change"
@@ -32,7 +32,7 @@
     "text" : "，造成 "
   }, {
     "color" : "damage",
-    "text" : "13"
+    "text" : "11"
   }, {
     "color" : "text",
     "text" : " 点伤害并中毒"

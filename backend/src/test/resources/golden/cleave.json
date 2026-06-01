@@ -11,7 +11,7 @@
     "color" : "damage",
     "target" : "goblin1",
     "type" : "damage_number",
-    "value" : -15
+    "value" : -12
   }, {
     "side" : "player",
     "target" : "mage",
@@ -19,8 +19,8 @@
   } ],
   "effects" : [ {
     "data" : {
-      "amount" : -15,
-      "hp" : 185,
+      "amount" : -12,
+      "hp" : 188,
       "maxHp" : 200
     },
     "target" : "goblin1",
@@ -34,7 +34,7 @@
     "text" : " 的顺劈斩命中 1 个目标，各造成 "
   }, {
     "color" : "damage",
-    "text" : "15"
+    "text" : "12"
   }, {
     "color" : "text",
     "text" : " 点伤害"
