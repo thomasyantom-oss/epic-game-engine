@@ -1,0 +1,51 @@
+[ {
+  "animation" : [ {
+    "color" : "#b0bec5",
+    "target" : "goblin1",
+    "type" : "slash"
+  }, {
+    "color" : "#b0bec5",
+    "target" : "goblin1",
+    "type" : "impact"
+  }, {
+    "intensity" : "heavy",
+    "target" : "goblin1",
+    "type" : "shake"
+  }, {
+    "color" : "damage",
+    "target" : "goblin1",
+    "type" : "damage_number",
+    "value" : -12
+  }, {
+    "side" : "player",
+    "target" : "mage",
+    "type" : "lunge"
+  } ],
+  "effects" : [ {
+    "amount" : -12,
+    "hp" : 188,
+    "maxHp" : 200,
+    "target" : "goblin1",
+    "type" : "hp_change"
+  } ],
+  "logCount" : 1,
+  "segments" : [ {
+    "color" : "player",
+    "text" : "法师"
+  }, {
+    "color" : "text",
+    "text" : " 的背刺命中 "
+  }, {
+    "color" : "enemy",
+    "text" : "哥布林甲"
+  }, {
+    "color" : "text",
+    "text" : "，造成 "
+  }, {
+    "color" : "damage",
+    "text" : "12"
+  }, {
+    "color" : "text",
+    "text" : " 点伤害"
+  } ]
+} ]

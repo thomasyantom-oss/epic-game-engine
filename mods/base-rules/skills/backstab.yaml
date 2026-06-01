@@ -1,0 +1,35 @@
+id: backstab
+name: "背刺"
+description: "背刺，对单体造成高额伤害"
+category: skill
+silenceable: true
+effect: damage_only
+damage:
+  base: attack
+  scaling: { 敏捷: 0.2 }
+targeting:
+  mode: pattern
+  field: enemy
+  pattern: [[0,0]]
+  steps:
+    - prompt: "选择目标"
+      filter: enemy
+      count: 1
+log:
+  template: "{caster} 的背刺命中 {target}，造成 {damage} 点伤害"
+animation:
+  - type: lunge
+    target: actor
+    side: actor_side
+  - type: slash
+    target: target
+    color: "#b0bec5"
+  - type: impact
+    target: target
+    color: "#b0bec5"
+  - type: shake
+    target: target
+    intensity: heavy
+  - type: damage_number
+    target: target
+    color: damage

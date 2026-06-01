@@ -10,7 +10,8 @@ class SkillFidelityTest {
         {"pulse_wave",   "goblin1"}, {"fireball",       "goblin1"}, {"poison_dart", "goblin1"},
         {"cleave",       "goblin1"}, {"piercing_ray",   "goblin1"}, {"cross_blast", "goblin1"},
         {"light_field",  "goblin1"}, {"heal",  null}, {"defend", null},
-        {"war_cry",      null},      {"curse",  null}
+        {"war_cry",      null},      {"curse",  null},
+        {"backstab",     "goblin1"}
     };
 
     @Test
