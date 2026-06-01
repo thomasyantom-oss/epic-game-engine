@@ -5,7 +5,9 @@ engine.on("combat.unit_action", 80, function(event) {
     var combatId = event.get("combatId");
     var caster = store.get(actorId);
     var health = caster.getComponent("Health");
-    var healAmount = 15;
+    var prim = caster.getComponent("PrimaryStats");
+    var con = (prim !== null && prim.has("体质")) ? prim.getInt("体质") : 0;
+    var healAmount = 10 + Math.ceil(0.1 * con);   // 护卫治愈 = 10 + ⌈0.1×体质⌉
     var newHp = Math.min(health.getInt("maxHp"), health.getInt("hp") + healAmount);
     health.set("hp", newHp);
 

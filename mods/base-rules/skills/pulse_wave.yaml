@@ -1,12 +1,12 @@
 id: pulse_wave
-name: "脉冲波"
-description: "脉冲波，对范围内敌人造成伤害"
+name: "震波"
+description: "震波，对目标造成冲击伤害"
 category: skill
 silenceable: true
 effect: damage_only
 damage:
   base: attack
-  add: 6
+  scaling: { 体质: 0.1 }
 targeting:
   mode: pattern
   field: enemy

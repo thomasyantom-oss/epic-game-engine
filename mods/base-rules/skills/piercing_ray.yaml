@@ -4,8 +4,8 @@ description: "贯穿射线，穿透目标列造成伤害"
 category: skill
 silenceable: true
 damage:
-  base: attack
-  add: 6
+  add: 10
+  scaling: { 意志: 0.2 }
 targeting:
   mode: pattern
   field: enemy

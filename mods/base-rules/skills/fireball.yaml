@@ -5,8 +5,8 @@ category: skill
 silenceable: true
 effect: damage_with_debuff
 damage:
-  add: 8
-  scaling: { 法术强度: 0.5 }
+  add: 10
+  scaling: { 智力: 0.2 }
 targeting:
   mode: pattern
   field: enemy
@@ -17,6 +17,7 @@ targeting:
       count: 1
 debuff:
   id: burning
+  scaling: { damage: { 智力: 0.1 } }
   data:
     damage: 3
     remaining: 2

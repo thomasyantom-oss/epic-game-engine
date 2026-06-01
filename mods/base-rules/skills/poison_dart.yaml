@@ -6,7 +6,7 @@ silenceable: true
 effect: damage_with_debuff
 damage:
   base: attack
-  add: 3
+  scaling: { 敏捷: 0.1 }
 targeting:
   mode: pattern
   field: enemy
@@ -17,6 +17,7 @@ targeting:
       count: 1
 debuff:
   id: poison
+  scaling: { damage: { 敏捷: 0.1 } }
   data:
     damage: 3
     remaining: 3
