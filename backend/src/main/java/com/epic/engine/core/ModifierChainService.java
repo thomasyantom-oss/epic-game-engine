@@ -98,4 +98,11 @@ public class ModifierChainService {
         chains.remove(entityId);
         contributions.remove(entityId);
     }
+
+    /** 更新单个组件在基础快照中的值，不影响其他组件的基础快照。用于「诅咒」类 debuff 降 hp 后锁住新 hp 基线。*/
+    public void updateBaseComponent(String entityId, String componentType) {
+        ModifierChain chain = chains.get(entityId);
+        if (chain == null) return;
+        chain.updateBaseComponent(componentType);
+    }
 }

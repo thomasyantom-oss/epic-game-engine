@@ -42,6 +42,14 @@ public class ModifierChain {
         }
     }
 
+    /** 更新单个组件在基础快照中的值，不影响其他组件的基础快照。*/
+    public void updateBaseComponent(String componentType) {
+        Component comp = entity.getComponent(componentType);
+        if (comp != null) {
+            baseState.put(componentType, comp.copy());
+        }
+    }
+
     public Map<String, Component> getBaseState() {
         return Collections.unmodifiableMap(baseState);
     }

@@ -240,6 +240,13 @@ public class ScriptRuntime implements AutoCloseable {
         }
 
         @HostAccess.Export
+        public void updateBaseComponent(String entityId, String componentType) {
+            if (modifierChainService != null) {
+                modifierChainService.updateBaseComponent(entityId, componentType);
+            }
+        }
+
+        @HostAccess.Export
         public void addModifier(String entityId, Value config) {
             if (modifierChainService == null) return;
             String id = config.getMember("id").asString();

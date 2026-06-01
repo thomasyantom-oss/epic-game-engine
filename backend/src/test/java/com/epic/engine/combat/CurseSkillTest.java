@@ -22,6 +22,7 @@ class CurseSkillTest {
         rt.bindService("buffs", new BuffService(bus, store));
         rt.execute(Files.readString(Path.of("../mods/base-rules/handlers/character/derived_stats.js")), "derived_stats.js");
         rt.execute(Files.readString(Path.of("../mods/base-rules/buffs/war_cry.js")), "war_cry.js");
+        rt.execute(Files.readString(Path.of("../mods/base-rules/buffs/cursed.js")), "cursed.js");
     }
     @AfterEach
     void tearDown() { rt.close(); }
@@ -78,5 +79,55 @@ class CurseSkillTest {
             .as("重复施放不叠加(单一 modifier 替换,而非两个 +10)").isEqualTo(20);
         js("buffs.removeBuff('w2', 'war_cry');");
         assertThat(store.get("w2").getComponent("PrimaryStats").getInt("力量")).isEqualTo(10);
+    }
+
+    @Test
+    void curse_reduces_all_primary_stats_and_clamps_hp() {
+        Entity e = warrior("c1");
+        int maxBefore = e.getComponent("Health").getInt("maxHp"); // 30 + 体质10×10 = 130
+        js("var d = engine.newMap(); d.put('remaining', 3); d.put('stacking','refresh');" +
+           " buffs.applyBuff('c1', 'cursed', d);");
+        Entity r = store.get("c1");
+        assertThat(r.getComponent("PrimaryStats").getInt("力量")).isEqualTo(8);   // 10-2
+        assertThat(r.getComponent("PrimaryStats").getInt("体质")).isEqualTo(8);   // 10-2
+        // 体质8 → maxHp = 30 + 80 = 110；hp 原 130 被 clamp 到 110
+        assertThat(r.getComponent("Health").getInt("maxHp")).isEqualTo(110);
+        assertThat(r.getComponent("Health").getInt("hp")).isEqualTo(110);
+        assertThat(maxBefore).isEqualTo(130);
+
+        // 移除：体质回 10 → maxHp 回 130，但 hp 不补（仍 110）
+        js("buffs.removeBuff('c1', 'cursed');");
+        Entity r2 = store.get("c1");
+        assertThat(r2.getComponent("PrimaryStats").getInt("力量")).isEqualTo(10);
+        assertThat(r2.getComponent("Health").getInt("maxHp")).isEqualTo(130);
+        assertThat(r2.getComponent("Health").getInt("hp")).isEqualTo(110);   // 不补
+    }
+
+    @Test
+    void curse_clamps_primary_stats_at_zero() {
+        Entity e = new Entity("c2");
+        Component p = new Component("PrimaryStats");
+        p.set("力量", 1); p.set("敏捷", 1); p.set("智力", 1);
+        p.set("体质", 1); p.set("意志", 1); p.set("weaponAttr", "力量");
+        e.addComponent(p);
+        e.addComponent(new Component("DerivedStats"));
+        Component h = new Component("Health"); h.set("hp", 40); h.set("maxHp", 40); e.addComponent(h);
+        Component c = new Component("CombatStats"); c.set("attack", 0); c.set("defense", 0); c.set("speed", 0); e.addComponent(c);
+        store.add(e);
+        js("engine.setBase('c2'); registerDerivedModifier('c2');");
+        js("var d = engine.newMap(); d.put('remaining', 3); buffs.applyBuff('c2', 'cursed', d);");
+        // 1-2 clamp 到 0，不为负
+        assertThat(store.get("c2").getComponent("PrimaryStats").getInt("力量")).isEqualTo(0);
+    }
+
+    @Test
+    void curse_recast_does_not_double_reduce() {
+        warrior("c3");
+        js("var d = engine.newMap(); d.put('remaining', 3); d.put('stacking','refresh'); buffs.applyBuff('c3', 'cursed', d);");
+        assertThat(store.get("c3").getComponent("PrimaryStats").getInt("力量")).isEqualTo(8);  // -2
+        js("var d2 = engine.newMap(); d2.put('remaining', 3); d2.put('stacking','refresh'); buffs.applyBuff('c3', 'cursed', d2);");
+        // 重复施放仍 -2(幂等),而非 -4
+        assertThat(store.get("c3").getComponent("PrimaryStats").getInt("力量"))
+            .as("重复施放不叠加").isEqualTo(8);
     }
 }
