@@ -10,3 +10,4 @@ modifiers:
   - { field: "PrimaryStats.敏捷", value: "+2" }
   - { field: "PrimaryStats.体质", value: "+6" }
   - { field: "PrimaryStats.意志", value: "+10" }
+starting_skills: [curse, piercing_ray]

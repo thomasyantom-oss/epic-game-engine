@@ -76,4 +76,45 @@ class CharacterFlowTest {
         List<Map> characters = (List<Map>) snapshot.getBody().get("characters");
         assertThat(characters).isNotEmpty();
     }
+
+    @Test
+    @SuppressWarnings("unchecked")
+    void warriorGetsClassStartingSkills() {
+        String token = sessionService.createSession();
+        HttpHeaders headers = new HttpHeaders();
+        headers.set("X-Session-Token", token);
+        headers.setContentType(MediaType.APPLICATION_JSON);
+
+        var confirmReq = Map.of("type", "confirm_character",
+                "params", Map.of("name", "战士技能测试", "class", "warrior"));
+        ResponseEntity<Map> resp = rest.exchange("/api/action", HttpMethod.POST,
+                new HttpEntity<>(confirmReq, headers), Map.class);
+        String playerId = (String) resp.getBody().get("playerId");
+
+        var skillsComp = entityStore.get(playerId).getComponent("Skills");
+        List<Map<String,Object>> list = (List<Map<String,Object>>) skillsComp.get("list");
+        List<String> ids = list.stream().map(m -> String.valueOf(m.get("id"))).toList();
+        assertThat(ids).contains("cleave", "war_cry");           // 来自 schema starting_skills
+        assertThat(ids).contains("basic_attack", "defend", "flee"); // 全员通用保留
+    }
+
+    @Test
+    @SuppressWarnings("unchecked")
+    void mageGetsClassStartingSkills() {
+        String token = sessionService.createSession();
+        HttpHeaders headers = new HttpHeaders();
+        headers.set("X-Session-Token", token);
+        headers.setContentType(MediaType.APPLICATION_JSON);
+
+        var confirmReq = Map.of("type", "confirm_character",
+                "params", Map.of("name", "法师技能测试", "class", "mage"));
+        ResponseEntity<Map> resp = rest.exchange("/api/action", HttpMethod.POST,
+                new HttpEntity<>(confirmReq, headers), Map.class);
+        String playerId = (String) resp.getBody().get("playerId");
+
+        var skillsComp = entityStore.get(playerId).getComponent("Skills");
+        List<Map<String,Object>> list = (List<Map<String,Object>>) skillsComp.get("list");
+        List<String> ids = list.stream().map(m -> String.valueOf(m.get("id"))).toList();
+        assertThat(ids).contains("fireball", "light_field");
+    }
 }

@@ -11,3 +11,4 @@ modifiers:
   - { field: "PrimaryStats.智力", value: "+11" }
   - { field: "PrimaryStats.体质", value: "+4" }
   - { field: "PrimaryStats.意志", value: "+3" }
+starting_skills: [fireball, light_field]

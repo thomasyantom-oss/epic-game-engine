@@ -10,3 +10,4 @@ modifiers:
   - { field: "PrimaryStats.力量", value: "+2" }
   - { field: "PrimaryStats.体质", value: "+14" }
   - { field: "PrimaryStats.意志", value: "+3" }
+starting_skills: [heal, pulse_wave]

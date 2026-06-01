@@ -10,3 +10,4 @@ modifiers:
   - { field: "PrimaryStats.力量", value: "+2" }
   - { field: "PrimaryStats.敏捷", value: "+11" }
   - { field: "PrimaryStats.体质", value: "+5" }
+starting_skills: [poison_dart, backstab]

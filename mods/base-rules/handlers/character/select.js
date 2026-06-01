@@ -116,12 +116,13 @@ engine.on("action.confirm_character", 100, function(event) {
     var fleeSkill = engine.newMap();
     fleeSkill.put("id", "flee"); fleeSkill.put("level", 1); fleeSkill.put("cooldown", 0);
     skillList.add(fleeSkill);
-    if (classId === "mage") {
-        var mageSkills = ["fireball", "light_field"];
-        for (var m = 0; m < mageSkills.length; m++) {
-            var ms = engine.newMap();
-            ms.put("id", mageSkills[m]); ms.put("level", 1); ms.put("cooldown", 0);
-            skillList.add(ms);
+    // 职业技能:读 schema 的 starting_skills(替代硬编码)
+    if (classSchema !== null && classSchema.raw().get("starting_skills") !== null) {
+        var startSkills = classSchema.raw().get("starting_skills");
+        for (var sk = 0; sk < startSkills.size(); sk++) {
+            var ss = engine.newMap();
+            ss.put("id", String(startSkills.get(sk))); ss.put("level", 1); ss.put("cooldown", 0);
+            skillList.add(ss);
         }
     }
     skills.set("list", skillList);
