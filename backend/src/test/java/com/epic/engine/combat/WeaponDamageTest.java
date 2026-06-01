@@ -110,6 +110,7 @@ class WeaponDamageTest {
         for (String id : ids) {
             assertThat(store.get(id)).as(id).isNotNull();
             assertThat(store.get(id).getComponent("ItemStats").getString("weaponAttr")).isNotNull();
+            assertThat(store.get(id).getComponent("ItemStats").getInt("base")).as(id + " base").isEqualTo(5);
         }
     }
 
