@@ -1,5 +1,7 @@
 // 诅咒 buff→modifier 桥：5 主属性各 -2(clamp ≥0)，typeId buff(priority 10，derived 前跑)。
-// 体质削减经 derived 重算 maxHp，hp 由 derived_stats 的 clamp 收口(只降不升 → 过期不补血)。
+// 体质削减经 derived 重算 maxHp；hp 由 recalculate_hooks 的 scratch 机制收口——
+// 它在 recalc 后置 hp=min(recalc前的hp, maxHp)：体质降 → maxHp 降 → hp clamp 到新上限；
+// 诅咒消除 → maxHp 回升但 hp 取 min(旧hp, 新maxHp)=旧hp,不补血。无需改基础快照。
 var CURSE_STATS = ["力量", "敏捷", "智力", "体质", "意志"];
 
 engine.on("buff.applied", 50, function(event) {
@@ -20,9 +22,6 @@ engine.on("buff.applied", 50, function(event) {
             }
         }
     });
-    // addModifier 已触发 recalc：体质降低 → derived 将 maxHp 下调并 clamp hp。
-    // 此时 Health.hp 已是 clamp 后的值，更新 Health 基础快照，确保诅咒消除时 hp 不回升。
-    engine.updateBaseComponent(targetId, "Health");
 });
 
 engine.on("buff.removed", 50, function(event) {

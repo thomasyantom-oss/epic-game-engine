@@ -21,6 +21,9 @@ class CurseSkillTest {
         rt.setModuleContext(Path.of("../mods/base-rules"));
         rt.bindService("buffs", new BuffService(bus, store));
         rt.execute(Files.readString(Path.of("../mods/base-rules/handlers/character/derived_stats.js")), "derived_stats.js");
+        // recalculate_hooks.js: before/after_recalculate 用 scratch 保住当前 hp(=min(旧hp,maxHp))。
+        // 加载它使测试与生产一致 —— 诅咒降体质后 hp clamp、消除后 maxHp 回升不补 hp 均由它收口。
+        rt.execute(Files.readString(Path.of("../mods/base-rules/handlers/character/recalculate_hooks.js")), "recalculate_hooks.js");
         rt.execute(Files.readString(Path.of("../mods/base-rules/buffs/war_cry.js")), "war_cry.js");
         rt.execute(Files.readString(Path.of("../mods/base-rules/buffs/cursed.js")), "cursed.js");
     }
