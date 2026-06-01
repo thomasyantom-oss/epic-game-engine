@@ -12,13 +12,16 @@ engine.on("buff.applied", 50, function(event) {
     var d = target.getComponent("DerivedStats");
     var physStrength = (d !== null && d.has("物理强度")) ? d.getInt("物理强度") : 0;
     var bonus = Math.ceil(0.5 * physStrength);
+    // 幂等:重复施放(war_cry stacking=refresh,buff.applied 会再次触发)先撤旧 modifier,避免叠加翻倍。
+    engine.removeModifier(targetId, "war_cry_" + targetId);
+    if (bonus === 0) return;   // 无加成不注册空 modifier
     engine.addModifier(targetId, {
         typeId: "buff",
         id: "war_cry_" + targetId,
         label: "战吼",
         apply: function(ent) {
             var p = ent.getComponent("PrimaryStats");
-            if (p === null || bonus === 0) return;
+            if (p === null) return;
             p.set("力量", p.getInt("力量") + bonus);
         }
     });

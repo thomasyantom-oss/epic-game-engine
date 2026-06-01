@@ -51,4 +51,32 @@ class CurseSkillTest {
         js("buffs.removeBuff('w1', 'war_cry');");
         assertThat(store.get("w1").getComponent("PrimaryStats").getInt("力量")).isEqualTo(10); // 撤回 base
     }
+
+    // 物理强度固定为 20(写进 base 快照,不注册 derived → 不会因 力量 抬升而自我膨胀),
+    // 隔离测「重复施放不叠加」:bonus=⌈0.5×20⌉=10,两次施放仍只 +10(=20),而非 +20(=30)。
+    Entity warriorStablePhys(String id) {
+        Entity e = new Entity(id);
+        Component p = new Component("PrimaryStats");
+        p.set("力量", 10); p.set("敏捷", 5); p.set("智力", 3);
+        p.set("体质", 10); p.set("意志", 3); p.set("weaponAttr", "力量");
+        e.addComponent(p);
+        Component d = new Component("DerivedStats"); d.set("物理强度", 20); e.addComponent(d);
+        Component h = new Component("Health"); h.set("hp", 130); h.set("maxHp", 130); e.addComponent(h);
+        Component c = new Component("CombatStats"); c.set("attack", 0); c.set("defense", 0); c.set("speed", 0); e.addComponent(c);
+        store.add(e);
+        js("engine.setBase('" + id + "');");   // 物理强度=20 进 base，不注册 derived → recalc 后仍 20
+        return e;
+    }
+
+    @Test
+    void war_cry_recast_does_not_double_stack() {
+        warriorStablePhys("w2");
+        js("buffs.applyBuff('w2', 'war_cry', engine.newMap());");   // +10 → 20
+        assertThat(store.get("w2").getComponent("PrimaryStats").getInt("力量")).isEqualTo(20);
+        js("buffs.applyBuff('w2', 'war_cry', engine.newMap());");   // refresh 再触发 buff.applied:幂等,仍 +10
+        assertThat(store.get("w2").getComponent("PrimaryStats").getInt("力量"))
+            .as("重复施放不叠加(单一 modifier 替换,而非两个 +10)").isEqualTo(20);
+        js("buffs.removeBuff('w2', 'war_cry');");
+        assertThat(store.get("w2").getComponent("PrimaryStats").getInt("力量")).isEqualTo(10);
+    }
 }
