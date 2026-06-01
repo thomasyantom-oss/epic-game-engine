@@ -182,6 +182,40 @@ class SkillLibTest {
            "if (typeof Skill.effects['smoke_test'] !== 'function') throw 'not registered';");
     }
 
+    // scaling 键不在 DerivedStats 时回落到 PrimaryStats（裸属性）
+    @Test
+    void computeDamage_scaling_readsPrimaryStatsFallback() {
+        mkUnit("mage","法师",true);
+        mkUnit("goblin","哥布林",false);
+        js("var p = engine.newComponent('PrimaryStats'); p.set('力量',15); store.get('mage').addComponent(p);");
+        // {base:'attack', scaling:{力量:0.1}} → attack10 + ⌈15×0.1⌉ = 10 + 2 = 12
+        js("var dmg = Skill.computeDamage(store.get('mage'), store.get('goblin'), {base:'attack', scaling:{力量:0.1}});" +
+           "if (dmg !== 12) throw 'dmg='+dmg;");
+    }
+
+    // DerivedStats 命中时优先用它（不回落 PrimaryStats）
+    @Test
+    void computeDamage_scaling_prefersDerivedOverPrimary() {
+        mkUnit("mage","法师",true);
+        mkUnit("goblin","哥布林",false);
+        // 同名键 法术强度 同时存在于 DerivedStats(14)；PrimaryStats 没有 → 用 14
+        // {add:10, scaling:{法术强度:0.5}} → 10 + ⌈14×0.5⌉ = 17
+        js("var dmg = Skill.computeDamage(store.get('mage'), store.get('goblin'), {add:10, scaling:{法术强度:0.5}});" +
+           "if (dmg !== 17) throw 'dmg='+dmg;");
+    }
+
+    // applyBuffFromSpec 的 scaling 把属性加成算进 debuff 的 data 字段
+    @Test
+    void applyBuffFromSpec_scalesDebuffDamage() {
+        mkUnit("mage","法师",true);
+        Entity goblin = mkUnit("goblin","哥布林",false);
+        js("var p = engine.newComponent('PrimaryStats'); p.set('智力',10); store.get('mage').addComponent(p);");
+        // data.damage=3 + ⌈智力10×0.1⌉ = 4
+        js("var ctx = {actorId:'mage', caster: store.get('mage')};" +
+           "Skill.applyBuffFromSpec(ctx, store.get('goblin'), {id:'poison', data:{damage:3, remaining:3}, scaling:{damage:{智力:0.1}}});");
+        org.assertj.core.api.Assertions.assertThat(goblin.getComponent("Buff_poison").getInt("damage")).isEqualTo(4);
+    }
+
     // ── Test 2: tooltip/AI reuse ───────────────────────────────────────────
     // Proves: computeDamage is pure — same function used in live combat can compute a tooltip
     // preview without any side-effect (target hp is unchanged after the call).

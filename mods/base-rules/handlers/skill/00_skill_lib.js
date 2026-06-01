@@ -53,15 +53,21 @@ var Skill = {
         ? caster.getComponent("CombatStats").getInt(statName) : 0;
     var total = base + (dmgSpec.add || 0);
     if (dmgSpec.scaling) {
-        var ds = caster.getComponent("DerivedStats");
-        if (ds !== null) {
-            var keys = Object.keys(dmgSpec.scaling);
-            for (var i = 0; i < keys.length; i++) {
-                total += Math.ceil(ds.getInt(keys[i]) * dmgSpec.scaling[keys[i]]);
-            }
+        var keys = Object.keys(dmgSpec.scaling);
+        for (var i = 0; i < keys.length; i++) {
+            total += Math.ceil(this.lookupStat(caster, keys[i]) * dmgSpec.scaling[keys[i]]);
         }
     }
     return total;
+  },
+
+  // 两级查找一个属性值：先 DerivedStats 再 PrimaryStats，取不到返回 0。
+  lookupStat: function(caster, key) {
+    var ds = caster.getComponent("DerivedStats");
+    if (ds !== null && ds.has(key)) return ds.getInt(key);
+    var ps = caster.getComponent("PrimaryStats");
+    if (ps !== null && ps.has(key)) return ps.getInt(key);
+    return 0;
   },
 
   _rowOrder: ["FRONT", "MID", "BACK"],
@@ -153,7 +159,8 @@ var Skill = {
     engine.fire("combat.damage_dealt", ev);
   },
 
-  // Apply a buff from a buff spec object (id + data map), resolving "@caster" references.
+  // 从 buff spec 应用 buff，解析 "@caster" 引用；
+  // 若 buffSpec.scaling 存在(如 {damage:{智力:0.1}})，把 data 中对应字段加上 Σ⌈caster属性×系数⌉。
   applyBuffFromSpec: function(ctx, target, buffSpec) {
     var data = engine.newMap();
     var src = buffSpec.data || {};
@@ -162,6 +169,20 @@ var Skill = {
       var v = src[keys[i]];
       if (v === "@caster") v = ctx.actorId;   // resolve caster reference
       data.put(keys[i], v);
+    }
+    if (buffSpec.scaling) {
+      var fields = Object.keys(buffSpec.scaling);          // 如 ["damage"]
+      for (var f = 0; f < fields.length; f++) {
+        var field = fields[f];
+        var coefs = buffSpec.scaling[field];               // 如 {智力:0.1}
+        var add = 0;
+        var statKeys = Object.keys(coefs);
+        for (var s = 0; s < statKeys.length; s++) {
+          add += Math.ceil(this.lookupStat(ctx.caster, statKeys[s]) * coefs[statKeys[s]]);
+        }
+        var baseVal = data.containsKey(field) ? data.get(field) : 0;
+        data.put(field, baseVal + add);
+      }
     }
     buffs.applyBuff(target.getId(), buffSpec.id, data);
   },
