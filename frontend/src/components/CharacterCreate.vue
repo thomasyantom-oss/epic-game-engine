@@ -13,7 +13,6 @@
                :class="{ selected: values[field.name] === opt.value }"
                @click="values[field.name] = opt.value">
             <div class="opt-label">{{ opt.label }}</div>
-            <div class="opt-desc">{{ opt.description }}</div>
           </div>
         </div>
       </div>
@@ -132,20 +131,24 @@ function submit() {
   box-sizing: border-box;
 }
 .field-input:focus { outline: none; border-color: var(--link-color); }
-.select-options { display: flex; gap: 1rem; flex-wrap: wrap; }
+.select-options { display: flex; gap: 0.75rem; flex-wrap: wrap; }
 .option-card {
   border: 2px solid var(--panel-border-color);
   background: var(--panel-bg);
-  padding: 1rem;
+  /* 固定宽度:无论职业名长短(法师2字 / 德鲁伊3字)按钮一律等宽,像游戏选项按钮 */
+  width: 96px;
+  height: 44px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
   cursor: pointer;
-  min-width: 120px;
   text-align: center;
+  box-sizing: border-box;
   transition: border-color 0.2s;
 }
 .option-card:hover { border-color: var(--link-color); }
 .option-card.selected { border-color: var(--link-color); box-shadow: 0 0 0 2px var(--link-color) inset; }
-.opt-label { color: var(--text-color); font-weight: bold; margin-bottom: 0.3rem; }
-.opt-desc { color: var(--text-color); opacity: 0.7; font-size: 0.85em; }
+.opt-label { color: var(--text-color); font-weight: bold; }
 
 /* Live preview panel — mirrors select-page detail composition */
 .preview-panel {
