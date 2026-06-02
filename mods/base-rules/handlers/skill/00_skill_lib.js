@@ -141,6 +141,34 @@ var Skill = {
     this.fireDamageDealt(ctx, target, amount, skillId, skipLog);
   },
 
+  // 唯一减伤收口。delivery: "普攻" -> 护甲(flat,逐位对齐现行 damage_calc);
+  // "技能" -> 类型抗% + 元素乘区。本期元素仅建框架,默认空跑。
+  // opts = { delivery, type, element, elementAmp, ignoreDefend }
+  mitigate: function(target, raw, opts) {
+    opts = opts || {};
+    var defending = target.hasComponent("Buff_defending") && !opts.ignoreDefend;
+    if (opts.delivery === "普攻") {
+      var armor = target.hasComponent("CombatStats")
+          ? target.getComponent("CombatStats").getInt("defense") : 0;
+      var basicDamage = Math.max(1, raw - armor);
+      if (defending) basicDamage = Math.max(1, Math.floor(basicDamage * 0.5));
+      return basicDamage;
+    }
+
+    var res = target.hasComponent("Resistances") ? target.getComponent("Resistances") : null;
+    var type = opts.type || "物理";
+    var typeResist = (res !== null && res.has(type)) ? res.getInt(type) : 0;
+    var element = opts.element || null;
+    var elementResist = (element && res !== null && res.has(element)) ? res.getInt(element) : 0;
+    var elementAmp = opts.elementAmp || 0;
+    var skillDamage = raw
+        * (1 + elementAmp / 100)
+        * (1 - typeResist / 100)
+        * (1 - elementResist / 100);
+    if (defending) skillDamage = skillDamage * 0.5;
+    return Math.max(1, Math.ceil(skillDamage));
+  },
+
   // Mutate target HP only — does NOT fire any event (so no death cascade yet).
   // present()-path effects call this first, present() the skill animation, THEN
   // fireDamageDealt() — keeping the skill animation ahead of the death event in the queue.

@@ -108,6 +108,30 @@ class MitigationTest {
         assertThat(defaults.getInt("精神")).isEqualTo(0);
     }
 
+    @Test
+    void mitigate_branches() throws Exception {
+        loadScripts("../mods/base-rules/handlers/skill/00_skill_lib.js");
+        addProbe();
+
+        addTarget("t", 5, 0, 0, 0, false);
+        assertThat(mitigate("t", 20, "{delivery:'普攻'}")).isEqualTo(15);
+        assertThat(mitigate("t", 3, "{delivery:'普攻'}")).isEqualTo(1);
+        assertThat(mitigate("t", 20, "{delivery:'技能', type:'法术'}")).isEqualTo(20);
+
+        addTarget("r", 5, 0, 50, 0, false);
+        assertThat(mitigate("r", 20, "{delivery:'技能', type:'法术'}")).isEqualTo(10);
+        assertThat(mitigate("r", 20, "{delivery:'技能', type:'物理'}")).isEqualTo(20);
+        assertThat(mitigate("r", 20, "{delivery:'普攻'}")).isEqualTo(15);
+
+        addTarget("n", 0, -100, 0, 0, false);
+        assertThat(mitigate("n", 10, "{delivery:'技能', type:'物理'}")).isEqualTo(20);
+
+        addTarget("d", 5, 0, 0, 0, true);
+        assertThat(mitigate("d", 20, "{delivery:'普攻'}")).isEqualTo(7);
+        assertThat(mitigate("d", 20, "{delivery:'技能', type:'物理'}")).isEqualTo(10);
+        assertThat(mitigate("d", 20, "{delivery:'技能', type:'物理', ignoreDefend:true}")).isEqualTo(20);
+    }
+
     void loadScripts(String... paths) throws Exception {
         for (String path : paths) {
             Path p = Path.of(path);
@@ -126,6 +150,40 @@ class MitigationTest {
         stats.set(statKey, value);
         item.addComponent(stats);
         store.add(item);
+    }
+
+    int mitigate(String targetId, int raw, String optsJs) {
+        js("store.get('probe').getComponent('Probe').set('v', "
+                + "Skill.mitigate(store.get('" + targetId + "'), " + raw + ", " + optsJs + "));");
+        return store.get("probe").getComponent("Probe").getInt("v");
+    }
+
+    void addProbe() {
+        Entity e = new Entity("probe");
+        Component p = new Component("Probe");
+        p.set("v", 0);
+        e.addComponent(p);
+        store.add(e);
+    }
+
+    void addTarget(String id, int defense, int physical, int magical, int mental, boolean defending) {
+        Entity e = new Entity(id);
+        Component h = new Component("Health");
+        h.set("hp", 100);
+        h.set("maxHp", 100);
+        e.addComponent(h);
+        Component c = new Component("CombatStats");
+        c.set("attack", 0);
+        c.set("defense", defense);
+        c.set("speed", 0);
+        e.addComponent(c);
+        Component r = new Component("Resistances");
+        r.set("物理", physical);
+        r.set("法术", magical);
+        r.set("精神", mental);
+        e.addComponent(r);
+        if (defending) e.addComponent(new Component("Buff_defending"));
+        store.add(e);
     }
 
     void loadEntity(String id) {
