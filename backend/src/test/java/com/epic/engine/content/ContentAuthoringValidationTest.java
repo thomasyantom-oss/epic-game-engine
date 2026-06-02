@@ -19,6 +19,9 @@ class ContentAuthoringValidationTest {
     private static final Path MOD = Path.of("../mods/base-rules");
     private static final Set<String> PRIMARY_STATS = Set.of("力量", "敏捷", "智力", "体质", "意志");
     private static final Set<String> DERIVED_STATS = Set.of("物理强度", "法术强度", "精神强度");
+    private static final Set<String> DAMAGE_TYPES = Set.of("物理", "法术", "精神");
+    private static final Set<String> DELIVERIES = Set.of("普攻", "技能");
+    private static final Set<String> RESISTANCE_KEYS = Set.of("物理", "法术", "精神");
     private static final Set<String> ALLOWED_SCALING_KEYS;
 
     static {
@@ -53,6 +56,10 @@ class ContentAuthoringValidationTest {
                 }
 
                 validateScaling(errors, skillFile, map(skill.get("damage")), "damage.scaling");
+                validateDamageMetadata(errors, skillFile, map(skill.get("damage")));
+                String delivery = string(skill.get("delivery"));
+                require(errors, delivery == null || DELIVERIES.contains(delivery), skillFile,
+                        "delivery must be one of " + DELIVERIES + ": " + delivery);
                 validateBuffSpec(errors, skillFile, map(skill.get("buff")), "buff", buffIds);
                 validateBuffSpec(errors, skillFile, map(skill.get("debuff")), "debuff", buffIds);
             }
@@ -90,11 +97,30 @@ class ContentAuthoringValidationTest {
                             MOD.resolve("entities/items.yaml"), id + ": non-weapon stat must be Component.field: " + key);
                     require(errors, entry.getValue() instanceof Number, MOD.resolve("entities/items.yaml"),
                             id + ": stat value must be numeric: " + key);
+                    validateEquipmentStatKey(errors, MOD.resolve("entities/items.yaml"), id, key);
                 }
             }
         }
 
         assertThat(errors).isEmpty();
+    }
+
+    private static void validateDamageMetadata(List<String> errors, Path file, Map<String, Object> damage) {
+        if (damage == null) return;
+        String type = string(damage.get("type"));
+        require(errors, type == null || DAMAGE_TYPES.contains(type), file,
+                "damage.type must be one of " + DAMAGE_TYPES + ": " + type);
+    }
+
+    private static void validateEquipmentStatKey(List<String> errors, Path file, String itemId, String key) {
+        int dotIdx = key.indexOf('.');
+        if (dotIdx < 0) return;
+        String component = key.substring(0, dotIdx);
+        String field = key.substring(dotIdx + 1);
+        if ("Resistances".equals(component)) {
+            require(errors, RESISTANCE_KEYS.contains(field), file,
+                    itemId + ": Resistances key must be one of " + RESISTANCE_KEYS + ": " + field);
+        }
     }
 
     private static void validateBuffSpec(List<String> errors, Path file, Map<String, Object> spec,
