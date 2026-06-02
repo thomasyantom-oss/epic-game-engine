@@ -28,3 +28,25 @@ debuff:
     positive: false
 log:
   template: "{caster} 的毒镖命中 {target}，造成 {damage} 点伤害并中毒"
+# 毒镖是数据驱动技能(effect: damage_with_debuff),动画由 present()→resolveAnimation 读取本块生成。
+# 缺这块就既无飞射动画也无伤害数字(damage_number 是动画原语)。参照 fireball 的飞射→命中→抖动→数字结构。
+animation:
+  - type: projectile
+    shape: diamond
+    color: "#9c27b0"
+    trail: glow
+    speed: fast
+    from: actor
+    to: target
+  - type: impact
+    target: target
+    color: "#9c27b0"
+  - type: shake
+    target: target
+    intensity: normal
+  - type: damage_number
+    target: target
+    color: damage
+  - type: debuff_down
+    target: target
+    color: "#9c27b0"

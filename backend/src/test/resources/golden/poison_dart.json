@@ -1,5 +1,30 @@
 [ {
-  "animation" : [ ],
+  "animation" : [ {
+    "color" : "#9c27b0",
+    "from" : "mage",
+    "shape" : "diamond",
+    "speed" : "fast",
+    "to" : "goblin1",
+    "trail" : "glow",
+    "type" : "projectile"
+  }, {
+    "color" : "#9c27b0",
+    "target" : "goblin1",
+    "type" : "impact"
+  }, {
+    "intensity" : "normal",
+    "target" : "goblin1",
+    "type" : "shake"
+  }, {
+    "color" : "damage",
+    "target" : "goblin1",
+    "type" : "damage_number",
+    "value" : -11
+  }, {
+    "color" : "#9c27b0",
+    "target" : "goblin1",
+    "type" : "debuff_down"
+  } ],
   "effects" : [ {
     "amount" : -11,
     "hp" : 189,

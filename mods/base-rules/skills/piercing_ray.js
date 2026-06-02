@@ -25,9 +25,10 @@ engine.on("combat.unit_action", 80, function(event) {
     var targetPos = selectedTarget.hasComponent("CombatPosition") ? selectedTarget.getComponent("CombatPosition") : null;
     var targetSlot = targetPos !== null ? targetPos.getInt("slot") : 0;
 
-    // Mutate HP + fire damage_dealt (skipLog=true, we emit our own event below)
+    // 只先扣血(不发事件),让死亡级联排在本技能动画之后入队 —— 与 01_effects 的 present() 路径一致。
+    // 否则 dealDamage 会立刻触发 combat.unit_death,把死亡事件排到 beam 动画之前(死亡先于技能动画结算)。
     for (var i = 0; i < results.length; i++) {
-        Skill.dealDamage(ctx, results[i].entity, damage, "piercing_ray", true);
+        Skill.applyDamage(results[i].entity, damage);
     }
 
     // Emit via direct queue push to preserve golden format (no logCount, nested effects.data)
@@ -90,5 +91,10 @@ engine.on("combat.unit_action", 80, function(event) {
 
         evt.put("animation", animation);
         combat.getComponent("CombatEvents").get("queue").add(evt);
+    }
+
+    // 技能动画入队后,再触发死亡级联(死亡事件排在 beam 之后)——HP 已在上面 applyDamage 扣过。
+    for (var d = 0; d < results.length; d++) {
+        Skill.fireDamageDealt(ctx, results[d].entity, damage, "piercing_ray", true);
     }
 });
