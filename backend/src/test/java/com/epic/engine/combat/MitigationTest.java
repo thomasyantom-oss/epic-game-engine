@@ -132,11 +132,47 @@ class MitigationTest {
         assertThat(mitigate("d", 20, "{delivery:'技能', type:'物理', ignoreDefend:true}")).isEqualTo(20);
     }
 
+    @Test
+    void basicAttack_numbersUnchanged() throws Exception {
+        loadCombatScriptsForRound();
+        addCombat("battle1");
+        addCombatUnit("hero", "勇者", 100, 14, 4, 10, true, "FRONT", 0);
+        addCombatUnit("goblin", "哥布林", 100, 14, 4, 1, false, "FRONT", 0);
+
+        resolveRound("battle1", "hero", "basic_attack", "goblin", "goblin", "basic_attack", "hero");
+        assertThat(store.get("goblin").getComponent("Health").getInt("hp"))
+                .as("basic attack still equals attack-defense")
+                .isEqualTo(90);
+
+        store.get("hero").getComponent("Health").set("hp", 100);
+        store.get("goblin").getComponent("Health").set("hp", 100);
+        resolveRound("battle1", "hero", "defend", null, "goblin", "basic_attack", "hero");
+        assertThat(store.get("hero").getComponent("Health").getInt("hp"))
+                .as("defending basic attack still floors half damage")
+                .isEqualTo(95);
+    }
+
     void loadScripts(String... paths) throws Exception {
         for (String path : paths) {
             Path p = Path.of(path);
             rt.execute(Files.readString(p), p.getFileName().toString());
         }
+    }
+
+    void loadCombatScriptsForRound() throws Exception {
+        loadScripts(
+                "../mods/base-rules/handlers/combat/initiative.js",
+                "../mods/base-rules/handlers/combat/damage_calc.js",
+                "../mods/base-rules/handlers/combat/death_check.js",
+                "../mods/base-rules/handlers/combat/combat_flow.js",
+                "../mods/base-rules/handlers/combat/combat_events.js",
+                "../mods/base-rules/handlers/combat/combat_log.js",
+                "../mods/base-rules/handlers/skill/00_skill_lib.js",
+                "../mods/base-rules/handlers/skill/01_effects.js",
+                "../mods/base-rules/handlers/skill/02_dispatch.js",
+                "../mods/base-rules/skills/defend.js",
+                "../mods/base-rules/buffs/defending.js"
+        );
     }
 
     void addResistAccessory(String id, String statKey, int value) {
@@ -184,6 +220,65 @@ class MitigationTest {
         e.addComponent(r);
         if (defending) e.addComponent(new Component("Buff_defending"));
         store.add(e);
+    }
+
+    void addCombat(String combatId) {
+        Entity combat = new Entity(combatId);
+        Component state = new Component("CombatState");
+        state.set("round", 1);
+        state.set("phase", "COMMAND");
+        combat.addComponent(state);
+        Component events = new Component("CombatEvents");
+        events.set("queue", new ArrayList<>());
+        combat.addComponent(events);
+        Component log = new Component("CombatLog");
+        log.set("entries", new ArrayList<>());
+        combat.addComponent(log);
+        store.add(combat);
+    }
+
+    void addCombatUnit(String id, String name, int hp, int attack, int defense, int speed,
+                       boolean player, String row, int slot) {
+        Entity e = new Entity(id);
+        Component h = new Component("Health");
+        h.set("hp", hp);
+        h.set("maxHp", hp);
+        e.addComponent(h);
+        Component c = new Component("CombatStats");
+        c.set("attack", attack);
+        c.set("defense", defense);
+        c.set("speed", speed);
+        e.addComponent(c);
+        Component r = new Component("Resistances");
+        r.set("物理", 0);
+        r.set("法术", 0);
+        r.set("精神", 0);
+        e.addComponent(r);
+        Component n = new Component("Name");
+        n.set("value", name);
+        e.addComponent(n);
+        Component pos = new Component("CombatPosition");
+        pos.set("row", row);
+        pos.set("slot", slot);
+        e.addComponent(pos);
+        e.addTag(player ? "player" : "enemy");
+        e.addTag("combat:battle1");
+        store.add(e);
+    }
+
+    void resolveRound(String combatId,
+                      String actorA, String skillA, String targetA,
+                      String actorB, String skillB, String targetB) {
+        js("var commands=engine.newMap();"
+                + "var a=engine.newMap(); a.put('type','" + skillA + "');"
+                + (targetA != null ? "a.put('targetId','" + targetA + "');" : "")
+                + "commands.put('" + actorA + "', a);"
+                + "var b=engine.newMap(); b.put('type','" + skillB + "');"
+                + (targetB != null ? "b.put('targetId','" + targetB + "');" : "")
+                + "commands.put('" + actorB + "', b);"
+                + "var ev=engine.newEvent('combat.resolve_round');"
+                + "ev.set('combatId','" + combatId + "'); ev.set('commands', commands);"
+                + "engine.fire('combat.resolve_round', ev);");
     }
 
     void loadEntity(String id) {

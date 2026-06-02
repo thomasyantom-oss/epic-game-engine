@@ -10,6 +10,12 @@ Skill.registerEffect("damage_only", function(ctx, spec, results) {
   var damages = [];
   for (var i = 0; i < results.length; i++) {
     var dmg = Skill.computeDamage(ctx.caster, results[i].entity, spec.damage);
+    dmg = Skill.mitigate(results[i].entity, dmg, {
+      delivery: spec.delivery || "技能",
+      type: (spec.damage && spec.damage.type) || "物理",
+      element: spec.damage && spec.damage.element,
+      elementAmp: spec.damage && spec.damage.elementAmp
+    });
     if (custom) Skill.applyDamage(results[i].entity, dmg);                 // present path: mutate now, death later
     else Skill.dealDamage(ctx, results[i].entity, dmg, spec.id, false);    // combat_events path: enqueues attack (prio 60) before death (prio 100)
     damages.push(dmg);
