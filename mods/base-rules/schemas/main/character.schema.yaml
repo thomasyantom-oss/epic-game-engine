@@ -14,4 +14,5 @@ base_components:
   CombatStats: { attack: 10, defense: 3, speed: 3 }
   PrimaryStats: { 力量: 3, 敏捷: 3, 智力: 3, 体质: 3, 意志: 3, weaponAttr: "力量" }
   DerivedStats: { 物理强度: 0, 法术强度: 0, 精神强度: 0 }
+  Resistances: { 物理: 0, 法术: 0, 精神: 0 }
   Position: { map: "world_map", x: 4, y: 3 }

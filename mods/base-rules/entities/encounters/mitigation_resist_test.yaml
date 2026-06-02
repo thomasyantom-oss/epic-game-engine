@@ -1,0 +1,26 @@
+id: mitigation_resist_test
+name: "减伤测试敌人"
+enemies:
+  - id: resist_dummy
+    name: "抗性假人"
+    row: FRONT
+    slot: 0
+    defense: 0
+    力量: 0
+    敏捷: 0
+    智力: 0
+    体质: 1
+    意志: 0
+    weaponAttr: "敏捷"
+    resistances: { 法术: 50 }
+  - id: plain_dummy
+    name: "无抗假人"
+    row: FRONT
+    slot: 1
+    defense: 0
+    力量: 0
+    敏捷: 0
+    智力: 0
+    体质: 1
+    意志: 0
+    weaponAttr: "敏捷"

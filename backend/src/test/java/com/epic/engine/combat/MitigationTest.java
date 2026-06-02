@@ -1,0 +1,163 @@
+package com.epic.engine.combat;
+
+import com.epic.engine.buff.BuffService;
+import com.epic.engine.core.Component;
+import com.epic.engine.core.Entity;
+import com.epic.engine.core.EntityStore;
+import com.epic.engine.core.EventBus;
+import com.epic.engine.core.ModifierChainService;
+import com.epic.engine.core.ModifierTypeRegistry;
+import com.epic.engine.module.SchemaRegistry;
+import com.epic.engine.script.ScriptRuntime;
+import org.graalvm.polyglot.HostAccess;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.util.ArrayList;
+
+import static org.assertj.core.api.Assertions.assertThat;
+
+class MitigationTest {
+    EventBus bus;
+    EntityStore store;
+    ScriptRuntime rt;
+    ModifierTypeRegistry typeReg;
+    ModifierChainService chainService;
+
+    public static class StubPersistence {
+        @HostAccess.Export public void save(Object e) {}
+    }
+
+    @BeforeEach
+    void setUp() throws Exception {
+        bus = new EventBus();
+        store = new EntityStore();
+        typeReg = new ModifierTypeRegistry();
+        typeReg.loadFromModPath(Path.of("../mods/base-rules"));
+        chainService = new ModifierChainService(bus, store, typeReg);
+        rt = new ScriptRuntime(bus, store, chainService, typeReg);
+        rt.setModuleContext(Path.of("../mods/base-rules"));
+
+        SchemaRegistry schemas = new SchemaRegistry();
+        schemas.loadFromModPath(Path.of("../mods/base-rules"));
+        rt.bindService("schemas", schemas);
+        rt.bindService("buffs", new BuffService(bus, store));
+        rt.bindService("persistence", new StubPersistence());
+    }
+
+    @AfterEach
+    void tearDown() {
+        rt.close();
+    }
+
+    void js(String script) {
+        rt.execute("(function(){ " + script + " })();", "test.js");
+    }
+
+    @Test
+    void resistances_defaultZero_equipmentAdds_derivedNeverWrites() throws Exception {
+        loadScripts(
+                "../mods/base-rules/handlers/character/derived_stats.js",
+                "../mods/base-rules/handlers/character/leveling.js",
+                "../mods/base-rules/handlers/equipment/equip.js",
+                "../mods/base-rules/handlers/character/recalculate_hooks.js"
+        );
+        addResistAccessory("resist_ring", "Resistances.法术", 20);
+        persistedWarriorWithAccessory("hero", "resist_ring");
+
+        loadEntity("hero");
+
+        Component res = store.get("hero").getComponent("Resistances");
+        assertThat(res).as("Resistances component exists").isNotNull();
+        assertThat(res.getInt("物理")).isEqualTo(0);
+        assertThat(res.getInt("精神")).isEqualTo(0);
+        assertThat(res.getInt("法术")).as("equipment adds 法抗").isEqualTo(20);
+
+        loadEntity("hero");
+        assertThat(store.get("hero").getComponent("Resistances").getInt("法术"))
+                .as("equipment resistance does not inflate on reload")
+                .isEqualTo(20);
+    }
+
+    @Test
+    void enemySpawn_readsEncounterResistances_defaultingToZero() throws Exception {
+        loadScripts(
+                "../mods/base-rules/handlers/combat/start_combat.js",
+                "../mods/base-rules/handlers/character/derived_stats.js"
+        );
+        addMinimalPlayer("hero");
+
+        js("var ev=engine.newEvent('combat.start_encounter');"
+                + "ev.set('playerId','hero');"
+                + "ev.set('encounterId','mitigation_resist_test');"
+                + "engine.fire('combat.start_encounter', ev);");
+
+        Component configured = store.get("resist_dummy_0").getComponent("Resistances");
+        assertThat(configured).isNotNull();
+        assertThat(configured.getInt("物理")).isEqualTo(0);
+        assertThat(configured.getInt("法术")).isEqualTo(50);
+        assertThat(configured.getInt("精神")).isEqualTo(0);
+
+        Component defaults = store.get("plain_dummy_1").getComponent("Resistances");
+        assertThat(defaults).isNotNull();
+        assertThat(defaults.getInt("物理")).isEqualTo(0);
+        assertThat(defaults.getInt("法术")).isEqualTo(0);
+        assertThat(defaults.getInt("精神")).isEqualTo(0);
+    }
+
+    void loadScripts(String... paths) throws Exception {
+        for (String path : paths) {
+            Path p = Path.of(path);
+            rt.execute(Files.readString(p), p.getFileName().toString());
+        }
+    }
+
+    void addResistAccessory(String id, String statKey, int value) {
+        Entity item = new Entity(id);
+        Component meta = new Component("ItemMeta");
+        meta.set("name", "抗性戒指");
+        meta.set("type", "accessory");
+        meta.set("rarity", "common");
+        item.addComponent(meta);
+        Component stats = new Component("ItemStats");
+        stats.set(statKey, value);
+        item.addComponent(stats);
+        store.add(item);
+    }
+
+    void loadEntity(String id) {
+        js("var ev=engine.newEvent('entity.loaded'); ev.set('entity', store.get('" + id + "')); engine.fire('entity.loaded', ev);");
+    }
+
+    void persistedWarriorWithAccessory(String id, String accessoryId) {
+        Entity e = new Entity(id);
+        Component p = new Component("PrimaryStats");
+        p.set("力量", 14); p.set("敏捷", 5); p.set("智力", 3);
+        p.set("体质", 12); p.set("意志", 3); p.set("weaponAttr", "力量");
+        e.addComponent(p);
+        e.addComponent(new Component("DerivedStats"));
+        Component r = new Component("Resistances");
+        r.set("物理", 0); r.set("法术", 0); r.set("精神", 0);
+        e.addComponent(r);
+        Component h = new Component("Health"); h.set("hp", 150); h.set("maxHp", 150); e.addComponent(h);
+        Component m = new Component("Mana"); m.set("mp", 50); m.set("maxMp", 50); e.addComponent(m);
+        Component c = new Component("CombatStats"); c.set("attack", 6); c.set("defense", 3); c.set("speed", 5); e.addComponent(c);
+        Component pos = new Component("Position"); pos.set("map", "world_map"); pos.set("x", 7); pos.set("y", 2); e.addComponent(pos);
+        Component ch = new Component("Character"); ch.set("name", "勇者"); ch.set("classId", "warrior"); ch.set("level", 1); e.addComponent(ch);
+        Component exp = new Component("Experience"); exp.set("xp", 0); exp.set("level", 1); exp.set("pendingPoints", 0); e.addComponent(exp);
+        Component slots = new Component("EquipmentSlots"); slots.set("weapon", null); slots.set("armor", null); slots.set("accessory", accessoryId); e.addComponent(slots);
+        Component inv = new Component("Inventory"); inv.set("items", new ArrayList<>()); e.addComponent(inv);
+        store.add(e);
+    }
+
+    void addMinimalPlayer(String id) {
+        Entity e = new Entity(id);
+        Component h = new Component("Health"); h.set("hp", 100); h.set("maxHp", 100); e.addComponent(h);
+        Component c = new Component("CombatStats"); c.set("attack", 10); c.set("defense", 3); c.set("speed", 3); e.addComponent(c);
+        e.addTag("player");
+        store.add(e);
+    }
+}

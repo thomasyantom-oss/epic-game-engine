@@ -69,6 +69,15 @@ engine.on("combat.start_encounter", 100, function(event) {
         stats.set("speed", 0);    // 派生覆盖(= 敏捷)
         enemy.addComponent(stats);
 
+        var res = engine.newComponent("Resistances");
+        var rdef = enemyDef.get("resistances");
+        var rkeys = ["物理", "法术", "精神"];
+        for (var r = 0; r < rkeys.length; r++) {
+            var rk = rkeys[r];
+            res.set(rk, (rdef !== null && rdef.get(rk) !== null) ? rdef.get(rk) : 0);
+        }
+        enemy.addComponent(res);
+
         var nameComp = engine.newComponent("Name");
         nameComp.set("value", enemyDef.get("name"));
         enemy.addComponent(nameComp);
