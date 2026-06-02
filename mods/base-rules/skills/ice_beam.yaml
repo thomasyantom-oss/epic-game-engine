@@ -5,6 +5,7 @@ category: skill
 silenceable: true
 effect: damage_only
 damage:
+  type: 法术
   add: 8
   scaling: { 法术强度: 0.5 }
 targeting:

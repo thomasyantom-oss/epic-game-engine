@@ -25,10 +25,19 @@ engine.on("combat.unit_action", 80, function(event) {
     var targetPos = selectedTarget.hasComponent("CombatPosition") ? selectedTarget.getComponent("CombatPosition") : null;
     var targetSlot = targetPos !== null ? targetPos.getInt("slot") : 0;
 
+    var damages = [];
+
     // 只先扣血(不发事件),让死亡级联排在本技能动画之后入队 —— 与 01_effects 的 present() 路径一致。
     // 否则 dealDamage 会立刻触发 combat.unit_death,把死亡事件排到 beam 动画之前(死亡先于技能动画结算)。
     for (var i = 0; i < results.length; i++) {
-        Skill.applyDamage(results[i].entity, damage);
+        var finalDamage = Skill.mitigate(results[i].entity, damage, {
+            delivery: spec.delivery || "技能",
+            type: (spec.damage && spec.damage.type) || "物理",
+            element: spec.damage && spec.damage.element,
+            elementAmp: spec.damage && spec.damage.elementAmp
+        });
+        damages.push(finalDamage);
+        Skill.applyDamage(results[i].entity, finalDamage);
     }
 
     // Emit via direct queue push to preserve golden format (no logCount, nested effects.data)
@@ -40,7 +49,7 @@ engine.on("combat.unit_action", 80, function(event) {
         var segments = engine.newList();
         var s1 = engine.newMap(); s1.put("text", ctx.casterName); s1.put("color", ctx.casterSide); segments.add(s1);
         var s2 = engine.newMap(); s2.put("text", " 的贯穿射线命中 " + results.length + " 个目标，各造成 "); s2.put("color", "text"); segments.add(s2);
-        var s3 = engine.newMap(); s3.put("text", "" + damage); s3.put("color", "damage"); segments.add(s3);
+        var s3 = engine.newMap(); s3.put("text", "" + (damages.length > 0 ? damages[0] : 0)); s3.put("color", "damage"); segments.add(s3);
         var s4 = engine.newMap(); s4.put("text", " 点伤害"); s4.put("color", "text"); segments.add(s4);
         evt.put("segments", segments);
 
@@ -51,7 +60,7 @@ engine.on("combat.unit_action", 80, function(event) {
             eff.put("target", results[e].entity.getId());
             eff.put("type", "hp_change");
             var effData = engine.newMap();
-            effData.put("amount", -damage);
+            effData.put("amount", -damages[e]);
             effData.put("hp", results[e].entity.getComponent("Health").getInt("hp"));
             effData.put("maxHp", results[e].entity.getComponent("Health").getInt("maxHp"));
             eff.put("data", effData);
@@ -84,7 +93,7 @@ engine.on("combat.unit_action", 80, function(event) {
             var dmgAnim = engine.newMap();
             dmgAnim.put("type", "damage_number");
             dmgAnim.put("target", results[t].entity.getId());
-            dmgAnim.put("value", -damage);
+            dmgAnim.put("value", -damages[t]);
             dmgAnim.put("color", "damage");
             animation.add(dmgAnim);
         }
@@ -95,6 +104,6 @@ engine.on("combat.unit_action", 80, function(event) {
 
     // 技能动画入队后,再触发死亡级联(死亡事件排在 beam 之后)——HP 已在上面 applyDamage 扣过。
     for (var d = 0; d < results.length; d++) {
-        Skill.fireDamageDealt(ctx, results[d].entity, damage, "piercing_ray", true);
+        Skill.fireDamageDealt(ctx, results[d].entity, damages[d], "piercing_ray", true);
     }
 });

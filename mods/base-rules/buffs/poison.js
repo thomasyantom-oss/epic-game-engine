@@ -20,7 +20,11 @@ engine.on("combat.round_end", 50, function(event) {
 
         var stacks = poison.has("stacks") ? poison.getInt("stacks") : 1;
         var dmgPerStack = poison.has("damage") ? poison.getInt("damage") : 3;
-        var totalDmg = stacks * dmgPerStack;
+        var totalDmg = Skill.mitigate(entity, stacks * dmgPerStack, {
+            delivery: "技能",
+            type: "物理",
+            ignoreDefend: true
+        });
 
         health.set("hp", Math.max(0, health.getInt("hp") - totalDmg));
 

@@ -5,6 +5,7 @@ category: skill
 silenceable: true
 effect: damage_with_debuff
 damage:
+  type: 法术
   add: 10
   scaling: { 智力: 0.2 }
 targeting:

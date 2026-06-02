@@ -34,6 +34,12 @@ Skill.registerEffect("damage_with_debuff", function(ctx, spec, results) {
   var damages = [];
   for (var i = 0; i < results.length; i++) {
     var dmg = Skill.computeDamage(ctx.caster, results[i].entity, spec.damage);
+    dmg = Skill.mitigate(results[i].entity, dmg, {
+      delivery: spec.delivery || "技能",
+      type: (spec.damage && spec.damage.type) || "物理",
+      element: spec.damage && spec.damage.element,
+      elementAmp: spec.damage && spec.damage.elementAmp
+    });
     Skill.applyDamage(results[i].entity, dmg);                    // mutate HP now (present() reads it)
     Skill.applyBuffFromSpec(ctx, results[i].entity, spec.debuff);
     damages.push(dmg);

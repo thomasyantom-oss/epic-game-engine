@@ -16,7 +16,12 @@ engine.on("combat.round_end", 50, function(event) {
         var health = entity.getComponent("Health");
         if (health === null || health.getInt("hp") <= 0) continue;
 
-        var dmg = burning.has("damage") ? burning.getInt("damage") : 3;
+        var rawDmg = burning.has("damage") ? burning.getInt("damage") : 3;
+        var dmg = Skill.mitigate(entity, rawDmg, {
+            delivery: "技能",
+            type: "法术",
+            ignoreDefend: true
+        });
         health.set("hp", Math.max(0, health.getInt("hp") - dmg));
 
         // A DoT kill must go through the normal death flow (death log/animation, LifeState).

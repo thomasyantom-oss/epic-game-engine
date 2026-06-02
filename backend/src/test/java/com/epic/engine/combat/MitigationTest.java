@@ -152,6 +152,70 @@ class MitigationTest {
                 .isEqualTo(95);
     }
 
+    @Test
+    void skillsRespectResist() throws Exception {
+        loadSkillScriptsForActions();
+        addCombat("battle1");
+        addCombatUnit("mage", "法师", 100, 10, 0, 10, true, "FRONT", 0);
+        addCombatUnit("goblin", "哥布林", 100, 10, 0, 1, false, "FRONT", 0);
+
+        fireUnitAction("battle1", "mage", "fireball", "goblin");
+        assertThat(store.get("goblin").getComponent("Health").getInt("hp"))
+                .as("fireball raw damage at zero resistance")
+                .isEqualTo(88);
+
+        store.get("goblin").getComponent("Health").set("hp", 100);
+        store.get("goblin").getComponent("Resistances").set("法术", 50);
+        fireUnitAction("battle1", "mage", "fireball", "goblin");
+        assertThat(store.get("goblin").getComponent("Health").getInt("hp"))
+                .as("fireball respects 法术 resistance")
+                .isEqualTo(94);
+
+        store.clear();
+        addCombat("battle1");
+        addCombatUnit("warrior", "战士", 100, 14, 0, 10, true, "FRONT", 0);
+        addCombatUnit("goblin", "哥布林", 100, 10, 0, 1, false, "FRONT", 0);
+        store.get("goblin").getComponent("Resistances").set("法术", 50);
+        fireUnitAction("battle1", "warrior", "cleave", "goblin");
+        assertThat(store.get("goblin").getComponent("Health").getInt("hp"))
+                .as("法术 resistance does not reduce default physical skills")
+                .isEqualTo(85);
+    }
+
+    @Test
+    void dotIgnoresDefending_butRespectsTypeResist() throws Exception {
+        loadScripts(
+                "../mods/base-rules/handlers/skill/00_skill_lib.js",
+                "../mods/base-rules/buffs/burning.js"
+        );
+
+        addCombat("battle1");
+        addCombatUnit("target", "目标", 100, 0, 0, 1, false, "FRONT", 0);
+        addBurning("target", 10);
+        fireRoundEnd("battle1");
+        assertThat(store.get("target").getComponent("Health").getInt("hp")).isEqualTo(90);
+
+        store.clear();
+        addCombat("battle1");
+        addCombatUnit("target", "目标", 100, 0, 0, 1, false, "FRONT", 0);
+        addBurning("target", 10);
+        store.get("target").addComponent(new Component("Buff_defending"));
+        fireRoundEnd("battle1");
+        assertThat(store.get("target").getComponent("Health").getInt("hp"))
+                .as("defending does not reduce DoT")
+                .isEqualTo(90);
+
+        store.clear();
+        addCombat("battle1");
+        addCombatUnit("target", "目标", 100, 0, 0, 1, false, "FRONT", 0);
+        store.get("target").getComponent("Resistances").set("法术", 50);
+        addBurning("target", 10);
+        fireRoundEnd("battle1");
+        assertThat(store.get("target").getComponent("Health").getInt("hp"))
+                .as("burning DoT respects 法术 resistance")
+                .isEqualTo(95);
+    }
+
     void loadScripts(String... paths) throws Exception {
         for (String path : paths) {
             Path p = Path.of(path);
@@ -172,6 +236,18 @@ class MitigationTest {
                 "../mods/base-rules/handlers/skill/02_dispatch.js",
                 "../mods/base-rules/skills/defend.js",
                 "../mods/base-rules/buffs/defending.js"
+        );
+    }
+
+    void loadSkillScriptsForActions() throws Exception {
+        loadScripts(
+                "../mods/base-rules/handlers/combat/death_check.js",
+                "../mods/base-rules/handlers/combat/combat_events.js",
+                "../mods/base-rules/handlers/combat/combat_log.js",
+                "../mods/base-rules/handlers/skill/00_skill_lib.js",
+                "../mods/base-rules/handlers/skill/01_effects.js",
+                "../mods/base-rules/handlers/skill/02_dispatch.js",
+                "../mods/base-rules/skills/cleave.js"
         );
     }
 
@@ -254,6 +330,19 @@ class MitigationTest {
         r.set("法术", 0);
         r.set("精神", 0);
         e.addComponent(r);
+        Component ds = new Component("DerivedStats");
+        ds.set("物理强度", attack);
+        ds.set("法术强度", attack);
+        ds.set("精神强度", attack);
+        e.addComponent(ds);
+        Component ps = new Component("PrimaryStats");
+        ps.set("力量", 10);
+        ps.set("敏捷", 10);
+        ps.set("智力", 10);
+        ps.set("体质", 10);
+        ps.set("意志", 10);
+        ps.set("weaponAttr", "力量");
+        e.addComponent(ps);
         Component n = new Component("Name");
         n.set("value", name);
         e.addComponent(n);
@@ -279,6 +368,28 @@ class MitigationTest {
                 + "var ev=engine.newEvent('combat.resolve_round');"
                 + "ev.set('combatId','" + combatId + "'); ev.set('commands', commands);"
                 + "engine.fire('combat.resolve_round', ev);");
+    }
+
+    void fireUnitAction(String combatId, String actorId, String skill, String targetId) {
+        js("var cmd=engine.newMap(); cmd.put('type','" + skill + "');"
+                + (targetId != null ? "cmd.put('targetId','" + targetId + "');" : "")
+                + "var ev=engine.newEvent('combat.unit_action');"
+                + "ev.set('combatId','" + combatId + "');"
+                + "ev.set('actorId','" + actorId + "');"
+                + "ev.set('command', cmd);"
+                + "engine.fire('combat.unit_action', ev);");
+    }
+
+    void addBurning(String entityId, int damage) {
+        Component b = new Component("Buff_burning");
+        b.set("damage", damage);
+        b.set("remaining", 2);
+        b.set("source", "source");
+        store.get(entityId).addComponent(b);
+    }
+
+    void fireRoundEnd(String combatId) {
+        js("var ev=engine.newEvent('combat.round_end'); ev.set('combatId','" + combatId + "'); engine.fire('combat.round_end', ev);");
     }
 
     void loadEntity(String id) {

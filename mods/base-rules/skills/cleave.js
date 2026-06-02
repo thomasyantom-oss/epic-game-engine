@@ -27,17 +27,26 @@ engine.on("combat.unit_action", 80, function(event) {
     var rowToCol = { "FRONT": 0, "MID": 1, "BACK": 2 };
     var gridCol = rowToCol[targetRow] || 0;
 
+    var damages = [];
+
     // Mutate HP only. Fire damage_dealt after the skill event is queued so death
     // events cannot appear before the cleave animation.
     for (var i = 0; i < results.length; i++) {
-        Skill.applyDamage(results[i].entity, damage);
+        var finalDamage = Skill.mitigate(results[i].entity, damage, {
+            delivery: spec.delivery || "技能",
+            type: (spec.damage && spec.damage.type) || "物理",
+            element: spec.damage && spec.damage.element,
+            elementAmp: spec.damage && spec.damage.elementAmp
+        });
+        damages.push(finalDamage);
+        Skill.applyDamage(results[i].entity, finalDamage);
     }
 
     // Emit via direct queue push to preserve golden format (no logCount, nested effects.data)
-    var segments = Skill.summaryLog(ctx, " 的顺劈斩命中 " + results.length + " 个目标，各造成 ", damage, " 点伤害");
+    var segments = Skill.summaryLog(ctx, " 的顺劈斩命中 " + results.length + " 个目标，各造成 ", damages.length > 0 ? damages[0] : 0, " 点伤害");
     var effects = engine.newList();
     for (var e = 0; e < results.length; e++) {
-        effects.add(Skill.nestedHpEffect(results[e].entity, damage));
+        effects.add(Skill.nestedHpEffect(results[e].entity, damages[e]));
     }
 
     // Animation: lunge on actor, slash covering the column, per-target shake/damage_number
@@ -68,7 +77,7 @@ engine.on("combat.unit_action", 80, function(event) {
         var dmgAnim = engine.newMap();
         dmgAnim.put("type", "damage_number");
         dmgAnim.put("target", results[t].entity.getId());
-        dmgAnim.put("value", -damage);
+        dmgAnim.put("value", -damages[t]);
         dmgAnim.put("color", "damage");
         animation.add(dmgAnim);
     }
@@ -76,6 +85,6 @@ engine.on("combat.unit_action", 80, function(event) {
     Skill.emitCombatQueueEvent(ctx.combatId, segments, effects, animation);
 
     for (var d = 0; d < results.length; d++) {
-        Skill.fireDamageDealt(ctx, results[d].entity, damage, "cleave", true);
+        Skill.fireDamageDealt(ctx, results[d].entity, damages[d], "cleave", true);
     }
 });
