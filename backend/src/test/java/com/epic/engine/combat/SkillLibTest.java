@@ -163,6 +163,25 @@ class SkillLibTest {
     }
 
     @Test
+    void emptyGroundAoE_usesFrontendGridContract_slotFromRow_rowIdxFromCol() {
+        mkUnit("mage","法师",true);
+        mkPos("front_slot1", false, "FRONT", 1);
+        mkPos("mid_slot1", false, "MID", 1);
+        mkPos("back_slot1", false, "BACK", 1);
+        mkPos("mid_slot0", false, "MID", 0);
+        mkPos("mid_slot2", false, "MID", 2);
+        mkPos("front_slot0", false, "FRONT", 0);
+
+        js("var ctx = {caster: store.get('mage'), combatId:'b1', cmd:{targetRow:1, targetCol:1}};" +
+           "var spec = {targeting:{mode:'pattern',field:'enemy',pattern:[[0,0],[-1,0],[1,0],[0,-1],[0,1]]}};" +
+           "var r = Skill.resolveTargets(ctx, spec);" +
+           "var ids = r.map(function(x){ return x.entity.getId(); }).sort().join(',');" +
+           "var expected = ['back_slot1','front_slot1','mid_slot0','mid_slot1','mid_slot2'].sort().join(',');" +
+           "if (ids !== expected) throw 'ids='+ids;" +
+           "if (ids.indexOf('front_slot0') >= 0) throw 'frontend grid row/col contract changed';");
+    }
+
+    @Test
     void dealDamage_mutatesHp_andFiresDamageDealtWithSkipLog() {
         mkUnit("mage","法师",true);
         Entity g = mkUnit("goblin","哥布林",false);

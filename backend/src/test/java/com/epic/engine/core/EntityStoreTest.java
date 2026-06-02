@@ -68,4 +68,17 @@ class EntityStoreTest {
 
         assertThat(store.all()).hasSize(2);
     }
+
+    @Test
+    void clear_removesEntitiesAndTagIndexEntries() {
+        Entity enemy = new Entity("goblin1");
+        enemy.addTag("enemy");
+        store.add(enemy);
+
+        store.clear();
+
+        assertThat(store.all()).isEmpty();
+        assertThat(store.get("goblin1")).isNull();
+        assertThat(store.getByTag("enemy")).isEmpty();
+    }
 }

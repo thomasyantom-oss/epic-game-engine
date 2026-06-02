@@ -32,6 +32,14 @@ public class ModifierChain {
         snapshotAll();
     }
 
+    /**
+     * Replaces the entire base snapshot with only the listed component types.
+     *
+     * This is intentionally not an incremental update API. Calling it with a
+     * single structural component such as Position or EquipmentSlots drops every
+     * other base component and can make additive modifiers inflate on future
+     * recalculations. Use {@link #updateBase(String)} to refresh one component.
+     */
     public void setBaseSelective(List<String> componentTypes) {
         baseState.clear();
         baseTags.clear();

@@ -113,6 +113,8 @@ var Skill = {
       center = this._cellOf(centerEntity);
     } else {
       var r = ctx.cmd.targetRow, c = ctx.cmd.targetCol;
+      // Frontend BattleGrid contract: targetRow is grid row -> CombatPosition.slot,
+      // targetCol is grid col -> CombatPosition.rowIdx (FRONT/MID/BACK mapped to 0/1/2).
       center = { slot: parseInt(r) || 0, rowIdx: parseInt(c) || 0 };
     }
     var pattern = t.pattern || [[0,0]];
@@ -221,6 +223,39 @@ var Skill = {
       }
     }
     return eff;
+  },
+
+  // Bespoke skill helpers: preserve the legacy direct-queue event shape while
+  // keeping repeated segment/effect/queue boilerplate in one place.
+  summaryLog: function(ctx, beforeDamage, amount, afterDamage) {
+    var segments = engine.newList();
+    var s1 = engine.newMap(); s1.put("text", ctx.casterName); s1.put("color", ctx.casterSide); segments.add(s1);
+    var s2 = engine.newMap(); s2.put("text", beforeDamage); s2.put("color", "text"); segments.add(s2);
+    var s3 = engine.newMap(); s3.put("text", "" + amount); s3.put("color", "damage"); segments.add(s3);
+    var s4 = engine.newMap(); s4.put("text", afterDamage); s4.put("color", "text"); segments.add(s4);
+    return segments;
+  },
+
+  nestedHpEffect: function(target, amount) {
+    var eff = engine.newMap();
+    eff.put("target", target.getId());
+    eff.put("type", "hp_change");
+    var data = engine.newMap();
+    data.put("amount", -amount);
+    data.put("hp", target.getComponent("Health").getInt("hp"));
+    data.put("maxHp", target.getComponent("Health").getInt("maxHp"));
+    eff.put("data", data);
+    return eff;
+  },
+
+  emitCombatQueueEvent: function(combatId, segments, effects, animation) {
+    var combat = store.get(combatId);
+    if (combat === null || !combat.hasComponent("CombatEvents")) return;
+    var evt = engine.newMap();
+    evt.put("segments", segments);
+    evt.put("effects", effects);
+    evt.put("animation", animation);
+    combat.getComponent("CombatEvents").get("queue").add(evt);
   },
 
   // Flat-format animation resolution mirroring combat_events.resolveSkillAnimation.

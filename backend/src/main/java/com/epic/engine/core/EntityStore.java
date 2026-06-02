@@ -49,5 +49,6 @@ public class EntityStore {
 
     public void clear() {
         entities.clear();
+        tagIndex.clear();
     }
 }

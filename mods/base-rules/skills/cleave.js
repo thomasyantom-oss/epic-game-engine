@@ -27,73 +27,55 @@ engine.on("combat.unit_action", 80, function(event) {
     var rowToCol = { "FRONT": 0, "MID": 1, "BACK": 2 };
     var gridCol = rowToCol[targetRow] || 0;
 
-    // Mutate HP + fire damage_dealt (skipLog=true, we emit our own event below)
+    // Mutate HP only. Fire damage_dealt after the skill event is queued so death
+    // events cannot appear before the cleave animation.
     for (var i = 0; i < results.length; i++) {
-        Skill.dealDamage(ctx, results[i].entity, damage, "cleave", true);
+        Skill.applyDamage(results[i].entity, damage);
     }
 
     // Emit via direct queue push to preserve golden format (no logCount, nested effects.data)
-    var combat = store.get(ctx.combatId);
-    if (combat !== null && combat.hasComponent("CombatEvents")) {
-        var evt = engine.newMap();
+    var segments = Skill.summaryLog(ctx, " 的顺劈斩命中 " + results.length + " 个目标，各造成 ", damage, " 点伤害");
+    var effects = engine.newList();
+    for (var e = 0; e < results.length; e++) {
+        effects.add(Skill.nestedHpEffect(results[e].entity, damage));
+    }
 
-        // Summary segments
-        var segments = engine.newList();
-        var s1 = engine.newMap(); s1.put("text", ctx.casterName); s1.put("color", ctx.casterSide); segments.add(s1);
-        var s2 = engine.newMap(); s2.put("text", " 的顺劈斩命中 " + results.length + " 个目标，各造成 "); s2.put("color", "text"); segments.add(s2);
-        var s3 = engine.newMap(); s3.put("text", "" + damage); s3.put("color", "damage"); segments.add(s3);
-        var s4 = engine.newMap(); s4.put("text", " 点伤害"); s4.put("color", "text"); segments.add(s4);
-        evt.put("segments", segments);
+    // Animation: lunge on actor, slash covering the column, per-target shake/damage_number
+    var animation = engine.newList();
+    var lungeAnim = engine.newMap();
+    lungeAnim.put("type", "lunge");
+    lungeAnim.put("target", ctx.actorId);
+    lungeAnim.put("side", ctx.casterSide);
+    animation.add(lungeAnim);
 
-        // Effects (nested data format, matching golden)
-        var effects = engine.newList();
-        for (var e = 0; e < results.length; e++) {
-            var eff = engine.newMap();
-            eff.put("target", results[e].entity.getId());
-            eff.put("type", "hp_change");
-            var effData = engine.newMap();
-            effData.put("amount", -damage);
-            effData.put("hp", results[e].entity.getComponent("Health").getInt("hp"));
-            effData.put("maxHp", results[e].entity.getComponent("Health").getInt("maxHp"));
-            eff.put("data", effData);
-            effects.add(eff);
-        }
-        evt.put("effects", effects);
+    var areaCells = engine.newList();
+    areaCells.add("cell_0_" + gridCol);
+    areaCells.add("cell_1_" + gridCol);
+    areaCells.add("cell_2_" + gridCol);
+    var slashAnim = engine.newMap();
+    slashAnim.put("type", "slash");
+    slashAnim.put("area", areaCells);
+    slashAnim.put("color", "#ffffff");
+    animation.add(slashAnim);
 
-        // Animation: lunge on actor, slash covering the column, per-target shake/damage_number
-        var animation = engine.newList();
-        var lungeAnim = engine.newMap();
-        lungeAnim.put("type", "lunge");
-        lungeAnim.put("target", ctx.actorId);
-        lungeAnim.put("side", ctx.casterSide);
-        animation.add(lungeAnim);
+    for (var t = 0; t < results.length; t++) {
+        var shakeAnim = engine.newMap();
+        shakeAnim.put("type", "shake");
+        shakeAnim.put("target", results[t].entity.getId());
+        shakeAnim.put("intensity", "heavy");
+        animation.add(shakeAnim);
 
-        var areaCells = engine.newList();
-        areaCells.add("cell_0_" + gridCol);
-        areaCells.add("cell_1_" + gridCol);
-        areaCells.add("cell_2_" + gridCol);
-        var slashAnim = engine.newMap();
-        slashAnim.put("type", "slash");
-        slashAnim.put("area", areaCells);
-        slashAnim.put("color", "#ffffff");
-        animation.add(slashAnim);
+        var dmgAnim = engine.newMap();
+        dmgAnim.put("type", "damage_number");
+        dmgAnim.put("target", results[t].entity.getId());
+        dmgAnim.put("value", -damage);
+        dmgAnim.put("color", "damage");
+        animation.add(dmgAnim);
+    }
 
-        for (var t = 0; t < results.length; t++) {
-            var shakeAnim = engine.newMap();
-            shakeAnim.put("type", "shake");
-            shakeAnim.put("target", results[t].entity.getId());
-            shakeAnim.put("intensity", "heavy");
-            animation.add(shakeAnim);
+    Skill.emitCombatQueueEvent(ctx.combatId, segments, effects, animation);
 
-            var dmgAnim = engine.newMap();
-            dmgAnim.put("type", "damage_number");
-            dmgAnim.put("target", results[t].entity.getId());
-            dmgAnim.put("value", -damage);
-            dmgAnim.put("color", "damage");
-            animation.add(dmgAnim);
-        }
-
-        evt.put("animation", animation);
-        combat.getComponent("CombatEvents").get("queue").add(evt);
+    for (var d = 0; d < results.length; d++) {
+        Skill.fireDamageDealt(ctx, results[d].entity, damage, "cleave", true);
     }
 });

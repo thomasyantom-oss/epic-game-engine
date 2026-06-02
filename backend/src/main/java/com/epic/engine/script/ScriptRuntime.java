@@ -239,6 +239,9 @@ public class ScriptRuntime implements AutoCloseable {
         @HostAccess.Export
         public void setBaseSelective(String entityId, Value componentTypes) {
             if (modifierChainService == null) return;
+            // DANGER: this replaces the entire base snapshot with only the listed
+            // components. To persist a single structural component change, use
+            // updateBase(entityId, componentType) instead.
             List<String> types = new ArrayList<>();
             for (int i = 0; i < componentTypes.getArraySize(); i++) {
                 types.add(componentTypes.getArrayElement(i).asString());

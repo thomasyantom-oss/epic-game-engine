@@ -37,4 +37,9 @@ public class TagIndex {
         return Collections.unmodifiableSet(
                 tagToEntities.getOrDefault(tag, Collections.emptySet()));
     }
+
+    public void clear() {
+        tagToEntities.clear();
+        entityTags.clear();
+    }
 }
