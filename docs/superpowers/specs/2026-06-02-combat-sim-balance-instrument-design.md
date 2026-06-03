@@ -1,198 +1,209 @@
-# Feature #3(切片二):数值平衡模拟器 / 战斗仪器 — 设计
+# Feature #3(切片二):数值平衡模拟器 / 战斗仪表盘 — 设计
 
-作者:Claude (Senior SDE) · 2026-06-02
-脑暴出处:`docs/feature3-damage-types-running-notes.md`(减伤地基基调)+ 本轮对话(数值方法论 / 模拟器输入输出 / AI 策略)。
+作者:Claude (Senior SDE) · 2026-06-02(v2,纳入 Codex review)
+脑暴出处:`docs/feature3-damage-types-running-notes.md` + 本轮对话(数值方法论 / 输入输出 / AI 策略)。
 实现:Codex。我(Senior SDE)review,**仅我 APPROVE 方可 merge**。
 上游约束:#3 切片一(`Skill.mitigate` 唯一减伤收口已就位、空跑);F2 §1 安全/高级属性红线。
 
 ---
 
-## 0. 一句话
+## 0. 这一版是什么(给 PM 看的一句话)
 
-slice-2 的主题是"配数值 / 做手感"。**但在配任何数值之前,先造一台测量仪器**:一个无头批量战斗模拟器,跑真引擎战斗 N 次,吐出胜率 / TTK / 剩血 / 相对 baseline 功率。**本 slice 只交付仪器 + 用它定出护甲 K、抗性 cap、各职业前期 baseline 体检。** 技能组 / 被动 / 专精 / 装备 / 新怪的内容设计是后续用这台仪器驱动的独立 slice,不在本刀内。
+slice-2 主题是"配数值 / 做手感"。**配数值之前先造一台 PM 能直接用的数值仪表盘**:无头批量跑真引擎战斗,输出报表,让 PM **不看代码**就能回答四件事——**前期顺不顺、护甲 K / 抗性 cap 大概多少、一个 build 强多少、一场仗为什么赢/输**。
 
----
-
-## 1. 方法论锚点(贯穿,决定一切设计取舍)
-
-1. **属性是 TTK 方程的解,不是输入。** 先定体验(击杀回合数 TTK / 存活回合数),反解出 HP/DPS。不手拍裸数值。
-2. **在比值空间设计,绝对尺度最后乘。** 一切用"相对基准玩家"表达(怪血="N 下普攻"、抗性="×EHP")。手感全在比值;绝对尺度 `N` 只为 ceil 分辨率,不影响手感。
-3. **降维 = 只调几个旋钮。** 个体属性由公式算(class+level),不手填。全局只有少数旋钮:护甲 `K`、抗性 `cap`、易伤 `floor`、暴击率/暴击倍率、伤害浮动带、尺度 `N`。
-4. **基线压平,高光放离散乘区。** 成长曲线本身温和(现有 class `growth` 已是线性);爽感来自稀有乘区(套装/暗金/元素),不靠基线膨胀。→ 满足"后期不爆炸"。
-5. **护甲曲线天然防爆。** `减伤%=护甲/(护甲+K)` ⟹ `EHP=HP×(1+护甲/K)`,EHP 对护甲线性、永不破 100%,**无需硬 cap**。对照 flat 三抗会 hyperbolic 爆炸,**故三抗必须硬 cap 75%**。两层防御用两套数学,各司其职。
-6. **先造仪器,再调数。** spreadsheet/模拟器先行(几千场/秒),真人后测(验手感)。"将将击败"有量化定义:`win_rate ~50-60%` 且 `胜利时中位剩血 < 20%`。
+**这不是"完美战斗 AI 平台"的第一版,是"PM 能拿来调数值的仪表盘"。** 技能组 / 被动 / 专精 / 装备 / 新怪的内容设计是后续用它驱动的独立 slice,不在本刀。
 
 ---
 
-## 2. 体验目标(三阶段 TTK,比值空间)
+## 1. PM 要回答的四个问题(本版围绕它们组织)
 
-| 阶段 | 玩家 TTK(杀怪) | 敌人 TTK(杀你) | 手感 |
+| # | PM 问题 | 输入 | 关键输出 |
 |---|---|---|---|
-| 前期(≤10级,无专精) | 1~2 | 6+(高度不对称偏玩家) | 流畅、低压、靠 1~2 技能 |
-| 中期(选专精后) | 拉长 | 与玩家 TTK 拉近 | 卡墙、稍受苦、去定向刷/换 build |
-| 后期(毕业向) | 靠 build 压低 | 靠 EHP 顶高 | 重新拿回安全边际,机制乘区主导 |
+| UC1 前期职业体检 | 五职业 1-10 级、裸装 baseline 打前期怪顺不顺? | class, level, encounter, iterations, policy | win_rate / ttk_median / win_hp_remaining / loss_enemy_hp_remaining |
+| UC2 K/cap 校准 | 护甲 K、抗性 cap 设多少,生存曲线才达标? | K 或 cap 的 sweep | 每参数下 win_rate / player_survival_turns / enemy_ttk / mitigation_saved |
+| UC3 build 对比 | 某装备/属性 modifier 让角色强了多少? | baseline build vs variant build | offense_index / defense_index(+ delta 摘要) |
+| UC4 输赢解释 | 为什么这场 43%?伤害不够、太脆、还是策略? | 一场配置 | damage_by_skill / damage_taken_by_source / mitigation_saved / 平均死亡回合 / 主要击杀来源 |
 
-- **墙(道馆/拦路怪)= stat check**:把墙要求功率设在"自然走到这里"之上 ~10%(刷怪垫一下过=量变沟)或 ~30-50%(换 build 过=质变沟)。沟宽 = 受苦程度旋钮。
-- **唯一横向不变量:前期各职业都要"流畅"**(低等级 baseline 够强)。满级 baseline 故意参差,各职业成长曲线各走各的,**不强行校准**。
-
----
-
-## 3. 架构:薄测量层贴真引擎
-
-**模拟器跑真引擎战斗,不另写数学。** 给定配置 → 用真实体/组件/ModifierChain 构造双方 → 跑真回合循环 / 真技能 handler / 真 `Skill.mitigate` 收口 → 收集结果。
-
-- **保真**:测的是真公式(含 ceil、方差、buff),永不与游戏漂移。
-- **扩展性继承自引擎**:build 的每个维度 = 一个真引擎部件(modifier/装备/buff/专精)。模拟器只是"开打前把部件挂上、然后量"。**新 build 机制本来就要在引擎里加部件,模拟器自动吃到,核心不改。**
-- **代价**:暴击/伤害浮动这些"引擎目前没有"的旋钮,要先在真减伤/出伤路径里实装(很小),保证单一事实源。见 §7。
+**验收的硬标准:PM 看报表就能发现"某职业前期坐牢/明显过强"、据 sweep 选一个初始 K/cap、说出"这件装备约 +18% 输出 / +5% 生存"、解释一场仗为什么输赢——全程不读代码。**
 
 ---
 
-## 4. INPUT(配置面)
+## 2. PM Acceptance Criteria(★第一版必须能跑出这三份报告 + 五条曲线)
+
+这是本 slice 的**验收闸**。Codex 实现完,以下产物能一键跑出 = 通过。
+
+### 报告 A — `early_class_health_check`(对应 UC1)
+- 维度:五职业 × 1–10 级 × 前期怪物(现有 encounter)。
+- 每格输出:`win_rate / ttk_median / win_hp_remaining / loss_enemy_hp_remaining`。
+- 用途:发现"某职业前期坐牢"或"某职业明显过强"。
+
+### 报告 B — `armor_k_sweep`(对应 UC2)
+- 扫:`K = 5, 10, 20, 40, 60`(固定一组玩家/怪配置)。
+- 每个 K 输出:`win_rate / player_survival_turns / enemy_ttk / mitigation_saved`。
+- 用途:PM 据此选一个初始 K。
+- (抗性 cap 同形态:`resist_cap_sweep`,复用同机制,扫 cap。)
+
+### 报告 C — `baseline_vs_variant`(对应 UC3)
+- 比:baseline(空 sources)vs 一个加了**装备或属性 modifier** 的 variant。
+- 输出:`offense_index / defense_index` + delta 摘要(如 "输出 +18% / 生存 +5%")。
+- 用途:量化单个 build 部件的价值。
+
+### 五条曲线(report 的可视化/表格数据,UC2/UC1 用)
+1. `armor_K_vs_ttk` — x: armor_K;y: player_ttk_median, enemy_ttk_median。判断节奏。
+2. `armor_K_vs_win_rate` — x: armor_K;y: win_rate。判断是否落目标胜率区间。
+3. `armor_K_vs_win_hp_remaining` — x: armor_K;y: win_hp_remaining_median_percent。判断是否"险胜"。
+4. `resist_cap_vs_ehp` — x: resist_cap;y: effective_hp_multiplier / skill_ttk。判断抗性上限是否防后期防御爆炸。
+5. `class_level_1_10_health_check` — x: level;series: class;y: win_rate / ttk_median / win_hp_remaining。判断前期各职业流畅。
+
+> 输出形态(表格/CSV/JSON 给前端画图)是 §6 开放实现细节,但**上述字段必须齐**。
+
+---
+
+## 3. INPUT(收窄到 v1 实际支持)
 
 ```yaml
-# ── 全局旋钮(要拧的那几个)──
 knobs:
   armor_K:         20     # 护甲曲线 护甲/(护甲+K)
   resist_cap:      75     # 三抗上限 %
   resist_floor:   -50     # 负抗(易伤)下限 %
-  crit_chance:     0.0    # 暴击率   ┐ 方差源(§7 新实装)
-  crit_mult:       1.5    # 暴击倍率 │
-  damage_variance: 0.0    # ±伤害浮动带 ┘
+  damage_variance: 0.0    # ±伤害浮动带(★v1 唯一方差源,默认 0=关;crit 留后)
 
-# ── 尺度(比值→绝对,只为 ceil 分辨率)──
-scale: { N: 1 }
+scale: { N: 1 }           # 比值→绝对,只为 ceil 分辨率
 
-# ── 双方(combatant = class baseline + sources[];可 inline 或引用现有实体)──
 sides:
   player:
     units:
-      - class:  warrior      # 读 class schema → base属性 + growth + weapon_attr + 初始技能
-        level:  10           # 满级=100;stats = base + growth×(level−1)
-        sources: []          # ★空 = 裸装无专精 baseline。扩展全进这里:
-        #  - { kind: weapon, base: 12, attr: 力量 }
-        #  - { kind: armor,  defense: 40 }
-        #  - { kind: affix,  stat: 法抗, value: 15 }   # 加法
-        #  - { kind: set,    mult: { 火: 0.30 } }       # 乘区
-        #  - { kind: passive, ... }  - { kind: spec, ... }  - { kind: buff, ... }
-        skills_override: null         # 默认用 starting_skills;可覆盖测特定配招
+      - class:  warrior        # 读 class schema → base属性 + growth + weapon_attr + 初始技能
+        level:  10             # 满级=100;stats = base + growth×(level−1)
+        sources: []            # ★空 = 裸装无专精 baseline(测量零点)
+        #  v1 只支持一种 source kind:简单属性/装备 modifier(给报告 C 用)
+        #  - { kind: modifier, field: "PrimaryStats.力量", value: "+20" }
+        #  - { kind: equipment, slot: weapon, base: 12, attr: 力量 }
+        skills_override: null  # 默认用 starting_skills;可覆盖测特定配招
         pos: { row: FRONT, slot: 0 }
         policy: { kind: heuristic, target: lowest_hp, mp_aware: true, defend_below: 0.0 }
   enemy:
     units:
-      - ref: forest_goblin   # 直接吃现有 encounter 实体
-      # 或 inline,同上格式;敌方 policy 逐 encounter 编写(=设计杠杆,见 §6)
+      - ref: forest_goblin     # 直接吃现有 encounter 实体(也可 inline)
+        # 敌方 policy 逐 encounter 编写(=设计杠杆)
 
-# ── 跑批 ──
 run:
   iterations: 1000
   seed: 0                  # 固定→可复现;或 seed_sweep 跑分布
-  max_turns: 50            # 超时判负(防互锁)
+  max_turns: 50            # 到顶 → 记 timeout(不判负,见 §6)
 
-# ── sweep:扫任意一个入口出曲线(定 K/cap 的主力姿势)──
-sweep:
-  param:  knobs.armor_K           # 也可 sides.player.units[0].level / .sources[...] 等
+sweep:                     # 单参数扫(给报告 B 用)
+  param:  knobs.armor_K    # 也可扫 .level / sources / cap 等单一入口
   range:  { from: 5, to: 60, step: 5 }
-  metric: [win_rate, ttk_median, hp_remaining_median]
+  metric: [win_rate, player_survival_turns, enemy_ttk, mitigation_saved]
 ```
 
-- **baseline = `sources: []`**:裸装无专精不是特例,是空列表自然落出的那一档,天然成为测量零点。
-- **新增 build 维度 = 往 `sources[]` 加一个 kind**:INPUT 结构与模拟器核心都不动。
+**v1 支持矩阵(明确边界):**
+- ✅ `class + level` baseline(读现有 class schema + 线性 growth)。
+- ✅ `encounter ref`(吃现有 encounter)。
+- ✅ 一种 source:简单属性/装备 modifier(报告 C 必需)。
+- ✅ `scripted` policy + `simple heuristic` policy。
+- ✅ 单参数 sweep。
+- ❌ 不做:search/minimax policy、LLM 集成、其余 source kind(被动/专精/套装乘区)、矩阵跑、power_index 当头号指标。
 
 ---
 
-## 5. OUTPUT(指标)
+## 4. OUTPUT(指标口径)
 
 **A. 单场战斗指标(绝对)**
 ```
-win_rate
+win_rate / loss_rate / timeout_rate         # 三者和=100%(timeout 不并入输,见 §6)
 ttk                  { mean, median, p10, p90 }
-hp_remaining_on_win  { median, p10 }          ★"将将击败"量化(目标中位 <20%)
-damage_by_source     { 每技能: raw vs final }
-mitigation_breakdown { 每单位: 挡掉多少 / 占比 }   # 验证抗性梯度真生效
-dps / ehp                                       # 反推回比值空间核对
+win_hp_remaining     { median, p10 }         ★"将将击败"量化(目标中位 <20%)
+loss_enemy_hp_remaining { median }           # 输的时候差多少(UC1 体检看坐牢程度)
+player_survival_turns{ median }              # 玩家能撑几回合
+damage_by_skill      { 每技能: raw / final } # 来自真实伤害路径 instrumentation
+damage_taken_by_source { 每来源: final }
+mitigation_saved     { 每单位: raw−final 累计 }  # 真 mitigate 处捕获
+kill_source          { 主要击杀来源占比 }
 ```
 
-**B. 相对 baseline 的功率指数(★裸装基线的真正用途)**
+**B. 相对 baseline 的两轴指数(UC3 主指标)**
 ```
-offense_index = 本 build DPS / 同职业 baseline DPS
-defense_index = 本 build EHP / 同职业 baseline EHP
-power_index   = offense × defense
+offense_index = DPS(build) / DPS(同职业 baseline)      # 对固定参照,口径见 §6
+defense_index = survival_turns(build) / survival_turns(同职业 baseline)
 ```
-内容/墙全用 baseline 表达:"墙=baseline×1.2"、"套装=+35% 功率"。
-
-**C. 边际归因(扩展位,以后做)**:`sources[]` 非空时,每个 source 各贡献多少功率("这把武器 +18% 攻")。output 结构预留,等真有装备/专精再实装。
+- **本版重点是 offense / defense 两轴。** `power_index = offense × defense` 保留为 **experimental**,不作头号验收指标。
+- 边际归因(每个 source 各贡献多少)= future,output 结构预留。
 
 ---
 
-## 6. 行动准则 / 双方 AI(policy 是一等输入)
+## 5. 行动准则 / policy(scripted + heuristic 两档)
 
-胜率/TTK 只在"某出招策略"下有意义。AI 蠢则数据蠢。故 policy 可插拔,**每回合本质 = 给可选行动打分、选最高**;那个打分函数 = "准则"。
+胜率/TTK 只在某出招策略下有意义。**每回合本质 = 给合法行动打分、选最高。** 那个打分函数 = "准则"。
 
 **默认 heuristic 准则(从高到低):**
-1. 保送人头(本回合能击杀 → 优先,杀掉=减少后续挨伤)。
-2. 集火:`lowest_hp`(最快摘人)| `highest_threat`(先掐最高输出)—— policy 参数。
+1. 保送人头(本回合能击杀 → 优先)。
+2. 集火:`lowest_hp` | `highest_threat`(policy 参数)。
 3. AOE 阈值:命中 ≥N 个才放群体。
-4. 续航:HP < 阈值则防御/治疗。
-5. 资源:尊重蓝耗/CD,留爆发别 overkill。
+4. 续航:HP < `defend_below` 则防御。
+5. 资源:`mp_aware` 时尊重蓝耗;留爆发别 overkill。
 
-**三档 policy(同"先基础后扩展"套路):**
-- `scripted`:固定出招表 —— 回归/边界测试;**也是 LLM 建议线的承载体**(§8)。
-- `heuristic`:上面这套 —— **默认档**,realistic+便宜+透明。
-- `search`:浅层前瞻/minimax —— **扩展位,本 slice 不做**,以后测 build 操作天花板。
+**两档(v1):**
+- `scripted`:固定出招表(回归/边界测试;也是未来 LLM 建议线的承载体)。
+- `heuristic`:上面这套,**默认档**。
+- (`search` = future,不在 v1。)
 
-**双方角色不对称:**
-- **玩家侧 policy = "打得好的真人"代理**(真玩家练几次会变强);若按蠢人建模会把内容调得过软。
-- **敌人侧 policy = encounter 设计的一部分**("专点后排""血 30% 狂暴")——**怪的行为本身是不靠数值的难度旋钮**,逐 encounter 编写。
+**双方角色不对称:** 玩家侧 policy = "打得好的真人"代理(否则内容会被调过软);敌人侧 policy 逐 encounter 编写 = 不靠数值的难度旋钮。
 
-**白送诊断:策略胜率差。** 同一场在 naive/heuristic/search 下各跑,看胜率差:naive 低但 search 高 = 高度吃操作(技巧表达强);两者都 ~50% = 纯数值检查。**这就是"这场仗奖励技巧还是只奖励数值"的量化读数**,接上"将将击败的险从哪来"。
+**白送诊断:策略胜率差**(同场跑 scripted/heuristic 看差值)= "这场奖励技巧还是只奖励数值"的读数。
 
 ---
 
-## 7. 方差源(本 slice 新实装的引擎小改)
+## 6. 已定实现口径(把原"开放问题"定死,防漂移)
 
-确定性回合制下,"将将击败、再来一次"的循环无法靠重复(同 build 同结果)。需要一个**方差源**,把"险胜"变成概率胜(输几次再一丝血过)。
-
-- 在真出伤/减伤路径加 **暴击(crit_chance/crit_mult)** 与/或 **±伤害浮动带(damage_variance)**,受 `knobs` 控制(默认 0 = 关闭,行为同现状)。
-- 实装在真引擎(非模拟器私有),保证单一事实源;模拟器只是把旋钮设非 0。
-- **取舍待用仪器定**:暴击 vs 浮动带、幅度多大,留到 §9 校准时扫。本 slice 只建机制 + 默认关。
-
----
-
-## 8. LLM 的角色(设计时人工步骤,非跑批循环)
-
-**靠谱,但只在一个角色:LLM=假设生成器,模拟器=裁判。**
-- LLM 擅长**创造性提候选打法 / 阴间 combo**(新技能/新 build 时)。
-- **LLM 的数字一律不可信**;把它提的线**编成 `scripted` policy 喂模拟器**,拿精确 win%/TTK。
-- 零新架构:LLM 线 = `scripted` 槽里的一个值。顺带是**退化 combo 探测器**(LLM 线碾压 heuristic → 该削)。
-- **手动、设计时用**,不塞进跑批循环(慢/不确定/贵)。
+1. **timeout 不判负。** `max_turns` 到顶 = 记 `timeout`,单列 `timeout_rate`;`win_rate = wins/total`,`win/loss/timeout` 三桶和为 100%。timeout 通常代表"打不动/互锁",是信号不是输。
+2. **baseline DPS/EHP 口径固定**(比值法,尺度自动抵消):
+   - 两个**固定参照档**:`ref_dummy_offense`(0 护甲/0 抗、HP 极大永不死)、`ref_attacker_defense`(固定属性+固定伤害类型的标准攻击者)。
+   - `DPS(x)` = x 对 `ref_dummy_offense` 的总伤害 ÷ 回合数,固定 seed 集取均值。
+   - `survival_turns(x)` = x 面对 `ref_attacker_defense` 撑过的回合数,固定 seed 集取均值。
+   - `offense_index = DPS(build)/DPS(baseline)`、`defense_index = survival_turns(build)/survival_turns(baseline)`,**同职业同 level**,baseline = 空 sources。
+3. **policy 如何生成合法 command 写死:** policy 输出 `{ skillId, target: {targetId} | {targetRow,targetCol} }`,**经与前端同一条 action/skill 解析路径**下发。约束:技能须为该单位已知技能;`mp_aware` 时蓝不足不可选;被沉默不可选;`resolveTargets` 必须非空。`heuristic` 只在合法 (skill,target) 候选里打分;`scripted` 步骤非法时**回退 basic_attack**(并在报告里计一次 `illegal_step`)。
+4. **simulator builder 必须复用真实路径:** 用现有角色/实体创建 + `ModifierChain` + `derived_stats` 构造双方,sources 经真 modifier/装备/buff API 挂上。**禁止另写一套数学。**
+5. **damage breakdown 必须来自真实伤害路径 instrumentation:** 订阅真 `combat.damage_dealt` / 在 `Skill.mitigate` 处记录 `{attacker,target,skillId,type,raw,final,saved}` 聚合。**禁止事后旁路重算。**
 
 ---
 
-## 9. 本 slice 范围与交付物
+## 7. 方差源(v1 引擎小改,只做一种)
 
-**✅ In scope —— 仪器:**
-- 无头批量模拟器:跑真引擎战斗 N 次,输出 §5.A + §5.B。
-- INPUT §4:`class+level+sources(可空)` + heuristic/scripted policy + knobs + scale + run + **单参数 sweep**。
-- 方差源机制(§7,默认关)。
-
-**✅ In scope —— 用仪器做的眼前校准(交付数值初值):**
-- **UC2:100 级等级 sweep** → 定 **护甲 K** 与 **抗性 cap** 初值(看 EHP/TTK 曲线落在 §2 目标带)。
-- **UC1:各职业 ≤10 级 baseline 体检** → TTK / 对单 / 对群,守住"前期各职业都流畅"。
-- 站位:**只建模当前机制深度**(摆 row/slot,`resolveTargets` 已处理 AOE/可达性)。完整站位系统是未来独立 feature,模拟器届时自动继承,**本期不预造**。
-
-**⏸ Out of scope(扩展位,留接口不实现):**
-- `search` policy、矩阵跑(build×encounter 表)、§5.C 边际归因、LLM 集成(=scripted 用法)。
-
-**⏸ Future(独立 feature,用本仪器驱动,零仪器改动):**
-- 技能组 / 被动 / 专精 / 装备 / 新怪的**内容设计**(全是 `sources[]` 新 kind 或 enemy-config,核心不改)。
-- 完整站位 / lane 射程 / 宠物(见 `docs/future-positional-pets-combat-running-notes.md`)。
-- 元素真实内容 + rider。
+确定性回合制下"输几次再一丝血过"无法靠重复(同 build 同结果)。需要一个方差源。
+- **v1 只做 `damage_variance`(±伤害浮动带)**,受 `knobs.damage_variance` 控制,默认 0 = 关、行为同现状。
+- 实装在**真出伤/减伤路径**(非模拟器私有),单一事实源;模拟器只把旋钮设非 0。
+- **crit(暴击)= future**,本版不做。幅度多大留到用仪表盘校准时扫。
 
 ---
 
-## 10. 开放问题(实现期定,不阻塞结构)
+## 8. 方法论锚点(rationale,设计取舍的依据)
 
-- 模拟器形态:独立 JUnit 入口 / debug REST endpoint / CLI?(倾向先 test 入口,跑批快、可断言。)
-- `power_index` 的 offense×defense 合成式是否够用,还是分开看两轴更可读。
-- 方差源先做暴击还是浮动带(留到校准扫)。
-- baseline DPS/EHP 的精确测法(对固定参照假人 N 场取均值?还是闭式估算?)。
+1. **属性是 TTK 方程的解,不是输入**:先定体验(TTK/存活回合),反解 HP/DPS。
+2. **比值空间设计,绝对尺度最后乘**:手感全在比值;`N` 只为 ceil 分辨率。
+3. **降维 = 只调几个旋钮**:个体属性由 class+level 公式算,全局只有 `K / cap / floor / damage_variance / N`。
+4. **基线压平、高光放离散乘区**:成长温和(class `growth` 已线性),爽感来自稀有乘区 → 后期不爆炸。
+5. **护甲曲线天然防爆**:`EHP=HP×(1+护甲/K)` 对护甲线性、永不破 100% → 无需硬 cap;flat 三抗会 hyperbolic 爆炸 → 必须硬 cap 75%。两层防御两套数学。
+6. **先造仪器再调数**:模拟器几千场/秒先行,真人后验手感。"将将击败"= `win_rate 50-60%` 且 `win_hp_remaining 中位 <20%`。
+
+**三阶段 TTK 目标:** 前期玩家 TTK 1-2 / 敌 6+(偏玩家、流畅);中期两边 TTK 拉近(卡墙受苦);后期靠 build 压低 TTK、顶高 EHP。墙=stat check,沟宽(高出自然功率 ~10% 量变 / ~30-50% 质变)= 受苦旋钮。唯一横向不变量:前期各职业都流畅;满级 baseline 故意参差,不强行校准。
+
+---
+
+## 9. 范围
+
+**✅ v1 in:** §2 三报告 + 五曲线;§3 输入支持矩阵;§4 输出;§5 scripted+heuristic;§6 五条口径;§7 damage_variance(默认关)。交付物含 UC1 前期体检 + UC2 K/cap 初值。
+
+**⏸ v1 out(留接口不实现):** search policy、矩阵跑、power_index 头号化、§4.B 边际归因、其余 source kind、LLM 集成。
+
+**⏸ Future(独立 feature,用本仪表盘驱动,零仪器核心改动):** 技能组/被动/专精/装备/新怪的**内容设计**(全是新 source kind 或 enemy-config);完整站位/lane/宠物(见 future note);元素真实内容 + rider;crit;LLM=假设生成器(设计时人工,编成 scripted 喂模拟器验,数字不可信)。
+
+---
+
+## 10. 仍属实现期细节(不阻塞结构,Codex 定)
+
+- 模拟器形态:JUnit 入口 / debug REST endpoint / CLI(倾向 test 入口,跑批快可断言)。
+- 报告输出格式(CSV / JSON / 控制台表)。
+- `ref_dummy_offense` / `ref_attacker_defense` 的具体属性数值。
+- heuristic 打分函数的具体权重(先能跑出合理 baseline,后调)。
