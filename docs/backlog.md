@@ -171,7 +171,7 @@ _（待添加）_
 ---
 
 ### BL-011 ContentAuthoringValidationTest:animation 需校验非空
-**状态：** `[backlog]`
+**状态：** `[backlog]` ⚠️ **暂冻结(与 slice-2 模拟器计划冲突)**:Plan 3 新增的测试技能 `skills/fireball_fixed.yaml` 用 `animation: []`。本条上线前需先让该技能用非空动画、或把测试专用技能排除出 content 校验,否则两边互相搞红。待模拟器三计划落地后再做。
 **来源：** V1 refactor code review(Claude, Senior SDE)
 
 **需求描述：**
@@ -184,20 +184,19 @@ _（待添加）_
 ---
 
 ### BL-012 清理 01_effects.js 的 `heal` dead registration
-**状态：** `[backlog]`
-**来源：** V1 refactor code review(Claude, Senior SDE)
+**状态：** `[done]`(2026-06-02,Claude)
 
 **需求描述：**
 `01_effects.js` 注册了 `heal` effect,但 `heal.yaml` 没有 `effect:` 字段(走 bespoke `heal.js`),导致该注册无人使用。要么让某技能改用 `effect: heal`、要么删除这条 dead registration,避免后续作者误以为 heal 是数据驱动。
 
-**可行性分析：**
-- 先确认没有其它技能依赖该 effect,再删/改。
-- 与 BL-008(技能 authoring schema)一并处理也可。
+**处理：**
+- grep 确认:无技能声明 `effect: heal`;`SkillFidelityTest`/`golden/heal.json` 测的是 bespoke `heal.js`,不依赖该注册。
+- 删除 `01_effects.js` 的 `registerEffect("heal", ...)` 整块。全量 147/147 绿。
 
 ---
 
 ### BL-013 彻底删除 / 退役 `damage_calc.js`
-**状态：** `[backlog]`
+**状态：** `[backlog]` ⚠️ **暂冻结(与 slice-2 模拟器计划冲突)**:Codex 三计划新增的纯 runtime 测试 harness 仍在 setUp 显式 load `damage_calc.js`。在途期间删除会断这些 harness。待三计划落地后,连同所有 harness 的 load 数组一并清。
 **来源：** Feature #3 切片一 plan review
 
 **需求描述：**

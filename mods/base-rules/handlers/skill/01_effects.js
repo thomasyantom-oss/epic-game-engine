@@ -59,11 +59,3 @@ Skill.registerEffect("buff_only", function(ctx, spec, results) {
   for (var i = 0; i < results.length; i++) Skill.applyBuffFromSpec(ctx, results[i].entity, spec.buff);
   Skill.present(ctx, spec, results, null, {buffApplied: true});
 });
-
-Skill.registerEffect("heal", function(ctx, spec, results) {
-  for (var i = 0; i < results.length; i++) {
-    var h = results[i].entity.getComponent("Health");
-    h.set("hp", Math.min(h.getInt("maxHp"), h.getInt("hp") + spec.heal));
-  }
-  Skill.present(ctx, spec, results, null);
-});
