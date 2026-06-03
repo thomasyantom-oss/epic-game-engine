@@ -1,40 +1,41 @@
-# 下一轮 Prompt — Ch1 Feature #3「伤害类型/抗性」slice-2(数值平衡模拟器)
+# 下一轮 Prompt — Ch1 Feature #3「伤害类型/抗性」slice-2(收尾:抗性内容 + tester)
 
-> `master`:后端 **147/147 绿**,golden 稳定。
-> 已合并:F2(属性表/武器/技能/创建页)、V1 safe-authoring refactor、**#3 切片一:减伤地基/空跑框架**(`Skill.mitigate` 唯一收口已就位)。
-> **本轮(2026-06-02)已产出:slice-2 的 spec v2 + 三份实现计划,待 Codex 执行。**
+> `master`:后端绿。已合并:F2、V1 safe-authoring、**#3 切片一(减伤地基)**、BL-012(删 dead heal)。
+> 本轮(2026-06-03)产出:**slice-2 数值模拟器(Codex 实现)+ Track A 锁定公式落成真默认(已 APPROVE,待 Codex 圈准 commit 合)**。
 
 ## 团队工作流(沿用)
 - **Claude = Senior SDE**:design / plan / review。**仅 Claude APPROVE,Codex 才能 merge。** 不直接改 Codex 代码,只给署名 review。
 - **用户 = PM + stakeholder + 真人 tester**。
-- **Codex = 实现 SDE**:逐 task TDD、频繁提交;完成用 `requesting-code-review` 发 Claude。
-- 记忆见 `~/.claude/.../memory/team_roles_codex_workflow.md`。
+- **Codex = 实现 SDE**:逐 task TDD、频繁提交;完成发 `requesting-code-review`。
+- 记忆见 `~/.claude/.../memory/`(team_roles / 模拟器解读口径 / 核心公式 / 怪物种族子种族 等)。
 
-## slice-2 的方向(已脑暴定稿,见 spec)
-slice-2 主题"配数值/做手感",但**先造一台 PM 可用的数值仪表盘**(无头批量战斗模拟器),再用它配数。方法论已与 PM 聊定:**TTK 反解属性 / 在比值空间设计 / 只调几个旋钮 / 护甲曲线 EHP 线性天然防爆、三抗必须 cap / 先造仪器再调数**。"将将击败"= `win_rate 50-60% + 胜利中位剩血 <20%`,确定性回合制下靠 `damage_variance` 方差源供能。
-- **Spec(PM 已 review,纳入 Codex review):** `docs/superpowers/specs/2026-06-02-combat-sim-balance-instrument-design.md`。四个 PM use case + 三报告(A/B/C)+五曲线当验收闸;五条实现口径定死(timeout 单列不判负 / baseline 比值法 / policy 合法 command / 复用真 ModifierChain / damage 走真实路径 instrumentation)。
+## slice-2 现状:护甲/武器那半已闭环
+- **数值模拟器已造好**(Codex):`com.epic.engine.sim`,真引擎跑批,产 `balance-model.csv` / `balance-check.csv`(REST:`/api/sim/reports/...`)。**forest_goblin = 承伤/护甲基准压测怪,不是实战验收**(口径见 memory `project-sim-balance-interpretation`)。
+- **锁定核心公式(Track A 已 APPROVE)**——见 memory `project-core-combat-formulas`:
+  - 护甲减伤 PoE 式 `ceil(raw²/(armor+raw))`(K=1),已成真 `mitigate` 默认(FLAT 仅留 sweep 对照)。
+  - 武器伤害 sqrt 式 `ceil(base*(1+√(attr*weaponMult)/10))`,已进真 `derived_stats`。
+  - 抗性 cap/floor 75/−50 真默认;basic_attack golden 有意重生 + 6 测试精确重算 + B1 正确性测试。
+- ⚠️ **Codex 合并时圈准 commit**:进 Track A 真实路径 + 6 测试 + golden + 整个 sim 包;**别扫** `AGENT.md`/`doc/`/`frontend/src/assets/`/`set-env.ps1`/`docs/superpowers/*/2026-05-2[78]-*`。
 
-## 三份实现计划(本轮已写完,待 Codex 执行)
-按 1→2→3 顺序(2/3 有前置依赖):
-1. **Plan 1 仿真核心 → 报告 A**:`docs/superpowers/plans/2026-06-02-combat-sim-core.md`(6 task)。FightRunner / Scripted+Heuristic policy / BatchMetrics 三桶 / CombatantBuilder(复用真创建·派生·encounter)/ 端到端 / `early_class_health_check`。
-2. **Plan 2 解释力 + 方差源(UC4+§7)**:`docs/superpowers/plans/2026-06-02-combat-sim-explain-variance.md`(5 task)。FightTrace+DamageTap / `combat.mitigation` 增量事件 / CombatTuning+`damage_variance`(种子) / BatchTrace。
-3. **Plan 3 护甲曲线+cap+sweep+指数+报告 B/C(UC2+UC3+§2)**:`docs/superpowers/plans/2026-06-02-combat-sim-sweep-reports.md`(5 task)。护甲曲线/抗性 cap(旋钮驱动默认 FLAT)/ Sweep / sources 落地 / BaselineIndex offense·defense / 报告 B+曲线1/2/3 / 报告 C。
+## #3 收尾还剩(抗性轴 + tester)
+护甲/武器闭环了,但"穿法抗戒指打火法怪明显抗"的可感手感还差:
+1. **装备三抗词缀**:`items.yaml` 加 flat % 三抗(存%/显示%,零公式;负抗=易伤,见 memory `project-monster-race-subrace` §7)。
+2. **怪抗性内容**:给部分怪配 flat % 抗。**它的最终结构家 = 怪物种族/子种族系统**(见下),但收尾这轮可先手配少量怪抗性把手感做出来,不必等整套种族系统。
+3. **tester 脚手架**:抗性装进 debug 背包 + `mitigation_resist_test`/`mitigation_high_resist_test` 挂地图 POI,让 PM 真进游戏戳。
+4. **UI 抗性显示** = BL-015(面板重构,装备铺开后做)。
 
-**贯穿铁律(计划里已钉死):** 薄层贴真引擎、零自写战斗数学;`combat.mitigation` 无监听者、`tuning` 未绑定时 `typeof` 守卫、护甲曲线**默认 FLAT + cap75 不触界 → 147 测试与真游戏数值全不变**;每 task 全量 `mvn test` 回归。**把 CombatTuning 默认翻成 CURVE + 重生 golden = PM 选定 K/cap 后的独立收尾提交,不在三计划内。**
+## 已存档的前瞻 design(待排期,非本轮)
+- **怪物种族/子种族/随机 modifier**:`docs/superpowers/specs/2026-06-03-monster-race-subrace-design.md`。怪=种族(main schema)+子种族(sub schema)+随机 roll modifier(自带 p(level)、适用范围)+正交 tag(灵魂/宝宝)。复用引擎 schema/ModifierChain/TagIndex。落地时替模拟器脚手架成长 + 安置 #3 怪物抗性内容 + 喂宠物初始基调。**真做时另起 brainstorm→spec→plan。**
 
 ## 起手(下一轮)
-**派 Codex 按 Plan 1 开干**(逐 task TDD,完成发 Claude review,仅 Claude APPROVE 才 merge)。Claude 退回 Senior SDE review 位。Plan 1 落地后 PM 即可看报告 A(各职业前期体检)。
-
-## 计划里记录的两处诚实缺口(Codex 实现时按可执行同构指令补)
-- 曲线 4 `resist_cap_vs_ehp`:照 `ArmorKSweepReport` 复制改 setter(`tuning.setResistBounds`)成 `ResistCapSweepReport` + 一个 test。
-- equipment 真实物品源:`sim_support.js` 已留注释占位;报告 C 用 stat modifier 已满足验收,equipment-真实物品留后续。
-
-## 扩展位(spec §9,不需改仪器核心)
-search policy、矩阵跑、power_index、LLM=scripted 喂线(LLM 当假设生成器、模拟器当裁判)、crit。
+开 #3 收尾这轮:**装备三抗词缀 + 少量怪抗性 + tester 脚手架**,让 PM 第一次真上手玩测减伤+抗性手感。要 brainstorm 词缀池/数值再派 Codex。或:若 PM 想先推怪物种族系统(把怪抗性一步到位),则先 brainstorm 那个 design 的实现 slice。
 
 ## Backlog(docs/backlog.md)
-- BL-013 退役 `damage_calc.js`(现 inert)。BL-014 元素抗进装备池 + 元素注册表。BL-015 角色面板显示重构(抗性块 + 伤害数字按类型上色)。
+- BL-013 退役 `damage_calc.js`:**注意现已复用 `Skill.mitigate`(非 inert),退役条件变了**;且 sim harness 仍 load 它,删前圈清。
+- BL-011 animation 非空校验:与 `fireball_fixed.yaml(animation:[])` 冲突,先协调。
+- BL-014 元素抗进装备池 + 元素注册表。BL-015 角色面板显示重构(抗性块 + 伤害数字按类型上色)。
 
 ## 后续 features(已存档,非本轮)
-- 站位/宠物战斗(lane 前线 + 短中长射程 + 站位 buff + 穿透):`docs/future-positional-pets-combat-running-notes.md`。
-- 控制/豁免/韧性(挂 `buff.apply`,不碰减伤地基):同上 future note。
+- 站位/宠物战斗:`docs/future-positional-pets-combat-running-notes.md`。
+- 控制/豁免/韧性(挂 `buff.apply`,不碰减伤地基):同上。
+- 怪物种族/子种族(见上,前瞻 design 已存档)。
