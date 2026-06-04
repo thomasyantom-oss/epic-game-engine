@@ -70,10 +70,10 @@ class NewCombatIntegrationTest {
 
         Entity goblin = store.get("goblin1");
         Entity player = store.get("player1");
-        // Player attacks goblin: 10 attack - 2 defense = 8 damage -> goblin hp = 12
-        assertThat(goblin.getComponent("Health").getInt("hp")).isEqualTo(12);
-        // Goblin attacks player: 5 attack - 5 defense = 1 damage (min 1) -> player hp = 99
-        assertThat(player.getComponent("Health").getInt("hp")).isEqualTo(99);
+        // Player attacks goblin: ceil(10^2/(2+10)) = 9 damage -> goblin hp = 11
+        assertThat(goblin.getComponent("Health").getInt("hp")).isEqualTo(11);
+        // Goblin attacks player: ceil(5^2/(5+5)) = 3 damage -> player hp = 97
+        assertThat(player.getComponent("Health").getInt("hp")).isEqualTo(97);
     }
 
     @Test
@@ -97,9 +97,9 @@ class NewCombatIntegrationTest {
         bus.fire("combat.resolve_round", resolveEvent);
 
         Entity player = store.get("player1");
-        // Without defend: 15 - 5 = 10 damage
-        // With defend: floor(10 * 0.5) = 5 damage -> player hp = 95
-        assertThat(player.getComponent("Health").getInt("hp")).isEqualTo(95);
+        // Without defend: ceil(15^2/(5+15)) = 12 damage
+        // With defend: floor(12 * 0.5) = 6 damage -> player hp = 94
+        assertThat(player.getComponent("Health").getInt("hp")).isEqualTo(94);
     }
 
     @Test

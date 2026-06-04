@@ -1,0 +1,15 @@
+id: mitigation_high_resist_test
+name: "高抗性减伤测试敌人"
+enemies:
+  - id: high_resist_dummy
+    name: "高法抗假人"
+    row: FRONT
+    slot: 0
+    defense: 0
+    力量: 0
+    敏捷: 0
+    智力: 0
+    体质: 8
+    意志: 0
+    weaponAttr: "敏捷"
+    resistances: { 法术: 90 }

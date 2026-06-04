@@ -1,6 +1,10 @@
 // 武器对应属性的倍率:力量 ×2(纯输出补偿),其余 ×1。
 function weaponMult(attr) { return attr === "力量" ? 2 : 1; }
 
+function weaponAttack(base, attrValue, attr) {
+    return Math.ceil(base * (1 + Math.sqrt(Math.max(0, attrValue * weaponMult(attr))) / 10));
+}
+
 var PLACEHOLDER_WEAPON_BASE = 5;    // #2 占位武器基础;Ch2 真武器替换
 var MAXHP_FLOOR = 30;               // 基础血量底盘:体质削到 0 也有此血量,不暴毙
 
@@ -33,7 +37,7 @@ function registerDerivedModifier(entityId) {
             if (c !== null) {
                 c.set("speed", p.getInt("敏捷"));
                 // 武器最终伤害(第二层)：读装备武器绑定属性；无武器走占位物理强度。
-                var atk = Math.ceil(PLACEHOLDER_WEAPON_BASE * (1 + phys / 100));
+                var atk = weaponAttack(PLACEHOLDER_WEAPON_BASE, p.getInt(wAttr), wAttr);
                 var slots = ent.getComponent("EquipmentSlots");
                 if (slots !== null && slots.get("weapon") !== null) {
                     var weapon = store.get(slots.get("weapon"));
@@ -42,7 +46,7 @@ function registerDerivedModifier(entityId) {
                         var wAttrName = ws.has("weaponAttr") ? ws.getString("weaponAttr") : "力量";
                         var B = ws.has("base") ? ws.getInt("base") : PLACEHOLDER_WEAPON_BASE;
                         var wAttrVal = p.has(wAttrName) ? p.getInt(wAttrName) : 0;   // 防武器绑定的属性名实体没有 → 避免 NPE
-                        atk = Math.ceil(B * (1 + wAttrVal * weaponMult(wAttrName) / 100));
+                        atk = weaponAttack(B, wAttrVal, wAttrName);
                     }
                 }
                 c.set("attack", atk);

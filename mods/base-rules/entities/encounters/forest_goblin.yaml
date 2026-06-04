@@ -1,5 +1,11 @@
 id: forest_goblin
 name: "森林哥布林遭遇战"
+sim_scaling:
+  # Simulator-only level scaling. At hero level N, each enemy gets
+  # (N - 1) times this allocation through a real modifier.
+  per_level:
+    敏捷: 2
+    体质: 3
 enemies:
   - id: goblin1
     name: "哥布林"

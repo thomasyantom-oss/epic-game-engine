@@ -200,15 +200,15 @@ class CombatBugfixTest {
     @Test
     @SuppressWarnings("unchecked")
     void defend_isPreemptive_protectsCastRound_andExpiresSameRound() {
-        // goblin faster (speed 9 > mage 6) and hits hard (attack 15 vs mage defense 5 = 10; halved = 5)
+        // goblin faster (speed 9 > mage 6) and hits hard; PoE armor gives 12 damage, halved to 6.
         setupCombat(6, 9, 50);
         Entity mage = store.get("mage");
         store.get("goblin1").getComponent("CombatStats").set("attack", 15);
 
-        // Round N: mage defends. Pre-emptive -> guard up before the faster goblin's hit -> 10 halved to 5.
+        // Round N: mage defends. Pre-emptive -> guard up before the faster goblin's hit -> 12 halved to 6.
         resolveRound(cmd("defend", null), cmd("basic_attack", "mage"));
         assertThat(mage.getComponent("Health").getInt("hp"))
-                .as("cast round protected: 10 dmg halved to 5").isEqualTo(95);
+                .as("cast round protected: PoE 12 dmg halved to 6").isEqualTo(94);
 
         // 当回合失效: buff is gone by the time the round resolves, so it never reaches the
         // post-resolve snapshot (no lingering icon in the next command phase).

@@ -147,26 +147,82 @@ var Skill = {
   mitigate: function(target, raw, opts) {
     opts = opts || {};
     var defending = target.hasComponent("Buff_defending") && !opts.ignoreDefend;
+    var type = opts.type || "物理";
+    var fin;
     if (opts.delivery === "普攻") {
       var armor = target.hasComponent("CombatStats")
           ? target.getComponent("CombatStats").getInt("defense") : 0;
-      var basicDamage = Math.max(1, raw - armor);
-      if (defending) basicDamage = Math.max(1, Math.floor(basicDamage * 0.5));
-      return basicDamage;
+      if (raw <= 0) raw = 1;
+      if (this._useArmorCurve()) {
+        var K = this._armorK();
+        var reduced = raw * (1 - armor / (armor + K * raw));
+        fin = Math.max(1, Math.ceil(reduced));
+      } else {
+        fin = Math.max(1, raw - armor);
+      }
+      if (defending) fin = Math.max(1, Math.floor(fin * 0.5));
+      fin = this._applyVariance(fin);
+      this._emitMitigation(target, raw, fin, "普攻", opts.delivery);
+      return fin;
     }
 
     var res = target.hasComponent("Resistances") ? target.getComponent("Resistances") : null;
-    var type = opts.type || "物理";
-    var typeResist = (res !== null && res.has(type)) ? res.getInt(type) : 0;
+    var typeResist = this._clampResist((res !== null && res.has(type)) ? res.getInt(type) : 0);
     var element = opts.element || null;
-    var elementResist = (element && res !== null && res.has(element)) ? res.getInt(element) : 0;
+    var elementResist = this._clampResist((element && res !== null && res.has(element)) ? res.getInt(element) : 0);
     var elementAmp = opts.elementAmp || 0;
     var skillDamage = raw
         * (1 + elementAmp / 100)
         * (1 - typeResist / 100)
         * (1 - elementResist / 100);
     if (defending) skillDamage = skillDamage * 0.5;
-    return Math.max(1, Math.ceil(skillDamage));
+    fin = Math.max(1, Math.ceil(skillDamage));
+    fin = this._applyVariance(fin);
+    this._emitMitigation(target, raw, fin, type, opts.delivery);
+    return fin;
+  },
+
+  _useArmorCurve: function() {
+    return !(typeof tuning !== 'undefined' && tuning && !tuning.armorModelCurve());
+  },
+
+  _armorK: function() {
+    if (typeof tuning !== 'undefined' && tuning) return Math.max(1, tuning.armorK());
+    return 1;
+  },
+
+  _resistCap: function() {
+    if (typeof tuning !== 'undefined' && tuning) return tuning.resistCap();
+    return 75;
+  },
+
+  _resistFloor: function() {
+    if (typeof tuning !== 'undefined' && tuning) return tuning.resistFloor();
+    return -50;
+  },
+
+  _clampResist: function(value) {
+    var cap = this._resistCap();
+    var floor = this._resistFloor();
+    if (value > cap) return cap;
+    if (value < floor) return floor;
+    return value;
+  },
+
+  _applyVariance: function(fin) {
+    if (typeof tuning === 'undefined' || !tuning) return fin;
+    var factor = tuning.rollVariance();
+    return Math.max(1, Math.ceil(fin * factor));
+  },
+
+  _emitMitigation: function(target, raw, fin, type, delivery) {
+    var ev = engine.newEvent("combat.mitigation");
+    ev.set("targetId", target.getId());
+    ev.set("raw", raw);
+    ev.set("final", fin);
+    ev.set("type", type);
+    ev.set("delivery", delivery || "技能");
+    engine.fire("combat.mitigation", ev);
   },
 
   // Mutate target HP only — does NOT fire any event (so no death cascade yet).

@@ -80,11 +80,11 @@ class WeaponDamageTest {
         js("engine.setBase('m1');");
         js("registerDerivedModifier('m1');");
 
-        // 新公式: ⌈5 × (1 + 20×2/100)⌉ = ⌈5×1.4⌉ = 7  (实现前占位读智力4: ⌈5×1.04⌉=6 → 真失败)
-        assertThat(store.get("m1").getComponent("CombatStats").getInt("attack")).isEqualTo(7);
+        // sqrt 公式: ⌈5 × (1 + √(20×2)/10)⌉ = 9;必须读武器绑定力量,不是角色主属性智力。
+        assertThat(store.get("m1").getComponent("CombatStats").getInt("attack")).isEqualTo(9);
     }
 
-    // 无武器 fallback：占位 ⌈5×(1+物理强度/100)⌉
+    // 无武器 fallback：占位武器也走 sqrt 公式。
     @Test
     void no_weapon_falls_back_to_placeholder() {
         Entity e = new Entity("n1");
@@ -98,8 +98,8 @@ class WeaponDamageTest {
         store.add(e);
         js("engine.setBase('n1');");
         js("registerDerivedModifier('n1');");
-        // 物理强度 = 力量10×2 = 20 → attack = ⌈5×1.2⌉ = 6
-        assertThat(store.get("n1").getComponent("CombatStats").getInt("attack")).isEqualTo(6);
+        // 物理强度 = 力量10×2 = 20 → attack = ⌈5×(1+√20/10)⌉ = 8
+        assertThat(store.get("n1").getComponent("CombatStats").getInt("attack")).isEqualTo(8);
     }
 
     // items.yaml 通过 world.init 加载出 5 把武器,各带 weaponAttr

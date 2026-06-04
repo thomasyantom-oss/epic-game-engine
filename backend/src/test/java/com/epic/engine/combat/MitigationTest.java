@@ -114,26 +114,35 @@ class MitigationTest {
         addProbe();
 
         addTarget("t", 5, 0, 0, 0, false);
-        assertThat(mitigate("t", 20, "{delivery:'普攻'}")).isEqualTo(15);
-        assertThat(mitigate("t", 3, "{delivery:'普攻'}")).isEqualTo(1);
+        assertThat(mitigate("t", 20, "{delivery:'普攻'}")).isEqualTo(16);
+        assertThat(mitigate("t", 3, "{delivery:'普攻'}")).isEqualTo(2);
         assertThat(mitigate("t", 20, "{delivery:'技能', type:'法术'}")).isEqualTo(20);
 
         addTarget("r", 5, 0, 50, 0, false);
         assertThat(mitigate("r", 20, "{delivery:'技能', type:'法术'}")).isEqualTo(10);
         assertThat(mitigate("r", 20, "{delivery:'技能', type:'物理'}")).isEqualTo(20);
-        assertThat(mitigate("r", 20, "{delivery:'普攻'}")).isEqualTo(15);
+        assertThat(mitigate("r", 20, "{delivery:'普攻'}")).isEqualTo(16);
 
         addTarget("n", 0, -100, 0, 0, false);
-        assertThat(mitigate("n", 10, "{delivery:'技能', type:'物理'}")).isEqualTo(20);
+        assertThat(mitigate("n", 10, "{delivery:'技能', type:'物理'}")).isEqualTo(15);
 
         addTarget("d", 5, 0, 0, 0, true);
-        assertThat(mitigate("d", 20, "{delivery:'普攻'}")).isEqualTo(7);
+        assertThat(mitigate("d", 20, "{delivery:'普攻'}")).isEqualTo(8);
         assertThat(mitigate("d", 20, "{delivery:'技能', type:'物理'}")).isEqualTo(10);
         assertThat(mitigate("d", 20, "{delivery:'技能', type:'物理', ignoreDefend:true}")).isEqualTo(20);
+
+        addTarget("half", 10, 0, 0, 0, false);
+        assertThat(mitigate("half", 10, "{delivery:'普攻'}"))
+                .as("PoE armor: armor equals raw damage gives about 50% mitigation")
+                .isEqualTo(5);
+        addTarget("lowArmor", 2, 0, 0, 0, false);
+        assertThat(mitigate("lowArmor", 10, "{delivery:'普攻'}"))
+                .as("PoE armor hand-check: ceil(10^2/(2+10))")
+                .isEqualTo(9);
     }
 
     @Test
-    void basicAttack_numbersUnchanged() throws Exception {
+    void basicAttack_usesPoeArmorDefault() throws Exception {
         loadCombatScriptsForRound();
         addCombat("battle1");
         addCombatUnit("hero", "勇者", 100, 14, 4, 10, true, "FRONT", 0);
@@ -141,14 +150,14 @@ class MitigationTest {
 
         resolveRound("battle1", "hero", "basic_attack", "goblin", "goblin", "basic_attack", "hero");
         assertThat(store.get("goblin").getComponent("Health").getInt("hp"))
-                .as("basic attack still equals attack-defense")
-                .isEqualTo(90);
+                .as("basic attack uses PoE armor: ceil(14^2/(4+14)) = 11")
+                .isEqualTo(89);
 
         store.get("hero").getComponent("Health").set("hp", 100);
         store.get("goblin").getComponent("Health").set("hp", 100);
         resolveRound("battle1", "hero", "defend", null, "goblin", "basic_attack", "hero");
         assertThat(store.get("hero").getComponent("Health").getInt("hp"))
-                .as("defending basic attack still floors half damage")
+                .as("defending still floors half of mitigated damage")
                 .isEqualTo(95);
     }
 

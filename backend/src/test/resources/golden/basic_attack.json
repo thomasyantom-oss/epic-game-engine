@@ -10,15 +10,15 @@
     "color" : "damage",
     "target" : "goblin1",
     "type" : "damage_number",
-    "value" : -8
+    "value" : -9
   }, {
     "side" : "player",
     "target" : "mage",
     "type" : "lunge"
   } ],
   "effects" : [ {
-    "amount" : -8,
-    "hp" : 192,
+    "amount" : -9,
+    "hp" : 191,
     "maxHp" : 200,
     "target" : "goblin1",
     "type" : "hp_change"
@@ -37,7 +37,7 @@
     "text" : " 造成 "
   }, {
     "color" : "damage",
-    "text" : "8"
+    "text" : "9"
   }, {
     "color" : "text",
     "text" : " 点伤害"

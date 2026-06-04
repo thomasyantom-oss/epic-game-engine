@@ -57,7 +57,7 @@ class DerivedStatsTest {
         assertThat(d.getInt("精神强度")).isEqualTo(3);    // 意志3
         assertThat(e.getComponent("Health").getInt("maxHp")).isEqualTo(150); // 30 + 体质12×10
         assertThat(e.getComponent("CombatStats").getInt("speed")).isEqualTo(5); // 敏捷
-        assertThat(e.getComponent("CombatStats").getInt("attack")).isEqualTo(7); // ⌈5×1.28⌉
+        assertThat(e.getComponent("CombatStats").getInt("attack")).isEqualTo(8); // ⌈5×(1+√28/10)⌉
     }
 
     // 复现 bug:同 ID 实体移除后重建,旧 ModifierChain 缓存(绑旧 entity)被复用 → 新实体从未被派生。

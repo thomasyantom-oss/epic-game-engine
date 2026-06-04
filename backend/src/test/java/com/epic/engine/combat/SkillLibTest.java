@@ -103,11 +103,11 @@ class SkillLibTest {
     }
 
     @Test
-    void computeDamage_viaDamageCalc_subtractsDefense() {
+    void computeDamage_viaDamageCalc_usesPoeArmor() {
         mkUnit("mage","法师",true);
         mkUnit("goblin","哥布林",false);   // defense 5 in mkUnit
         js("var dmg = Skill.computeDamage(store.get('mage'), store.get('goblin'), {via_damage_calc:true});" +
-           "if (dmg !== 5) throw 'dmg='+dmg;");   // 10 attack - 5 defense
+           "if (dmg !== 7) throw 'dmg='+dmg;");   // ceil(10^2/(5+10))
     }
 
     @Test
