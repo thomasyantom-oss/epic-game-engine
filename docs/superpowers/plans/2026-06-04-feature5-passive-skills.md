@@ -12,6 +12,67 @@
 
 ---
 
+## ⚠️ Review 修订(Codex `bq07m0x5k`,实现时必须覆盖原文)
+
+下列修订**优先级高于下方 task 正文**——正文写法若与此冲突,以本段为准。完整 review 见 `docs/superpowers/codex-runs/feature5/review-response.md`。
+
+**R1(阻塞)· `rt.eval` 不存在。** `ScriptRuntime` 只暴露 `execute(String script, String sourceName)`,**没有 `eval`**。所有「`rt.eval("...表达式...")` → 断言返回值」的测试一律改成:**`rt.execute(脚本)` 把结果写进一个 `Probe` 组件,再用 Java 从 `store` 读断言**。模板:
+```java
+rt.execute(
+    "var e = engine.createEntity('probe');" +
+    "var c = engine.newComponent('Probe');" +
+    "c.set('ok', <被测布尔表达式>);" +
+    "e.addComponent(c); store.add(e);", "probe.js");
+assertThat(store.get("probe").getComponent("Probe").get("ok")).isEqualTo(true);
+```
+适用于 Task 1/2/3/4/11 所有原 `rt.eval` 测试。需要造 caster 实体的测试,把造实体脚本并入同一个 `execute`。
+
+**R2(阻塞)· bespoke 技能绕过 resolveSpec。** `02_dispatch.js` 只覆盖 data-driven(`effect:` 声明的)技能;`mods/base-rules/skills/cleave.js`、`cross_blast.js`、`piercing_ray.js`、`defend.js`、`heal.js`、`flee.js` 是 bespoke、自己读 raw spec、不经 dispatch 的 effect 分支。**本 feature 要让被动 patch 也作用于 bespoke 技能** → 在每个 bespoke skill 内,把 `var spec = Skill._toJs(rawSpec);` 改为 `var spec = Skill.resolveSpec(Skill.context(event), "<skillId>", Skill._toJs(rawSpec));`(`flee/defend` 无伤害可不接,但接了也 passthrough 无害,统一接更省心)。**这是 Task 3 之外新增的一步,并入 Task 3**:改完后加一个测试,证明持有 `lingering_burn` 不影响 cleave(match 不中)、且对一个新加的 `match:{skill:cleave}` demo patch 生效。
+
+**R3(阻塞)· 属性被动测试装配缺 ModifierChain。** `PassiveStatModTest`(Task 7)用 `new ScriptRuntime(bus, store)` 时 `addModifier/removeModifier/recalculate/setBase` 全 no-op。改按 `DerivedStatsTest` 四参装配:
+```java
+ModifierTypeRegistry typeReg = new ModifierTypeRegistry();
+typeReg.loadFromModPath(Path.of("../mods/base-rules"));
+ModifierChainService chainService = new ModifierChainService(bus, store, typeReg);
+ScriptRuntime rt = new ScriptRuntime(bus, store, chainService, typeReg);
+```
+`engine.recalculate(entityId)` 真名确认存在;`setBase/addModifier/removeModifier` 签名与 plan 一致。(参照 `backend/.../DerivedStatsTest.java` 实际装配。)
+
+**R4(阻塞)· 升级入口名。** Task 11 的「level_up / ready」不准。实际:升级走 `action.gain_xp`,升级后 fire **`entity.level_up`**;持久化重载走 **`entity.loaded`**(见 `handlers/character/leveling.js`、`recalculate_hooks.js`)。`applySkillLevelCurve(entityId)` 应在 `entity.level_up` handler(或 `action.gain_xp` 升级分支)调用,并在 `entity.loaded` 重放一次;新建角色在 `select.js` 建完 Skillbook 后调一次。**属性被动注册(Task 7 的 `Passive.registerStatMods`)也挂这三个点**(新建 / level_up / loaded),保证幂等。
+
+**R5(应修)· `combat.unit_death` 字段。** 该事件带 `deadId / killerId / combatId`,**无 `attackerId`**(`attackerId` 只在 `combat.damage_dealt`;`death_check.js` 把它转成 `entity.hp_zero.killerId` 再 fire `unit_death`)。Task 8 的 `lifesteal_on_kill.js` 读 `event.get("killerId")`,**不要**写 `attackerId` fallback 声称其存在。
+
+**R6(应修)· `SkillbookActionsTest` 骨架。** Task 6 用 `ui.render_actions` 事件验证。`setUp` 的 `known` 里加一个被动条目(`iron_skin`,无 equipped),测试体:
+```java
+@Test
+void passive_doesNotRenderAsCombatAction_evenIfKnown() {
+    store.get("player1").addTag("combat:c1");
+    GameEvent event = new GameEvent("ui.render_actions");
+    event.set("entityId", "player1");
+    event.set("actions", new ArrayList<WorldSnapshot.ActionOption>());
+    bus.fire("ui.render_actions", event);
+    List<WorldSnapshot.ActionOption> actions = event.get("actions");
+    assertThat(actions.stream().map(a -> String.valueOf(a.params().get("command"))))
+        .doesNotContain("iron_skin");
+}
+```
+(核 `SkillbookActionsTest` 现有 `skill(base, equipped)` helper 与 `setUp`,沿用之。)
+
+**R7(应修)· 防御性 kind 校验。** `Passive.owns(entityId, passiveId)` 除比对 base,还要 `Skill.loadSpecAny(passiveId)` 的 `kind === "passive"` 才算数,防主动同名/坏数据误触发。`actions.js` 生成 command 前显式确认 `skills/<base>.yaml` 存在且 `kind != passive`;`03_skillbook.js` equip/unequip 找到 target 后加载 spec,非 active 直接 return。
+
+**R8(应修,plan 漏的回归)· `CharacterFlowTest` 会被打破。** 该测试断言「`known` 全部 `equipped==true`」;Task 5 给法师加 `starting_passives` 后被动条目无 equipped → 断言失败。**Task 5 必须同时改 `CharacterFlowTest`**:断言改为「只检查 active 条目 equipped」或按 base 分支(被动忽略 equipped)。grep `getComponent("Skillbook")` / `.get("known")` 确认没有其它遍历被打破。
+
+**R9(建议)· 行号锚点更正。** `ModuleLoader` 的 `SCRIPT_DIRS` 在 **:42**(非 :46);`actions.js` 完整改动范围 **72-79**(非 73-77)。其余锚点(`WorldSnapshot:61`/`ScriptRuntime:161`/`SnapshotService:116`/`select:108-126`)准确。
+
+**R10(建议)· typeId 优先级。** `passive base_priority=70` 当前可行(链:buff10<equipment50<passive70<level90<class180<derived300,升序应用,70 早于 derived ✓;现有 class schema 全 `+N` 不覆盖)。**保留 70**;留一条注释:未来若 class/race 出现 set 语义可能覆盖被动,届时再议(本期不动)。
+
+**R11(建议)· 跨 task 暂红标注。** 这些测试在本 task 阶段预期**暂红,直到后续 task 才整体绿**,plan 执行时按此预期、勿误判:
+- Task 5 被动进 snapshot → 等 **Task 9**(`ui/skillbook.js` 加载 `passives/`)。
+- Task 7 属性被动 → 依赖 Task 1 的 `passive` typeId + Task 2/3 的 `loadSpecAny`。
+- Task 11 hook 测试 → 必须加载**定义 hook 的 character 文件**,光加载 `00_skill_lib.js` 看不到。
+
+---
+
 ## 文件结构(改动边界)
 
 **新建:**
@@ -24,10 +85,12 @@
 - `backend/src/test/java/com/epic/engine/skill/PassiveHandlerTest.java` — 特殊效果被动
 
 **修改:**
-- `backend/src/main/java/com/epic/engine/module/ModuleLoader.java:46` — `SCRIPT_DIRS` 加 `"passives"`
+- `backend/src/main/java/com/epic/engine/module/ModuleLoader.java:42` — `SCRIPT_DIRS` 加 `"passives"`（R9:在 42 行）
 - `mods/base-rules/modifier_types.yaml` — 加 `passive` typeId
 - `mods/base-rules/handlers/skill/00_skill_lib.js` — 加 `resolveSpec` + `loadSpecAny`
 - `mods/base-rules/handlers/skill/02_dispatch.js` — 插入 `resolveSpec` 调用
+- `mods/base-rules/skills/{cleave,cross_blast,piercing_ray}.js` — R2:bespoke 技能也接 `resolveSpec`
+- `backend/src/test/java/com/epic/engine/character/CharacterFlowTest.java` — R8:known 全 equipped 断言改只检查 active
 - `mods/base-rules/handlers/character/select.js:108-126` — 实例加 `level`、播种 `starting_passives`
 - `mods/base-rules/handlers/character/derived_stats.js` — 或新文件:属性被动 modifier 注册接入 recalc
 - `mods/base-rules/handlers/ui/actions.js:73-77` — 指令生成只取主动
