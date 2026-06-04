@@ -94,7 +94,27 @@ public class SnapshotService {
                 buildCombatLog(playerId),
                 buildColorMap(),
                 buildPendingPoints(playerId),
-                buildEquipmentData(playerId));
+                buildEquipmentData(playerId),
+                buildSkillbook(playerId));
+    }
+
+    private WorldSnapshot.Skillbook buildSkillbook(String playerId) {
+        Entity player = entityStore.get(playerId);
+        if (player == null || !player.hasComponent("Skillbook")) return null;
+
+        GameEvent event = new GameEvent("ui.render_skillbook");
+        event.set("entityId", playerId);
+        event.set("known", new ArrayList<WorldSnapshot.SkillEntry>());
+        event.set("slots", 6);
+        eventBus.fire("ui.render_skillbook", event);
+
+        @SuppressWarnings("unchecked")
+        List<WorldSnapshot.SkillEntry> known = event.get("known");
+        if (known == null) known = List.of();
+        Object slotsValue = event.get("slots");
+        int slots = slotsValue instanceof Number n ? n.intValue() : 6;
+        int equipped = (int) known.stream().filter(WorldSnapshot.SkillEntry::equipped).count();
+        return new WorldSnapshot.Skillbook(slots, equipped, known);
     }
 
     private Integer buildPendingPoints(String playerId) {

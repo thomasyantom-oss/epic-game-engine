@@ -158,6 +158,11 @@ public class ScriptRuntime implements AutoCloseable {
         }
 
         @HostAccess.Export
+        public WorldSnapshot.SkillEntry newSkillEntry(String base, String name, String description, String icon, boolean equipped, String node) {
+            return new WorldSnapshot.SkillEntry(base, name, description, icon, equipped, node);
+        }
+
+        @HostAccess.Export
         public WorldSnapshot.ActionOption newActionOption(String type, String label, Map<String, Object> params) {
             return new WorldSnapshot.ActionOption(type, label, params, null, null);
         }

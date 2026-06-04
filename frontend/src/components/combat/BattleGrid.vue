@@ -105,27 +105,15 @@
           </template>
         </div>
         <div class="cmd-col cmd-actions" v-if="currentActor && phase === 'COMMAND' && !animating" :class="{ locked: showSkills || step === 'target' }">
-          <button v-if="firstMainAction"
-                  class="cmd-btn"
-                  :class="{ disabled: firstMainAction.style === 'disabled' }"
-                  @click="selectCommand(firstMainAction)">
-            {{ firstMainAction.label }}
-          </button>
-          <button v-if="skillActions.length > 0"
-                  class="cmd-btn"
+          <button class="cmd-btn" :disabled="!attackAction" @click="selectCommand(attackAction)">攻击</button>
+          <button class="cmd-btn" :disabled="!defendAction" @click="selectCommand(defendAction)">防御</button>
+          <button class="cmd-btn"
                   :class="{ active: showSkills }"
+                  :disabled="skillActions.length === 0"
                   @click="showSkills = true">技能</button>
-          <button v-for="cmd in otherMainActions" :key="cmd.params?.command"
-                  class="cmd-btn"
-                  :class="{ disabled: cmd.style === 'disabled' }"
-                  @click="selectCommand(cmd)">
-            {{ cmd.label }}
-          </button>
-          <button v-if="fleeAction"
-                  class="cmd-btn"
-                  @click="selectCommand(fleeAction)">
-            {{ fleeAction.label }}
-          </button>
+          <button class="cmd-btn disabled" disabled title="暂未开放">移动</button>
+          <button class="cmd-btn disabled" disabled title="暂未开放">道具</button>
+          <button class="cmd-btn" :disabled="!fleeAction" @click="selectCommand(fleeAction)">逃跑</button>
         </div>
         <div class="cmd-col cmd-sub" v-if="currentActor && phase === 'COMMAND' && !animating">
           <template v-if="step === 'target'">
@@ -133,16 +121,18 @@
             <button class="cmd-btn cancel-btn" @click="cancelSelect">取消</button>
           </template>
           <template v-else-if="showSkills">
-            <button v-for="cmd in skillActions" :key="cmd.params?.command"
-                    class="cmd-btn skill-cmd-btn"
-                    :class="{ disabled: cmd.style === 'disabled' }"
-                    @mouseenter="onSkillHover(cmd, $event)"
-                    @mousemove="moveTooltip"
-                    @mouseleave="hideTooltip"
-                    @click="selectCommand(cmd)">
-              {{ cmd.label }}
-            </button>
-            <button class="cmd-btn cancel-btn" @click="cancelSub">取消</button>
+            <div class="skill-sub-grid">
+              <button v-for="cmd in skillActions" :key="cmd.params?.command"
+                      class="cmd-btn skill-cmd-btn"
+                      :class="{ disabled: cmd.style === 'disabled' }"
+                      @mouseenter="onSkillHover(cmd, $event)"
+                      @mousemove="moveTooltip"
+                      @mouseleave="hideTooltip"
+                      @click="selectCommand(cmd)">
+                {{ cmd.label }}
+              </button>
+              <button class="cmd-btn cancel-btn cancel-tall" @click="cancelSub">取消</button>
+            </div>
           </template>
         </div>
       </div>
@@ -418,13 +408,12 @@ const step = ref('command')
 const selectedCommand = ref(null)
 const showSkills = ref(false)
 
-const firstMainAction = computed(() =>
-  props.commands.find(c => (c.params?.category || 'action') !== 'skill' && c.params?.command !== 'flee') || null
+const attackAction = computed(() =>
+  props.commands.find(c => c.params?.command === 'basic_attack') || null
 )
-const otherMainActions = computed(() => {
-  const first = firstMainAction.value
-  return props.commands.filter(c => (c.params?.category || 'action') !== 'skill' && c.params?.command !== 'flee' && c !== first)
-})
+const defendAction = computed(() =>
+  props.commands.find(c => c.params?.command === 'defend') || null
+)
 const fleeAction = computed(() =>
   props.commands.find(c => c.params?.command === 'flee') || null
 )
@@ -535,6 +524,7 @@ function mapUnitsToGrid(units, side) {
 
 function selectCommand(action) {
   if (!currentActor.value) return
+  if (!action) return
   if (showSkills.value && action.params?.category !== 'skill') return
   if (step.value === 'target') return
   var style = action.style
@@ -1003,7 +993,7 @@ onUnmounted(() => stopTimer())
 .cmd-actions {
   border-right: 2px solid var(--panel-border-color);
   display: grid;
-  grid-template-columns: 1fr 1fr;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: 0.3rem;
   align-items: center;
   justify-items: stretch;
@@ -1019,11 +1009,19 @@ onUnmounted(() => stopTimer())
   border-left: 2px solid var(--panel-border-color);
   overflow-y: auto;
   display: grid;
-  grid-template-columns: 1fr 1fr;
   gap: 0.3rem;
   align-items: center;
   justify-items: stretch;
   padding: 0.3rem 0.6rem;
+}
+
+.skill-sub-grid {
+  width: 100%;
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr)) auto;
+  grid-template-rows: 1fr 1fr;
+  gap: 0.3rem;
+  align-items: stretch;
 }
 
 .actor-avatar {
@@ -1068,9 +1066,20 @@ onUnmounted(() => stopTimer())
   opacity: 0.35;
   pointer-events: none;
 }
+.cmd-btn:disabled {
+  opacity: 0.35;
+  cursor: not-allowed;
+}
 .cancel-btn {
   border-color: color-mix(in srgb, var(--color-enemy) 50%, transparent);
   color: var(--color-enemy);
+}
+.cancel-tall {
+  grid-column: 4;
+  grid-row: 1 / 3;
+  aspect-ratio: 1;
+  min-width: 3rem;
+  align-self: stretch;
 }
 .cancel-btn:hover {
   border-color: var(--color-enemy);

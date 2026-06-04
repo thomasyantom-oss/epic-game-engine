@@ -54,7 +54,7 @@ engine.on("action.confirm_character", 100, function(event) {
     var name = event.get("name");
     var classId = event.get("class");
 
-    var charId = "char_" + engine.now();
+    var charId = event.has("characterId") ? event.get("characterId") : "char_" + engine.now();
 
     var charSchema = schemas.get("character");
     var classSchema = schemas.get(classId);
@@ -105,27 +105,24 @@ engine.on("action.confirm_character", 100, function(event) {
     nameComp.set("value", name);
     entity.addComponent(nameComp);
 
-    var skills = engine.newComponent("Skills");
-    var skillList = engine.newList();
-    var atkSkill = engine.newMap();
-    atkSkill.put("id", "basic_attack"); atkSkill.put("level", 1); atkSkill.put("cooldown", 0);
-    skillList.add(atkSkill);
-    var defSkill = engine.newMap();
-    defSkill.put("id", "defend"); defSkill.put("level", 1); defSkill.put("cooldown", 0);
-    skillList.add(defSkill);
-    var fleeSkill = engine.newMap();
-    fleeSkill.put("id", "flee"); fleeSkill.put("level", 1); fleeSkill.put("cooldown", 0);
-    skillList.add(fleeSkill);
-    // 职业技能:读 schema 的 starting_skills(替代硬编码)
+    var skills = engine.newComponent("Skillbook");
+    var known = engine.newList();
     if (classSchema !== null && classSchema.raw().get("starting_skills") !== null) {
         var startSkills = classSchema.raw().get("starting_skills");
         for (var sk = 0; sk < startSkills.size(); sk++) {
-            var ss = engine.newMap();
-            ss.put("id", String(startSkills.get(sk))); ss.put("level", 1); ss.put("cooldown", 0);
-            skillList.add(ss);
+            var inst = engine.newMap();
+            inst.put("base", String(startSkills.get(sk)));
+            inst.put("node", null);
+            inst.put("equipped", true);
+            known.add(inst);
         }
     }
-    skills.set("list", skillList);
+    var skillSlots = 6;
+    if (classSchema !== null && classSchema.raw().get("skill_slots") !== null) {
+        skillSlots = parseInt(String(classSchema.raw().get("skill_slots")));
+    }
+    skills.set("slots", skillSlots);
+    skills.set("known", known);
     entity.addComponent(skills);
 
     var slotsComp = engine.newComponent("EquipmentSlots");

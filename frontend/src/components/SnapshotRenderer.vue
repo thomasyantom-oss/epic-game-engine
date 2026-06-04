@@ -70,15 +70,23 @@
     </div>
 
     <div class="panel-nav">
-      <TabPanel :tabs="navTabs" default-tab="actions">
-        <template #actions>
-          <ActionPanel :actions="filteredActions" @action="$emit('action', $event)" />
-        </template>
-      </TabPanel>
+      <div class="menu-bar">
+        <button class="menu-btn" disabled title="待后续开放">背包</button>
+        <button class="menu-btn" @click="openSkillbook">技能</button>
+        <button class="menu-btn" disabled title="待后续开放">专精</button>
+      </div>
+      <button v-if="isDev" class="menu-btn menu-exit" @click="$emit('action', { type: 'logout', params: {} })">退出角色</button>
     </div>
 
     <!-- 全局 Tooltip -->
     <ItemTooltip />
+    <Modal :visible="modalActive === 'skillbook'" @close="close">
+      <SkillbookPanel
+        :skillbook="snapshot.skillbook"
+        :readonly="!!snapshot.combat"
+        @action="$emit('action', $event)"
+      />
+    </Modal>
   </div>
 </template>
 
@@ -89,20 +97,28 @@ import TextRenderer from './TextRenderer.vue'
 import CharacterStatsTab from './CharacterStatsTab.vue'
 import EquipmentBagPanel from './EquipmentBagPanel.vue'
 import ItemTooltip from './ItemTooltip.vue'
-import ActionPanel from './ActionPanel.vue'
 import SettingsPanel from './SettingsPanel.vue'
 import MapGrid from './MapGrid.vue'
 import MapInfoPanel from './MapInfoPanel.vue'
+import Modal from './Modal.vue'
+import SkillbookPanel from './SkillbookPanel.vue'
 import BattleGrid from './combat/BattleGrid.vue'
 import { useSettings } from '../composables/useSettings.js'
 import { useTooltip } from '../composables/useTooltip.js'
+import { useModal } from '../composables/useModal.js'
 
 const props = defineProps({ snapshot: Object })
 const emit = defineEmits(['action'])
 const { settings } = useSettings()
 const { hideTooltip } = useTooltip()
+const { active: modalActive, open, close } = useModal()
 const showHistory = ref(false)
 const logScrollRef = ref(null)
+const isDev = import.meta.env.DEV
+
+function openSkillbook() {
+  open('skillbook')
+}
 
 // 战斗结束时清除残留 tooltip
 watch(() => props.snapshot?.combat, (combat) => { if (!combat) hideTooltip() })
@@ -126,8 +142,6 @@ const logTabs = computed(() => {
   }
   return [{ id: 'events', label: '事件' }]
 })
-const navTabs = [{ id: 'actions', label: '快捷' }]
-
 // Split log into rounds: each round starts with a separator entry (round != null)
 const rounds = computed(() => {
   const log = props.snapshot?.log || []
@@ -252,11 +266,6 @@ const combatActions = computed(() => {
   return (props.snapshot?.actions || []).filter(a => a.type === 'combat_command')
 })
 
-// Filter out actions handled by other UI elements
-const filteredActions = computed(() => {
-  return (props.snapshot?.actions || []).filter(a => a.type !== 'map_move' && a.type !== 'poi_interact' && a.type !== 'combat_command')
-})
-
 function onMove(direction) {
   emit('action', { type: 'map_move', params: { direction, entityId: props.snapshot?.playerId } })
 }
@@ -288,7 +297,45 @@ function onPoiAction(poi) {
 .map-split > :last-child { width: 8rem; flex-shrink: 0; border-left: 2px solid var(--panel-border-color); }
 .panel-func { grid-column: 2; grid-row: 1; min-height: 0; }
 .panel-log { grid-column: 1; grid-row: 2; min-height: 0; }
-.panel-nav { grid-column: 2; grid-row: 2; min-height: 0; }
+.panel-nav {
+  grid-column: 2;
+  grid-row: 2;
+  min-height: 0;
+  padding: 0.5rem;
+  border: 2px solid var(--panel-border-color);
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+.menu-bar {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 0.4rem;
+}
+.menu-btn {
+  min-height: 2rem;
+  padding: 0.25rem 0.45rem;
+  background: transparent;
+  border: 2px solid var(--color-border);
+  border-radius: 3px;
+  color: var(--color-text);
+  cursor: pointer;
+  font-family: inherit;
+  font-weight: 700;
+}
+.menu-btn:hover:not(:disabled) {
+  border-color: var(--color-highlight);
+  color: var(--color-highlight);
+}
+.menu-btn:disabled {
+  opacity: 0.35;
+  cursor: not-allowed;
+}
+.menu-exit {
+  width: 100%;
+  border-color: color-mix(in srgb, var(--color-enemy) 50%, transparent);
+  color: var(--color-enemy);
+}
 .combat-info { line-height: 1.8; padding: 0.5rem; }
 .combatant-row { margin-left: 1rem; }
 .log-scroll { height: 100%; overflow-y: auto; line-height: 1.8; }

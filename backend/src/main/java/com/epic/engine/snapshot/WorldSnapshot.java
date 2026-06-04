@@ -20,7 +20,8 @@ public record WorldSnapshot(
         Map<String, String> colors,
         Integer pendingPoints,
         EquipmentData equipment,
-        List<ClassPreview> classPreviews
+        List<ClassPreview> classPreviews,
+        Skillbook skillbook
 ) {
     public record ActionResult(boolean success, String message) {}
     public record CharacterInfo(String id, String name, int level, String classId, String classLabel) {}
@@ -57,17 +58,19 @@ public record WorldSnapshot(
     public record ItemInfo(String id, String name, String type, String rarity, String rarityColor,
                            Map<String, Integer> stats) {}
     public record EquipmentData(Map<String, ItemInfo> slots, List<ItemInfo> inventory) {}
+    public record SkillEntry(String base, String name, String description, String icon, boolean equipped, String node) {}
+    public record Skillbook(int slots, int equippedCount, List<SkillEntry> known) {}
 
     public static WorldSnapshot characterSelect(String sessionToken, List<CharacterInfo> characters, int maxSlots, Map<String, String> colors, List<ClassPreview> classPreviews) {
         return new WorldSnapshot("character_select", sessionToken, null,
                 new ActionResult(true, "ok"), characters, maxSlots, null,
-                null, null, null, null, null, null, colors, null, null, classPreviews);
+                null, null, null, null, null, null, colors, null, null, classPreviews, null);
     }
 
     public static WorldSnapshot characterCreate(String sessionToken, FormData form, Map<String, String> colors, List<ClassPreview> classPreviews) {
         return new WorldSnapshot("character_create", sessionToken, null,
                 new ActionResult(true, "ok"), null, null, form,
-                null, null, null, null, null, null, colors, null, null, classPreviews);
+                null, null, null, null, null, null, colors, null, null, classPreviews, null);
     }
 
     public static WorldSnapshot inGame(String sessionToken, String playerId, ActionResult result,
@@ -75,9 +78,10 @@ public record WorldSnapshot(
                                         MapSnapshot map, CombatSnapshot combat,
                                         List<ActionOption> actions, List<LogEntry> log,
                                         Map<String, String> colors,
-                                        Integer pendingPoints, EquipmentData equipment) {
+                                        Integer pendingPoints, EquipmentData equipment,
+                                        Skillbook skillbook) {
         return new WorldSnapshot("in_game", sessionToken, playerId, result,
                 null, null, null, statusBars, buffs, map, combat, actions, log, colors,
-                pendingPoints, equipment, null);
+                pendingPoints, equipment, null, skillbook);
     }
 }

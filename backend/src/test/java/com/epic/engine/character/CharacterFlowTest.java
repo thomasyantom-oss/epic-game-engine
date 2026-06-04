@@ -79,28 +79,35 @@ class CharacterFlowTest {
 
     @Test
     @SuppressWarnings("unchecked")
-    void warriorGetsClassStartingSkills() {
+    void warriorSkillbook_hasClassSkills_excludesUniversal() {
         String token = sessionService.createSession();
         HttpHeaders headers = new HttpHeaders();
         headers.set("X-Session-Token", token);
         headers.setContentType(MediaType.APPLICATION_JSON);
 
         var confirmReq = Map.of("type", "confirm_character",
-                "params", Map.of("name", "战士技能测试", "class", "warrior"));
+                "params", Map.of("name", "战士出战测试", "class", "warrior"));
         ResponseEntity<Map> resp = rest.exchange("/api/action", HttpMethod.POST,
                 new HttpEntity<>(confirmReq, headers), Map.class);
         String playerId = (String) resp.getBody().get("playerId");
 
-        var skillsComp = entityStore.get(playerId).getComponent("Skills");
-        List<Map<String,Object>> list = (List<Map<String,Object>>) skillsComp.get("list");
-        List<String> ids = list.stream().map(m -> String.valueOf(m.get("id"))).toList();
-        assertThat(ids).contains("cleave", "war_cry");           // 来自 schema starting_skills
-        assertThat(ids).contains("basic_attack", "defend", "flee"); // 全员通用保留
+        var skillbook = entityStore.get(playerId).getComponent("Skillbook");
+        assertThat(skillbook).isNotNull();
+        assertThat(((Number) skillbook.get("slots")).intValue()).isEqualTo(6);
+
+        List<Map<String,Object>> known = (List<Map<String,Object>>) skillbook.get("known");
+        List<String> bases = known.stream().map(m -> String.valueOf(m.get("base"))).toList();
+        assertThat(bases).contains("cleave", "war_cry");
+        assertThat(bases).doesNotContain("basic_attack", "defend", "flee");
+        for (Map<String,Object> skill : known) {
+            assertThat(skill.get("equipped")).isEqualTo(Boolean.TRUE);
+            assertThat(skill.get("node")).isNull();
+        }
     }
 
     @Test
     @SuppressWarnings("unchecked")
-    void mageGetsClassStartingSkills() {
+    void mageSkillbook_hasClassSkills_excludesUniversal() {
         String token = sessionService.createSession();
         HttpHeaders headers = new HttpHeaders();
         headers.set("X-Session-Token", token);
@@ -112,9 +119,13 @@ class CharacterFlowTest {
                 new HttpEntity<>(confirmReq, headers), Map.class);
         String playerId = (String) resp.getBody().get("playerId");
 
-        var skillsComp = entityStore.get(playerId).getComponent("Skills");
-        List<Map<String,Object>> list = (List<Map<String,Object>>) skillsComp.get("list");
-        List<String> ids = list.stream().map(m -> String.valueOf(m.get("id"))).toList();
-        assertThat(ids).contains("fireball", "light_field");
+        var skillbook = entityStore.get(playerId).getComponent("Skillbook");
+        assertThat(skillbook).isNotNull();
+        assertThat(((Number) skillbook.get("slots")).intValue()).isEqualTo(6);
+
+        List<Map<String,Object>> known = (List<Map<String,Object>>) skillbook.get("known");
+        List<String> bases = known.stream().map(m -> String.valueOf(m.get("base"))).toList();
+        assertThat(bases).contains("fireball", "light_field");
+        assertThat(bases).doesNotContain("basic_attack", "defend", "flee");
     }
 }

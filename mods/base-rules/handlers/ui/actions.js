@@ -1,3 +1,51 @@
+function emitCombatCommand(entityId, actions, skillId, categoryOverride) {
+    var skillDef = engine.loadYaml("skills/" + skillId + ".yaml");
+    if (skillDef === null) return;
+
+    var name = skillDef.get("name");
+    var targeting = skillDef.get("targeting");
+    var steps = targeting !== null ? targeting.get("steps") : null;
+    var needsTarget = steps !== null && steps.size() > 0;
+
+    var canUseEvent = engine.newEvent("skill.can_use");
+    canUseEvent.set("entityId", entityId);
+    canUseEvent.set("skillId", skillId);
+    canUseEvent.set("usable", true);
+    engine.fire("skill.can_use", canUseEvent);
+
+    var usable = canUseEvent.get("usable");
+
+    var params = engine.newMap();
+    params.put("command", skillId);
+    params.put("category", categoryOverride);
+
+    if (needsTarget) {
+        var prompt = steps.get(0).get("prompt");
+        if (prompt !== null) params.put("prompt", prompt);
+    }
+
+    var description = skillDef.get("description");
+    if (description !== null) params.put("description", description);
+
+    var mpCost = skillDef.get("mp_cost");
+    if (mpCost !== null) params.put("mpCost", mpCost);
+
+    var aoeOffsets = targeting !== null ? targeting.get("aoe_offsets") : null;
+    if (aoeOffsets !== null) {
+        params.put("aoeOffsets", aoeOffsets);
+    }
+    var allowEmpty = targeting !== null && targeting.get("allow_empty") !== null && targeting.get("allow_empty");
+    if (allowEmpty) {
+        params.put("allowEmpty", true);
+    }
+    var style = needsTarget ? "requires_target" : "instant";
+    if (!usable) {
+        actions.add(engine.newActionOptionStyled("combat_command", name, params, "text", "disabled"));
+    } else {
+        actions.add(engine.newActionOptionStyled("combat_command", name, params, null, style));
+    }
+}
+
 engine.on("ui.render_actions", 100, function(event) {
     var entityId = event.get("entityId");
     var entity = store.get(entityId);
@@ -16,57 +64,18 @@ engine.on("ui.render_actions", 100, function(event) {
     }
 
     if (inCombat) {
-        var skills = entity.hasComponent("Skills") ? entity.getComponent("Skills").get("list") : null;
-        if (skills !== null) {
-            for (var j = 0; j < skills.size(); j++) {
-                var sk = skills.get(j);
-                var skillId = sk.get("id");
-                var skillDef = engine.loadYaml("skills/" + skillId + ".yaml");
-                if (skillDef === null) continue;
+        var universalIds = ["basic_attack", "defend", "flee"];
+        for (var u = 0; u < universalIds.length; u++) {
+            emitCombatCommand(entityId, actions, universalIds[u], "action");
+        }
 
-                var name = skillDef.get("name");
-                var category = skillDef.get("category") || "action";
-                var targeting = skillDef.get("targeting");
-                var steps = targeting !== null ? targeting.get("steps") : null;
-                var needsTarget = steps !== null && steps.size() > 0;
-
-                var canUseEvent = engine.newEvent("skill.can_use");
-                canUseEvent.set("entityId", entityId);
-                canUseEvent.set("skillId", skillId);
-                canUseEvent.set("usable", true);
-                engine.fire("skill.can_use", canUseEvent);
-
-                var usable = canUseEvent.get("usable");
-
-                var params = engine.newMap();
-                params.put("command", skillId);
-                params.put("category", category);
-
-                // Target prompt for frontend
-                if (needsTarget) {
-                    var prompt = steps.get(0).get("prompt");
-                    if (prompt !== null) params.put("prompt", prompt);
-                }
-
-                // Skill description for tooltip
-                var description = skillDef.get("description");
-                if (description !== null) params.put("description", description);
-
-                // AOE offsets for frontend range indicator
-                var aoeOffsets = targeting !== null ? targeting.get("aoe_offsets") : null;
-                if (aoeOffsets !== null) {
-                    params.put("aoeOffsets", aoeOffsets);
-                }
-                var allowEmpty = targeting !== null && targeting.get("allow_empty") !== null && targeting.get("allow_empty");
-                if (allowEmpty) {
-                    params.put("allowEmpty", true);
-                }
-                var style = needsTarget ? "requires_target" : "instant";
-                if (!usable) {
-                    actions.add(engine.newActionOptionStyled("combat_command", name, params, "text", "disabled"));
-                } else {
-                    actions.add(engine.newActionOptionStyled("combat_command", name, params, null, style));
-                }
+        var skillsComp = entity.hasComponent("Skillbook") ? entity.getComponent("Skillbook") : null;
+        var known = skillsComp !== null ? skillsComp.get("known") : null;
+        if (known !== null) {
+            for (var j = 0; j < known.size(); j++) {
+                var sk = known.get(j);
+                if (sk.get("equipped") !== true) continue;
+                emitCombatCommand(entityId, actions, String(sk.get("base")), "skill");
             }
         }
     } else {
