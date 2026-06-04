@@ -3,10 +3,13 @@
 > `master`:后端绿(全量 `mvn test` 通过)、前端 `npm run build` 通过。
 > 本轮(2026-06-04)产出:**#4 Skillbook 出战配置已合并**(`0ccb859` 实现 + `9b53a88` 文档),**#3 slice-2 锁定公式/模拟器/tester 也补提交了**(`8a4532f`)。
 
-## 团队工作流(沿用)
-- **Claude = Senior SDE**:design / plan / review。**仅 Claude APPROVE,Codex 才能 merge。** 不直接改 Codex 代码,只给署名 review。
-- **用户 = PM + stakeholder + 真人 tester**。
-- **Codex = 实现 SDE**:逐 task TDD、频繁提交;完成发 `requesting-code-review`。
+## 团队工作流(2026-06-04 升级为 Claude orchestrate Codex,详见 memory `team-roles-codex-workflow`)
+- **用户只在头尾出现**:brainstorm 定需求(头)+ 真人 verify & approve(尾)。中间不当传话筒。
+- **Claude = orchestrator**:brainstorm → 写 spec →`codex review`→ 写 plan →`codex exec` 派实现 → review diff → 报用户 verify → 用户 approve → **Claude 提交**(显式圈文件,别扫残留)。
+- **Codex = headless 实现层**:`codex exec --sandbox workspace-write --cd /c/workplace/epic -o <file> "<plan>" </dev/null`;续轮 `codex exec resume --last`;**Codex 不自己 commit**。
+  - ⚠️ 实现前先做 workspace-write dry-run 验证 mvn/npm/git 不被 execpolicy `.rules` 挡(可能要 `--ignore-rules`)。
+  - **plan 必含 5 件**:验收标准(含不做什么)/ 修改边界 / 验证方式 / 隐含产品偏好(UI密度/文案/空错态)/ 现有代码约束。
+  - 每 feature 落 `docs/superpowers/codex-runs/<feature>/`(prompt + Codex 回话)当永久查证记录;`codex resume` 事后查 session。
 - 记忆见 `~/.claude/.../memory/`(team_roles / 模拟器解读口径 / 核心公式 / 怪物种族子种族 / chapter1 分解 等)。
 
 ## Ch1 进度(7 feature 依赖序)
