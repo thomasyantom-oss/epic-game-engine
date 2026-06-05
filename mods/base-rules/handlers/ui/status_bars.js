@@ -33,7 +33,7 @@ engine.on("ui.render_status", 100, function(event) {
         var cap = (typeof Progression !== "undefined") ? Progression.cap() : 100;
         var need = (typeof xpForLevel !== "undefined") ? xpForLevel(xpLevel) : xpLevel * 100;
         if (xpLevel >= cap) { xp = need; }   // 满级满格
-        bars.add(engine.newStatusBar("xp", "经验", xp, need, xpColor, 0));
+        bars.add(engine.newStatusBar("xp", "经验", xp, need, xpColor, 3));   // 能量条(hp1/mp2)之下
     }
 
     if (entity.hasComponent("Health")) {

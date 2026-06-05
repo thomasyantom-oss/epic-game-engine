@@ -23,7 +23,10 @@
       >
         <div class="sb-icon">{{ skill.icon }}</div>
         <div class="sb-info">
-          <div class="sb-name">{{ skill.name }}</div>
+          <div class="sb-name">
+            {{ skill.name }}
+            <span class="sb-lv">Lv{{ skill.level ?? 1 }}</span>
+          </div>
           <div class="sb-desc">{{ skill.description }}</div>
         </div>
         <button
