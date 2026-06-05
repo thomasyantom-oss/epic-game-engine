@@ -85,6 +85,8 @@ engine.on("combat.start_encounter", 100, function(event) {
         var metaComp = engine.newComponent("CombatantMeta");
         metaComp.set("race", enemyDef.get("race") !== null ? enemyDef.get("race") : enemyDef.get("name"));
         metaComp.set("level", enemyDef.get("level") !== null ? enemyDef.get("level") : 1);
+        // 可选显式经验覆盖（难度/种族/精英/剧情，Ch3 用）；无则 xp_reward.js 按等级走默认曲线
+        if (enemyDef.get("xpReward") !== null) metaComp.set("xpReward", enemyDef.get("xpReward"));
         enemy.addComponent(metaComp);
 
         var combatPos = engine.newComponent("CombatPosition");

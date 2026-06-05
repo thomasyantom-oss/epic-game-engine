@@ -39,5 +39,11 @@ var Progression = {
     if (lv > cap) lv = cap;
     return lv;
   },
-  orbCost: function() { return parseInt(this.cfg().orb.cost_per_evolution); }
+  orbCost: function() { return parseInt(this.cfg().orb.cost_per_evolution); },
+  // 怪经验:base * 怪等级^exp。怪可在 CombatantMeta.xpReward 显式覆盖（难度/种族/精英/剧情，Ch3）。
+  xpReward: function(monsterLevel) {
+    var r = this.cfg().xp_reward || { base: 14, exp: 0.9 };
+    var lvl = parseInt(monsterLevel || 1);
+    return Math.round(parseFloat(r.base) * Math.pow(lvl, parseFloat(r.exp)));
+  }
 };

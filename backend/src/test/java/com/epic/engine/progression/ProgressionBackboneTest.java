@@ -191,4 +191,48 @@ class ProgressionBackboneTest {
         assertThat(missing).isEqualTo(1L);
         assertThat(explicit).isEqualTo(3L);
     }
+
+    @Test
+    void xpReward_followsCurve() {
+        // reward = round(14 * L^0.9): L1=14, L10=round(14*7.943)=111
+        assertThat(probe("Progression.xpReward(1)")).isEqualTo(14L);
+        assertThat(probe("Progression.xpReward(10)")).isEqualTo(111L);
+    }
+
+    /** 造玩家(player tag + Experience)与敌人(enemy tag + CombatantMeta)，同挂 combat:cid。 */
+    void makeCombat(String cid, int playerLevel, int monLevel, Integer xpRewardOverride) throws Exception {
+        String enemyExtra = xpRewardOverride != null
+            ? "m.set('xpReward', " + xpRewardOverride + "); " : "";
+        runtime.execute(
+            "var p = engine.createEntity('pc'); " +
+            "var exp = engine.newComponent('Experience'); exp.set('level', " + playerLevel + "); exp.set('xp', 0); p.addComponent(exp); " +
+            "var ch = engine.newComponent('Character'); ch.set('level', " + playerLevel + "); ch.set('classId','mage'); p.addComponent(ch); " +
+            "p.addTag('player'); p.addTag('combat:" + cid + "'); store.add(p); " +
+            "var en = engine.createEntity('en'); " +
+            "var m = engine.newComponent('CombatantMeta'); m.set('level', " + monLevel + "); " + enemyExtra +
+            "en.addComponent(m); en.addTag('enemy'); en.addTag('combat:" + cid + "'); store.add(en);",
+            "mkcombat.js");
+        runtime.execute(Files.readString(Path.of("../mods/base-rules/handlers/combat/xp_reward.js")), "xp_reward.js");
+    }
+
+    void fireUnitDeath(String deadId, String cid) {
+        runtime.execute(
+            "var ev = engine.newEvent('combat.unit_death'); ev.set('deadId','" + deadId + "'); ev.set('combatId','" + cid + "'); " +
+            "engine.fire('combat.unit_death', ev);",
+            "death.js");
+    }
+
+    @Test
+    void enemyDeath_grantsPlayerXp_default() throws Exception {
+        makeCombat("c1", 1, 1, null);   // Lv.1 怪 → reward 14
+        fireUnitDeath("en", "c1");
+        assertThat(store.get("pc").getComponent("Experience").getInt("xp")).isEqualTo(14);
+    }
+
+    @Test
+    void enemyDeath_xpRewardOverride_wins() throws Exception {
+        makeCombat("c2", 1, 1, 50);     // 显式 xpReward=50 覆盖默认曲线
+        fireUnitDeath("en", "c2");
+        assertThat(store.get("pc").getComponent("Experience").getInt("xp")).isEqualTo(50);
+    }
 }

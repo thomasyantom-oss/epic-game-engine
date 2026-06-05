@@ -15,6 +15,9 @@ scaling_budget:
   baseline_multiplier: 5.0
 orb:
   cost_per_evolution: 1
+xp_reward:
+  base: 14          # 怪经验 = round(base * 怪等级^exp)
+  exp: 0.9          # < level.xp_curve.exp(1.5) → 每级需击杀只数随等级上升
 passive_budget:
   unit_primary_stat: 10
   tiers: { minor: 1, normal: 2, major: 4 }

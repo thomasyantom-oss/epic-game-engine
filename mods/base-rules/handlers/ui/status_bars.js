@@ -12,6 +12,7 @@ engine.on("ui.render_status", 100, function(event) {
     var playerColor = (colorsComp !== null && colorsComp.has("player")) ? colorsComp.getString("player") : "#66cc55";
     var hpColor     = (colorsComp !== null && colorsComp.has("hp"))     ? colorsComp.getString("hp")     : "#e84848";
     var mpColor     = (colorsComp !== null && colorsComp.has("mp"))     ? colorsComp.getString("mp")     : "#2eb8cc";
+    var xpColor     = (colorsComp !== null && colorsComp.has("neutral"))? colorsComp.getString("neutral"): "#ffcc33";
 
     if (entity.hasComponent("Character")) {
         var charComp = entity.getComponent("Character");
@@ -22,6 +23,17 @@ engine.on("ui.render_status", 100, function(event) {
             : (charComp.has("classLabel") ? charComp.getString("classLabel") : "");
         bars.add(engine.newStatusBar("name", name, level, level, playerColor, 0));
         bars.add(engine.newStatusBar("class", classLabel, level, 99, playerColor, 0));
+    }
+
+    // 经验条：当前 xp / 升级所需(xpForLevel)；满级显示满格
+    if (entity.hasComponent("Experience")) {
+        var expC = entity.getComponent("Experience");
+        var xp = expC.has("xp") ? expC.getInt("xp") : 0;
+        var xpLevel = expC.has("level") ? expC.getInt("level") : 1;
+        var cap = (typeof Progression !== "undefined") ? Progression.cap() : 100;
+        var need = (typeof xpForLevel !== "undefined") ? xpForLevel(xpLevel) : xpLevel * 100;
+        if (xpLevel >= cap) { xp = need; }   // 满级满格
+        bars.add(engine.newStatusBar("xp", "经验", xp, need, xpColor, 0));
     }
 
     if (entity.hasComponent("Health")) {
