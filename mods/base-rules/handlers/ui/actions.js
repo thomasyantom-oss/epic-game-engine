@@ -1,3 +1,15 @@
+// JS 坐标数组 [[x,y],...] → Java List<List>，供快照序列化(JS 数组直接塞 Map 不可序列化)
+function pairsToJavaList(arr) {
+    var out = engine.newList();
+    for (var i = 0; i < arr.length; i++) {
+        var cell = engine.newList();
+        cell.add(arr[i][0]);
+        cell.add(arr[i][1]);
+        out.add(cell);
+    }
+    return out;
+}
+
 function emitCombatCommand(entityId, actions, skillId, categoryOverride, node) {
     var skillDef = engine.loadYaml("skills/" + skillId + ".yaml");
     if (skillDef === null) return;
@@ -40,6 +52,21 @@ function emitCombatCommand(entityId, actions, skillId, categoryOverride, node) {
     if (mpCost !== null) params.put("mpCost", mpCost);
 
     var aoeOffsets = targeting !== null ? targeting.get("aoe_offsets") : null;
+    // 进化(node)可能改 targeting(如炎爆→一排 AOE)。用 resolveSpec 后的 targeting 算范围预览:
+    // 优先 aoe_offsets,否则取多格 pattern。仅对进化技能启用,不动普通技能的现有路径。
+    if (node !== null && node !== undefined && typeof Skill !== "undefined" && Skill !== null && typeof Skill.resolveSpec === "function") {
+        var caster = store.get(entityId);
+        if (caster !== null) {
+            var resolved = Skill.resolveSpec({ caster: caster }, skillId, Skill._toJs(skillDef));
+            var rt = resolved !== null && resolved !== undefined ? resolved.targeting : null;
+            var off = null;
+            if (rt !== null && rt !== undefined) {
+                if (rt.aoe_offsets !== undefined && rt.aoe_offsets !== null) off = rt.aoe_offsets;
+                else if (rt.pattern !== undefined && rt.pattern !== null && rt.pattern.length > 1) off = rt.pattern;
+            }
+            if (off !== null) aoeOffsets = pairsToJavaList(off);
+        }
+    }
     if (aoeOffsets !== null) {
         params.put("aoeOffsets", aoeOffsets);
     }
