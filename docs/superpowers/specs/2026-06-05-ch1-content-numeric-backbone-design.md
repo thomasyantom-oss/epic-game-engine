@@ -84,7 +84,8 @@ passive_budget:
 
 - `xpForLevel(L) = round(base * L^exp)` 取代现 `level*100`。`exp=1.5`(低指数):每升一级所需单调变多 → 前期蹭涨、后期一级磨久。直观(base=100):L1→2≈100,L10≈3160,L50≈35000,L99≈98500。
 - **唯一旋钮 = `exp`**:嫌后段太肝调 1.3,嫌太快调 1.7,公式不动。
-- `gain_xp`(`leveling.js`)升级时检 `level.cap`:到 cap 不再升、不再积溢出 XP。
+- `gain_xp`(`leveling.js:60`)现状是 `if` 单次升级——大额 XP 只升一级。改为 **`while` 循环**:连续扣阈值升级直到 XP 不足或到 `level.cap`。到 cap 时:`Experience.level`/`Character.level` clamp 到 cap、`xp` 置 0、不再积溢出。
+- `debug.set_level`(`leveling.js:39`)现只拒 `<1`,**须加 `level.cap` 上限 clamp**(超 cap 取 cap),并同步 `Experience.level` 与 `Character.level`(§5 验证满级封顶依赖它)。
 
 ### 3.2 技能等级曲线(核心接缝)
 
@@ -97,20 +98,28 @@ passive_budget:
   - smooth 技能:`1+floor(49/2)=25 → cap 10`(直接满级)
   - standard 技能:`1+floor(30/3)=11 → cap 10`(直接满级)
   - chunky 技能:`1+floor(0/5)=1`(从 1 级养起)
-- **实现策略(最小侵入):** `applySkillLevelCurve(entityId)` 遍历 `Skillbook.known`,读每条 `base` 技能定义的 `tier`(或 `level_curve`)+ 实体当前 level,算出 skillLevel,**写回 `known[i].level`**。下游 `Skill.applyLevelScaling(spec, inst.level)`(`00_skill_lib.js`)**完全不改**——它照旧读 `inst.level`,只是这个值现在由曲线算出而非 debug 设。
-- 触发点已就位:`entity.after_recalculate` 与 `entity.level_up`(`recalculate_hooks.js`)已调 `applySkillLevelCurve`,本轮只填函数体。
+- **实现策略(最小侵入):** `applySkillLevelCurve(entityId)` 遍历 `Skillbook.known`,对每条 `base` 用现有 `Skill.loadSpecAny(base)` 载入技能定义、`Skill._toJs` 转 JS 对象,**按优先级读曲线参数:`spec.level_curve`(内联覆盖)> `spec.tier`(选档)> `progression.skill_level.default`**;再结合实体当前 level 算出 skillLevel,**写回 `known[i].level`**。下游 `Skill.applyLevelScaling(spec, inst.level)` 与 `ownerInstance`(`00_skill_lib.js:154/181`)**完全不改**——照旧读 `known[i].level`,只是该值现在由曲线算出。未知 tier 名 fallback 到 `default` 并打一条 warn(不报错,避免一个坏 YAML 卡全表)。
+- **作用范围 = 全部 `known` 条目(主动 + 被动统一)。** 被动也消费 `level`(`04_passive_lib.js:38` flattenSpec 带 level),故曲线对主动/被动一视同仁写 `level`;某被动是否真的随 level 变强,取决于它自己有没有 `level_scaling`(多数 demo 被动无,故实际 level 无关)。
+- **触发点(实测,纠正):** 现 `applySkillLevelCurve` 在 `entity.loaded`(`recalculate_hooks.js:99`)与 `entity.level_up`(同文件 `:127`)被调,`after_recalculate`(`:10`)只复位 HP——本轮只填这两处已就位调用的函数体。**硬时序约束:曲线写 `level` 必须发生在 `Passive.registerStatMods`/`applySpec` 之前**(loaded 路径现已是此序:`:99` 曲线 → `:110/112` 被动注册,保持不变)。
+- **`debug.set_level` 也要触发曲线:** 该跳级脚手架(`leveling.js:39`)走 `applySpec` 不发 `level_up`,故须在其末尾(recalc 后)显式调一次 `applySkillLevelCurve`,否则跳级后技能等级不刷新。
+- **施法路径不重算:** 战斗 `resolveSpec` 只读实例 `known[i].level`、不重建 known(`00_skill_lib.js` 施法路径无 Skillbook 重建),故曲线值在一次角色状态变化(loaded/level_up/debug)后稳定到下次变化,不会被施法复位。
 - **不再需要 `learnedAt` 字段**(brainstorm 中一度引入,因改为 tier 派生而撤回)。`Skillbook.known` 数据模型不增字段;`level` 字段从「debug/实例存储」语义变为「曲线派生(每次 recalc 重算)」。
 
 ### 3.3 技能数值缩放预算(rubric)
 
 - `level_scaling` 引擎机制不变:`某级数值 = base + delta×(skillLevel-1)`,线性叠加(`00_skill_lib.js` `applyLevelScaling`)。
-- `baseline_multiplier: 5.0` 是**目标比值**:标准输出技能裸值 lv1→lv10 约 ×5。作者据此反推每级 delta 后填进各技能 `level_scaling`。选 ×5 让增量在 10 级内整除、不出小数;基础值主要影响前期,精确值 playtest 调。
+- `baseline_multiplier: 5.0` 是**目标比值**:标准输出技能裸值 lv1→lv10 约 ×5。作者据此反推每级 delta 后填进各技能 `level_scaling`。引擎线性叠加 `delta×(lv-1)`,9 个增量到满级,故 `delta = 4×base/9` ——**×5 是目标倍率,不天然整除**;作者自行选可整除的 base/delta(基础值主要影响前期),精确值 playtest 调。
 - **明确边界:** 此预算仅约束**单技能裸值**,不解决「玩家总功率追不追得上怪物」——后者是 base + 属性缩放 + 天赋/球/被动 + 装备的总和,且依赖怪物成长(脚手架),由 sim/playtest 在内容轮另调。
 
 ### 3.4 灵魂球进化成本
 
 - `orb.cost_per_evolution: 1`:每次技能槽进化固定消耗 1 颗对应类型的球。
-- 接入点:现进化扣球逻辑若把 count 写死在 talent 节点(demo `orb:{type:爆破,count:2}`),改为默认读此常量;节点仍可显式覆盖 count(保留逃生舱,但本轮默认 1)。
+- 接入点(实测):`action.talent_place_orb`(`talent.js:460`)读 `slot.orb`(`:482`)、`count = parseInt(orb.count || 0)`(`:484`)、扣球(`:497`)。**现状 missing count → 0(免费 bug)。** 改为精确规则:
+  ```
+  count = (orb.count != null) ? parseInt(orb.count) : progression.orb.cost_per_evolution
+  ```
+- **同步展示:** 进化成本在 `effectSummary` / 快照里若有展示,须一并改读同一规则,避免 UI 显示空或旧 count。
+- **demo 决策:** 把 `elementalist.yaml` 进化节点的显式 `count:` 删掉、改吃默认 1(顺便验证默认路径),不写 `count: 1`。
 - 球在 Ch1 全程 debug 给(`debug.grant_orb`),真供给 Ch3,故本值占位但自洽。
 
 ### 3.5 被动功率预算基准(纯 rubric)
@@ -126,15 +135,19 @@ passive_budget:
 | 位置 | 改动 | 性质 |
 |---|---|---|
 | `mods/base-rules/progression.yaml` | 新建调参板 | 新增 |
-| `handlers/character/leveling.js` `xpForLevel` | `level*100` → `round(base*L^exp)`,读 progression.yaml | 改 |
-| `handlers/character/leveling.js` `gain_xp` | 升级加 `level.cap` 封顶 | 改 |
-| `handlers/character/recalculate_hooks.js` `applySkillLevelCurve` | no-op → 据 tier+charLevel 写 `known[i].level` | 填真 |
-| 技能 YAML(schema/约定) | 支持 `tier:` 与 `level_curve:` 覆盖字段 | 约定新增 |
+| `leveling.js` `xpForLevel`(`:1`) | `level*100` → `round(base*L^exp)`,读 progression.yaml | 改 |
+| `leveling.js` `gain_xp`(`:60`) | `if`→`while` 多级升级 + `level.cap` clamp + 溢出归零 | 改 |
+| `leveling.js` `debug.set_level`(`:39`) | 加 `level.cap` 上限 clamp + 同步 Exp/Char level | 改 |
+| `recalculate_hooks.js` `applySkillLevelCurve`(`:123`) | no-op → 据 tier+charLevel 写全部 `known[i].level`(主动+被动) | 填真 |
+| `leveling.js` `debug.set_level` 末尾 | recalc 后显式调一次 `applySkillLevelCurve` | 改 |
+| 技能/被动 YAML(约定) | 支持 `tier:` 与 `level_curve:` 覆盖字段 | 约定新增 |
 | 法师 demo 技能 | 补 1~2 条 `level_scaling` 作接缝样例 | 验证用 |
-| 进化扣球逻辑 | count 默认读 `orb.cost_per_evolution` | 改 |
+| `talent.js` `action.talent_place_orb`(`:484`) | count 缺省读 `orb.cost_per_evolution`(否则免费 bug) | 改 |
+| `elementalist.yaml` 进化节点 | 删显式 `count:`,吃默认 1 | 验证用 |
 
-- progression.yaml 热重载:作为 YAML 数据走 ModuleLoader/HotReloader,改值即时生效(与 colors/item_rarity 同)。
+- **progression.yaml 加载(纠正):** handler 通过 `engine.loadYaml("progression.yaml")` **按需读取**(同 `colors.yaml`/`item_rarity.yaml` 在 `bootstrap.js`/`equip.js` 的读法);它**不是** ModuleLoader 自动加载的数据表(ModuleLoader 只自动执行 JS 目录)。yaml 变更由 HotReloader 触发脚本热重载从而重读,改值即时生效。建议在 skill 库里缓存一次解析结果(类似 `Skill._specs`),热重载时清缓存。
 - 无 schema 迁移:`Skillbook.known` 不增字段;`level` 语义从存储值变派生值,旧存档 `level` 会在首次 recalc 被曲线覆写(可接受,dev build)。
+- **`debug.set_skill_level` 兼容性:** 该脚手架(`04_passive_lib.js:109` 直接写 `known[i].level`)在本轮后**不再是持久技能等级入口**——任何 loaded/level_up/debug.set_level 触发的曲线刷新都会覆写它。spec 立场:保留该入口作**临时覆盖**(下次曲线刷新即失效),并在其注释标注「值会被派生曲线覆盖」;不改名。
 
 ---
 
