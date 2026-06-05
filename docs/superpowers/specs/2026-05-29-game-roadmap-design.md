@@ -127,6 +127,10 @@
 ### Chapter 1 — 技能成长内核(旗舰)
 build 空间的主轴。技能如何把属性炸成战斗效果;灵魂标签升级树(骨架);随机属性标签(血肉);RNG 在获取不在结果。**心脏,无法中立设计,必须第一。** 深挖时第一个要拍的旋钮:组合标签能否再参与升级(深度 vs 爆炸)。
 
+> **进度(2026-06-05):框架 7/7 全部合并 ✅** — Ch1 拆 7 个 feature 独立周期实现(技能架构重构 / 属性表 / 伤害类型抗性 / Skillbook 出战配置 / 被动技能 / 专精 / 专精天赋树),决策与实现见母文档 `2026-05-30-chapter1-skill-growth-core-design.md` 与 memory `project-chapter1-decomposition`。
+>
+> **但这些都是「框架 + demo 夹具,内容真空」。** 技能升级树节点 / 真被动 / 专精分类 / 各档数值 / `applySkillLevelCurve` 等级曲线全是占位 demo(法师单一元素示例)。**下一阶段 = Ch1 内容设计轮(进行中):把空槽填真**——强数值 / 可玩性设计,需大量真人调试(`debug.set_level`/`grant_orb`/`grant_passive`/`set_skill_level` 脚手架 + balance-check/sim 包均可用)。这是独立于「框架七 feature」的一轮,另起 brainstorm → spec。
+
 ### Chapter 2 — 随机词缀装备系统(随机产出引擎)
 装备从 Ch1 的属性轴上 roll 随机词缀 + 稀有度分层 + loot 生成器,含"改写技能"的高级词缀。反过来验证 Ch1 的轴能否 roll 出有意思的 build。
 
@@ -160,4 +164,4 @@ build 空间的主轴。技能如何把属性炸成战斗效果;灵魂标签升�
 
 ## 7. 下一步
 
-进入 **Chapter 1(技能成长内核)** 的独立 brainstorm → spec → plan 周期。
+Ch1 **框架** 7/7 已收官(见 §5)。当前进入 **Ch1 内容设计轮**:为已搭好的技能升级树 / 被动 / 专精 / 等级曲线填入真实节点与数值,做强数值与可玩性设计 + 真人调试。独立 brainstorm → spec → plan 周期。之后再进 Chapter 2(随机词缀装备)。
