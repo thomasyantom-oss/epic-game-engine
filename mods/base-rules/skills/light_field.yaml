@@ -2,12 +2,15 @@ id: light_field
 name: "光击阵"
 description: "光击阵，在指定区域布置光能陷阱"
 category: skill
+tier: smooth
 silenceable: true
 effect: damage_only
 damage:
   type: 法术
   add: 15
   scaling: { 智力: 0.1 }
+level_scaling:
+  "damage.add": 7
 targeting:
   mode: pattern
   field: enemy

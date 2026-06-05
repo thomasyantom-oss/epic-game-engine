@@ -35,6 +35,16 @@
       <span class="bar-nums" :style="{ color: mpBar.color }">{{ mpBar.current }}/{{ mpBar.max }}</span>
     </div>
 
+    <!-- 经验条 -->
+    <div class="bar-row" v-if="xpBar">
+      <span class="bar-label" :style="{ color: xpBar.color }">{{ xpBar.label }}</span>
+      <div class="bar-track">
+        <div class="bar-fill"
+             :style="{ width: (xpBar.max > 0 ? xpBar.current / xpBar.max * 100 : 0) + '%', background: xpBar.color }"></div>
+      </div>
+      <span class="bar-nums" :style="{ color: xpBar.color }">{{ xpBar.current }}/{{ xpBar.max }}</span>
+    </div>
+
     <div class="divider"></div>
 
     <!-- 属性行（hover tooltip） -->
@@ -98,8 +108,9 @@ const nameBar = computed(() => barById.value['name'])
 const classBar = computed(() => barById.value['class'])
 const hpBar = computed(() => barById.value['hp'])
 const mpBar = computed(() => barById.value['mp'])
+const xpBar = computed(() => barById.value['xp'])
 const statBars = computed(() =>
-  (props.bars || []).filter(b => !['name','class','hp','mp'].includes(b.id))
+  (props.bars || []).filter(b => !['name','class','hp','mp','xp'].includes(b.id))
     .sort((a, b) => a.priority - b.priority)
 )
 

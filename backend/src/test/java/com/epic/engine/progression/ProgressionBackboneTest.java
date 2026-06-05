@@ -157,12 +157,11 @@ class ProgressionBackboneTest {
     }
 
     @Test
-    void fireball_tierStandard_usesStandardCurve() {
-        // 用 level 30 区分:无 tier(fallback smooth)@30 = 1+floor(29/2)=10；
-        // 标 standard(start20,per3)@30 = 1+floor(10/3)=4。改前得 10、改后得 4。
-        makeHeroWithSkill("t1", 30, "fireball");
+    void fireball_smoothTier_levelsEarly() {
+        // 火球是初始技能 → smooth(start1,per2)，开局即随等级成长。@3 = 1+floor((3-1)/2)=2
+        makeHeroWithSkill("t1", 3, "fireball");
         runtime.execute("applySkillLevelCurve('t1');", "curve.js");
-        assertThat(skillLevelOf("t1")).isEqualTo(4L);
+        assertThat(skillLevelOf("t1")).isEqualTo(2L);
     }
 
     @Test
