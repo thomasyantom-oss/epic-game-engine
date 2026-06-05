@@ -1,9 +1,18 @@
-function emitCombatCommand(entityId, actions, skillId, categoryOverride) {
+function emitCombatCommand(entityId, actions, skillId, categoryOverride, node) {
     var skillDef = engine.loadYaml("skills/" + skillId + ".yaml");
     if (skillDef === null) return;
     if (skillDef.get("kind") === "passive") return;
 
     var name = skillDef.get("name");
+    var description = skillDef.get("description");
+    // 进化(node)覆盖显示名/描述，与技能书面板(skillbook.js)一致
+    if (node !== null && node !== undefined && typeof Talent !== "undefined" && Talent !== null && typeof Talent.evolutionDisplay === "function") {
+        var disp = Talent.evolutionDisplay(node);
+        if (disp !== null) {
+            if (disp.name !== null) name = disp.name;
+            if (disp.description !== null) description = disp.description;
+        }
+    }
     var targeting = skillDef.get("targeting");
     var steps = targeting !== null ? targeting.get("steps") : null;
     var needsTarget = steps !== null && steps.size() > 0;
@@ -25,7 +34,6 @@ function emitCombatCommand(entityId, actions, skillId, categoryOverride) {
         if (prompt !== null) params.put("prompt", prompt);
     }
 
-    var description = skillDef.get("description");
     if (description !== null) params.put("description", description);
 
     var mpCost = skillDef.get("mp_cost");
@@ -79,7 +87,8 @@ engine.on("ui.render_actions", 100, function(event) {
                 var base = String(sk.get("base"));
                 var activeDef = engine.loadYaml("skills/" + base + ".yaml");
                 if (activeDef === null || activeDef.get("kind") === "passive") continue;
-                emitCombatCommand(entityId, actions, base, "skill");
+                var skNode = sk.get("node") !== null ? String(sk.get("node")) : null;
+                emitCombatCommand(entityId, actions, base, "skill", skNode);
             }
         }
     } else {
