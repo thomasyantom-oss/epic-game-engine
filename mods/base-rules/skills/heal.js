@@ -24,16 +24,16 @@ engine.on("combat.unit_action", 80, function(event) {
         evt.put("segments", segments);
         evt.put("effects", engine.newList());
         // Animation from YAML
-        var skillDef = engine.loadYaml("skills/heal.yaml");
-        var animDef = skillDef.get("animation");
+        var skillDef = Skill.resolveSpec(Skill.context(event), "heal", Skill._toJs(engine.loadYaml("skills/heal.yaml")));
+        var animDef = skillDef.animation;
         var animation = engine.newList();
-        for (var i = 0; i < animDef.size(); i++) {
-            var step = animDef.get(i);
+        for (var i = 0; i < animDef.length; i++) {
+            var step = animDef[i];
             var anim = engine.newMap();
-            var keys = step.keySet().iterator();
-            while (keys.hasNext()) {
-                var key = keys.next();
-                var val = step.get(key);
+            var keys = Object.keys(step);
+            for (var k = 0; k < keys.length; k++) {
+                var key = keys[k];
+                var val = step[key];
                 if (val === "actor") val = actorId;
                 anim.put(key, val);
             }

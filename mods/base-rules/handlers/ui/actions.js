@@ -1,6 +1,7 @@
 function emitCombatCommand(entityId, actions, skillId, categoryOverride) {
     var skillDef = engine.loadYaml("skills/" + skillId + ".yaml");
     if (skillDef === null) return;
+    if (skillDef.get("kind") === "passive") return;
 
     var name = skillDef.get("name");
     var targeting = skillDef.get("targeting");
@@ -75,7 +76,10 @@ engine.on("ui.render_actions", 100, function(event) {
             for (var j = 0; j < known.size(); j++) {
                 var sk = known.get(j);
                 if (sk.get("equipped") !== true) continue;
-                emitCombatCommand(entityId, actions, String(sk.get("base")), "skill");
+                var base = String(sk.get("base"));
+                var activeDef = engine.loadYaml("skills/" + base + ".yaml");
+                if (activeDef === null || activeDef.get("kind") === "passive") continue;
+                emitCombatCommand(entityId, actions, base, "skill");
             }
         }
     } else {

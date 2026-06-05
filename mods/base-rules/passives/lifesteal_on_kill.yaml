@@ -1,0 +1,6 @@
+id: lifesteal_on_kill
+kind: passive
+name: "嗜血"
+description: "击杀目标时回复 5 点生命（demo 特殊效果被动）"
+icon: "血"
+effect: handler

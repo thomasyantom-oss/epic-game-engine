@@ -7,8 +7,8 @@ engine.on("combat.unit_action", 80, function(event) {
   // rawSpec is a Java Map (SnakeYAML). Read 'effect' via Java .get; bail if absent (bespoke skill).
   var effectName = (typeof rawSpec.get === "function") ? rawSpec.get("effect") : rawSpec.effect;
   if (effectName == null) return;
-  var spec = Skill._toJs(rawSpec);          // deep-convert to plain JS for the helpers
   var ctx = Skill.context(event);
+  var spec = Skill.resolveSpec(ctx, type, Skill._toJs(rawSpec));
   var results = Skill.resolveTargets(ctx, spec);
   var fn = Skill.effects[spec.effect];
   if (fn == null) return;

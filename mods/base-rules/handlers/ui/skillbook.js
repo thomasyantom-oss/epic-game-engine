@@ -12,6 +12,11 @@ engine.on("ui.render_skillbook", 100, function(event) {
         var skill = known.get(i);
         var base = String(skill.get("base"));
         var def = engine.loadYaml("skills/" + base + ".yaml");
+        var kind = "active";
+        if (def === null) {
+            def = engine.loadYaml("passives/" + base + ".yaml");
+            kind = "passive";
+        }
         if (def === null) continue;
 
         var name = def.get("name") !== null ? String(def.get("name")) : base;
@@ -19,7 +24,8 @@ engine.on("ui.render_skillbook", 100, function(event) {
         var icon = def.get("icon") !== null ? String(def.get("icon")) : name.substring(0, 1);
         var node = skill.get("node") !== null ? String(skill.get("node")) : null;
         var equipped = skill.get("equipped") === true;
-        out.add(engine.newSkillEntry(base, name, description, icon, equipped, node));
+        var level = skill.containsKey && skill.containsKey("level") ? parseInt(skill.get("level")) : 1;
+        out.add(engine.newSkillEntry(base, name, description, icon, equipped, node, level, kind));
     }
 
     event.set("slots", skills.has("slots") ? skills.getInt("slots") : 6);

@@ -28,11 +28,16 @@ function _setSkillbookEquipped(event, wantEquipped) {
 
     for (var i = 0; i < known.size(); i++) {
         var skill = known.get(i);
-        if (skill.get("equipped") === true) equippedCount++;
-        if (String(skill.get("base")) === String(base)) target = skill;
+        var skBase = String(skill.get("base"));
+        var def = engine.loadYaml("skills/" + skBase + ".yaml");
+        var isActive = def !== null && def.get("kind") !== "passive";
+        if (isActive && skill.get("equipped") === true) equippedCount++;
+        if (skBase === String(base)) target = skill;
     }
 
     if (target === null) return;
+    var targetDef = engine.loadYaml("skills/" + String(target.get("base")) + ".yaml");
+    if (targetDef === null || targetDef.get("kind") === "passive") return;
 
     if (wantEquipped) {
         if (target.get("equipped") === true) return;

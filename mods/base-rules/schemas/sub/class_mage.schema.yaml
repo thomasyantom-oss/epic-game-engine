@@ -12,3 +12,4 @@ modifiers:
   - { field: "PrimaryStats.体质", value: "+4" }
   - { field: "PrimaryStats.意志", value: "+3" }
 starting_skills: [fireball, light_field]
+starting_passives: [iron_skin, lingering_burn]

@@ -113,8 +113,19 @@ engine.on("action.confirm_character", 100, function(event) {
             var inst = engine.newMap();
             inst.put("base", String(startSkills.get(sk)));
             inst.put("node", null);
+            inst.put("level", 1);
             inst.put("equipped", true);
             known.add(inst);
+        }
+    }
+    if (classSchema !== null && classSchema.raw().get("starting_passives") !== null) {
+        var startPassives = classSchema.raw().get("starting_passives");
+        for (var sp = 0; sp < startPassives.size(); sp++) {
+            var pinst = engine.newMap();
+            pinst.put("base", String(startPassives.get(sp)));
+            pinst.put("node", null);
+            pinst.put("level", 1);
+            known.add(pinst);
         }
     }
     var skillSlots = 6;
@@ -179,6 +190,13 @@ engine.on("action.confirm_character", 100, function(event) {
     // 注册派生 modifier(priority 300,在 class 之后跑)→ 自动 recalculate 算出二级属性 + maxHp
     if (typeof registerDerivedModifier !== 'undefined') {
         registerDerivedModifier(charId);
+    }
+    if (typeof applySkillLevelCurve !== 'undefined') {
+        applySkillLevelCurve(charId);
+    }
+    if (typeof Passive !== 'undefined') {
+        Passive.registerStatMods(charId);
+        engine.recalculate(charId);
     }
     // 新建角色满血(base hp 仅 30,maxHp 由体质派生)
     var hpComp = entity.getComponent("Health");

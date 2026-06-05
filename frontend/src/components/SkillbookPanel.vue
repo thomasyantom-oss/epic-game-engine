@@ -31,7 +31,18 @@
           <button v-else class="sb-btn" :disabled="equippedCount >= slots" @click="emitAction('skillbook_equip', skill.base)">出战</button>
         </template>
       </div>
-      <div v-if="sortedKnown.length === 0" class="sb-empty">暂无主动技能</div>
+      <div v-if="activeKnown.length === 0" class="sb-empty">暂无主动技能</div>
+    </div>
+
+    <div v-else-if="tab === 'passive'" class="sb-list">
+      <div v-for="p in passiveKnown" :key="p.base" class="sb-row">
+        <div class="sb-icon">{{ p.icon }}</div>
+        <div class="sb-info">
+          <div class="sb-name">{{ p.name }} <span class="sb-lv">Lv{{ p.level ?? 1 }}</span></div>
+          <div class="sb-desc">{{ p.description }}</div>
+        </div>
+      </div>
+      <div v-if="passiveKnown.length === 0" class="sb-empty">暂无被动</div>
     </div>
 
     <div v-else class="sb-empty">暂未开放</div>
@@ -56,10 +67,15 @@ const tabs = [
 
 const slots = computed(() => props.skillbook?.slots ?? 6)
 const known = computed(() => props.skillbook?.known ?? [])
-const equippedCount = computed(() => props.skillbook?.equippedCount ?? known.value.filter(skill => skill.equipped).length)
-const sortedKnown = computed(() =>
-  [...known.value].sort((a, b) => Number(b.equipped === true) - Number(a.equipped === true))
+const activeKnown = computed(() =>
+  [...known.value].filter(skill => (skill.kind ?? 'active') === 'active')
+    .sort((a, b) => Number(b.equipped === true) - Number(a.equipped === true))
 )
+const passiveKnown = computed(() =>
+  known.value.filter(skill => skill.kind === 'passive')
+)
+const equippedCount = computed(() => props.skillbook?.equippedCount ?? activeKnown.value.filter(skill => skill.equipped).length)
+const sortedKnown = activeKnown
 
 function emitAction(type, base) {
   emit('action', { type, params: { base } })
@@ -150,6 +166,15 @@ function emitAction(type, base) {
   font-size: 0.8rem;
   line-height: 1.35;
   opacity: 0.72;
+}
+
+.sb-lv {
+  font-size: 0.75rem;
+  color: var(--color-highlight);
+  border: 2px solid var(--color-highlight);
+  border-radius: 3px;
+  padding: 0 0.3rem;
+  margin-left: 0.3rem;
 }
 
 .sb-tree {

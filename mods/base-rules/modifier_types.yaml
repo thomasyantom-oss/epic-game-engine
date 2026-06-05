@@ -29,6 +29,12 @@ modifier_types:
     stack_rule: independent
     base_priority: 10
 
+  - id: passive
+    label: 被动
+    stack_rule: additive
+    # 本期属性被动早于 derived(300)。若未来 class/race 出现 set 语义覆盖基础属性,再调整优先级。
+    base_priority: 70
+
   - id: derived
     label: 派生属性
     stack_rule: exclusive

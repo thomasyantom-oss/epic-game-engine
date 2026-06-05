@@ -58,7 +58,8 @@ public record WorldSnapshot(
     public record ItemInfo(String id, String name, String type, String rarity, String rarityColor,
                            Map<String, Integer> stats) {}
     public record EquipmentData(Map<String, ItemInfo> slots, List<ItemInfo> inventory) {}
-    public record SkillEntry(String base, String name, String description, String icon, boolean equipped, String node) {}
+    public record SkillEntry(String base, String name, String description, String icon,
+                             boolean equipped, String node, int level, String kind) {}
     public record Skillbook(int slots, int equippedCount, List<SkillEntry> known) {}
 
     public static WorldSnapshot characterSelect(String sessionToken, List<CharacterInfo> characters, int maxSlots, Map<String, String> colors, List<ClassPreview> classPreviews) {

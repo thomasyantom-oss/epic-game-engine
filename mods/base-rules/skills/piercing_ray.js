@@ -12,7 +12,7 @@ engine.on("combat.unit_action", 80, function(event) {
 
     // Load spec for damage definition
     var rawSpec = Skill.loadSpec("piercing_ray");
-    var spec = Skill._toJs(rawSpec);
+    var spec = Skill.resolveSpec(ctx, "piercing_ray", Skill._toJs(rawSpec));
 
     // Resolve targets via lib (same-slot pattern across all rows)
     var results = Skill.resolveTargets(ctx, spec);

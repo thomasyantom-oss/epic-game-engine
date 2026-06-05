@@ -113,7 +113,9 @@ public class SnapshotService {
         if (known == null) known = List.of();
         Object slotsValue = event.get("slots");
         int slots = slotsValue instanceof Number n ? n.intValue() : 6;
-        int equipped = (int) known.stream().filter(WorldSnapshot.SkillEntry::equipped).count();
+        int equipped = (int) known.stream()
+                .filter(e -> "active".equals(e.kind()) && e.equipped())
+                .count();
         return new WorldSnapshot.Skillbook(slots, equipped, known);
     }
 

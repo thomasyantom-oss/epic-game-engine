@@ -101,7 +101,30 @@ engine.on("entity.loaded", 100, function(event) {
     if (typeof registerDerivedModifier !== 'undefined' && entity.getComponent("PrimaryStats") !== null) {
         registerDerivedModifier(entity.getId());
     }
+    if (typeof applySkillLevelCurve !== 'undefined') {
+        applySkillLevelCurve(entity.getId());
+    }
+    if (typeof Passive !== 'undefined') {
+        Passive.registerStatMods(entity.getId());
+        engine.recalculate(entity.getId());
+    }
     // 重载满血(持久化的是 base hp=30;maxHp 由体质派生)
     var loadedHp = entity.getComponent("Health");
     if (loadedHp !== null) loadedHp.set("hp", loadedHp.getInt("maxHp"));
+});
+
+// 接缝：人物等级 → 技能等级。Ch1 内容设计轮在此填 charLevel→skillLevel 曲线（每技能不同）。
+// 现为 no-op：技能 level 维持实例存储值（默认 1 / debug 设定）。
+function applySkillLevelCurve(entityId) {
+    // TODO(Ch1 内容轮): 遍历 Skillbook.known，按各技能曲线据人物 level 写 level 字段。
+}
+
+engine.on("entity.level_up", 100, function(event) {
+    var entity = event.get("entity");
+    if (entity === null) return;
+    applySkillLevelCurve(entity.getId());
+    if (typeof Passive !== 'undefined') {
+        Passive.registerStatMods(entity.getId());
+        engine.recalculate(entity.getId());
+    }
 });

@@ -7,6 +7,16 @@ var Skill = {
     return this._specs[type];
   },
 
+  loadSpecAny: function(id) {
+    var s = this.loadSpec(id);
+    if (s !== null && s !== undefined) return s;
+    var key = "passive:" + id;
+    if (this._specs[key] === undefined) {
+      this._specs[key] = engine.loadYaml("passives/" + id + ".yaml");
+    }
+    return this._specs[key];
+  },
+
   effects: {},
   registerEffect: function(name, fn) { this.effects[name] = fn; },
 
@@ -139,6 +149,115 @@ var Skill = {
   dealDamage: function(ctx, target, amount, skillId, skipLog) {
     this.applyDamage(target, amount);
     this.fireDamageDealt(ctx, target, amount, skillId, skipLog);
+  },
+
+  ownerInstance: function(ctx, baseId) {
+    var c = ctx ? ctx.caster : null;
+    if (c === null || c === undefined || !c.hasComponent("Skillbook")) return { node: null, level: 1 };
+    var known = c.getComponent("Skillbook").get("known");
+    if (known === null) return { node: null, level: 1 };
+    for (var i = 0; i < known.size(); i++) {
+      var k = known.get(i);
+      if (String(k.get("base")) === String(baseId)) {
+        return {
+          node: k.get("node") !== null ? String(k.get("node")) : null,
+          level: k.containsKey && k.containsKey("level") ? parseInt(k.get("level")) : (k.has && k.has("level") ? k.getInt("level") : 1)
+        };
+      }
+    }
+    return { node: null, level: 1 };
+  },
+
+  resolveSpec: function(ctx, baseId, baseSpec) {
+    var spec = JSON.parse(JSON.stringify(baseSpec));
+    var inst = this.ownerInstance(ctx, baseId);
+    spec = this.applyLevelScaling(spec, inst.level);
+    spec = this.applyNode(spec, inst.node);
+    spec = this.applyPassivePatches(ctx, baseId, spec);
+    return spec;
+  },
+
+  applyLevelScaling: function(spec, level) {
+    var lv = parseInt(level || 1);
+    if (lv <= 1 || spec.level_scaling == null) return spec;
+    var keys = Object.keys(spec.level_scaling);
+    for (var i = 0; i < keys.length; i++) {
+      this._applyPatchValue(spec, keys[i], spec.level_scaling[keys[i]] * (lv - 1));
+    }
+    return spec;
+  },
+
+  applyNode: function(spec, node) {
+    return spec;
+  },
+
+  applyPassivePatches: function(ctx, baseId, spec) {
+    var passives = this.ownedPassives(ctx);
+    for (var i = 0; i < passives.length; i++) {
+      var ps = passives[i];
+      if (ps.effect !== "skill_patch") continue;
+      if (!this._matchSkill(ps.match, baseId, spec)) continue;
+      this._applyPatch(spec, ps.patch);
+    }
+    return spec;
+  },
+
+  ownedPassives: function(ctx) {
+    var out = [];
+    var c = ctx ? ctx.caster : null;
+    if (c === null || c === undefined || !c.hasComponent("Skillbook")) return out;
+    var known = c.getComponent("Skillbook").get("known");
+    if (known === null) return out;
+    for (var i = 0; i < known.size(); i++) {
+      var base = String(known.get(i).get("base"));
+      var raw = this.loadSpecAny(base);
+      if (raw === null || raw === undefined) continue;
+      var spec = this._toJs(raw);
+      if (spec.kind === "passive") out.push(spec);
+    }
+    return out;
+  },
+
+  _matchSkill: function(match, baseId, spec) {
+    if (match == null) return true;
+    var keys = Object.keys(match);
+    for (var i = 0; i < keys.length; i++) {
+      var k = keys[i];
+      if (k === "skill") {
+        if (String(match[k]) !== String(baseId)) return false;
+      } else if (this._getPath(spec, k) !== match[k]) {
+        return false;
+      }
+    }
+    return true;
+  },
+
+  _applyPatch: function(spec, patch) {
+    if (patch == null) return;
+    var keys = Object.keys(patch);
+    for (var i = 0; i < keys.length; i++) this._applyPatchValue(spec, keys[i], patch[keys[i]]);
+  },
+
+  _applyPatchValue: function(spec, path, value) {
+    var parts = path.split(".");
+    var obj = spec;
+    for (var i = 0; i < parts.length - 1; i++) {
+      if (obj[parts[i]] === undefined || obj[parts[i]] === null) return;
+      obj = obj[parts[i]];
+    }
+    var key = parts[parts.length - 1];
+    if (typeof value === "number" && typeof obj[key] === "number") obj[key] = obj[key] + value;
+    else obj[key] = value;
+  },
+
+  _getPath: function(obj, path) {
+    var parts = path.split(".");
+    var cur = obj;
+    for (var i = 0; i < parts.length; i++) {
+      if (cur === null || cur === undefined) return undefined;
+      cur = cur[parts[i]];
+    }
+    return cur;
   },
 
   // 唯一减伤收口。delivery: "普攻" -> 护甲(flat,逐位对齐现行 damage_calc);

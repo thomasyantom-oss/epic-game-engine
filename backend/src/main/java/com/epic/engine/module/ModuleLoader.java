@@ -43,7 +43,7 @@ public class ModuleLoader {
         }
     }
 
-    private static final String[] SCRIPT_DIRS = {"handlers", "skills", "buffs"};
+    private static final String[] SCRIPT_DIRS = {"handlers", "skills", "buffs", "passives"};
 
     private void loadModule(ModuleDescriptor mod) throws IOException {
         runtime.setModuleContext(mod.path());

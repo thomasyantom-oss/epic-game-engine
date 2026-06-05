@@ -11,7 +11,7 @@ engine.on("combat.unit_action", 80, function(event) {
 
     // Load spec for damage definition (targeting resolved manually below for summary log)
     var rawSpec = Skill.loadSpec("cross_blast");
-    var spec = Skill._toJs(rawSpec);
+    var spec = Skill.resolveSpec(ctx, "cross_blast", Skill._toJs(rawSpec));
 
     // Resolve targets via lib (cross pattern)
     var results = Skill.resolveTargets(ctx, spec);

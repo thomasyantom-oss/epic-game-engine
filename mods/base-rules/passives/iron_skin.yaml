@@ -1,0 +1,7 @@
+id: iron_skin
+kind: passive
+name: "铁壁"
+description: "力量提升（demo 属性被动）"
+icon: "壁"
+effect: stat_mod
+modifiers: { 力量: 10 }

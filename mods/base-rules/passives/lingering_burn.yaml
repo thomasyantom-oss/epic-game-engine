@@ -1,0 +1,8 @@
+id: lingering_burn
+kind: passive
+name: "余烬"
+description: "火球的灼烧多持续一回合（demo 技能 patch 被动）"
+icon: "烬"
+effect: skill_patch
+match: { skill: fireball }
+patch: { "debuff.data.remaining": +1 }
