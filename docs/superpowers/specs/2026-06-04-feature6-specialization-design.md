@@ -68,7 +68,7 @@ nodes:
     growth: { 智力: 2, 敏捷: 2, 体质: 1 }
 
   # ---- tier 2 (L50):各大类下细化 ----
-  - { id: pyromancer,  label: "火",   tier: 2, requires_level: 50, parent: elementalist, grant_passives: [lingering_burn] }
+  - { id: pyromancer,  label: "火",   tier: 2, requires_level: 50, parent: elementalist, grant_passives: [lifesteal_on_kill] }   # 法师不自带,验证"授被动可见";lingering_burn 是法师起手被动,授它会无形 no-op
   - { id: cryomancer,  label: "冰",   tier: 2, requires_level: 50, parent: elementalist }
   - { id: stormmancer, label: "电/射线", tier: 2, requires_level: 50, parent: elementalist }
   - { id: aoe_arcane,  label: "范围", tier: 2, requires_level: 50, parent: arcanist }
@@ -176,7 +176,7 @@ specialization: {
 **后端单元测试:**
 - 法师 L10 选 `arcanist` → growth 追溯:PrimaryStats 按 `{智力4,体质1}×(level-1)` 重算(对比选前/选后同级),maxHp 随体质升、当前血夹顶。
 - L10 选 `elementalist`(不覆 growth)→ 维持职业默认成长。
-- L50 选 `pyromancer` → `lingering_burn` 进 `Skillbook.known` 且 `Passive.registerStatMods` 生效;`path == [elementalist, pyromancer]`。
+- L50 选 `pyromancer` → `lifesteal_on_kill` 进 `Skillbook.known` 且 `Passive.registerStatMods` 生效;`path == [elementalist, pyromancer]`。
 - 校验拒绝:未到级选 tier2 / 跨大类选(parent 不匹配) / 同 tier 重选 → 全拒,状态不变。
 - **load 往返**:选专精 → 持久化 → 重载,属性/成长/被动**逐位一致**(验证 `registerSpecModifier` 重注册 + 幂等,无重启膨胀)。
 - **`main_attr` 通路**:用合成测试节点(声明 `main_attr`)验证 `spec`(priority 220)覆写 weaponAttr 后,**derived(300)读到新 weaponAttr** → `物理强度` 改吃新属性(覆盖去掉盾战 demo 后的空白)。
