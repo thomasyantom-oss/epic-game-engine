@@ -26,7 +26,7 @@
 - **不做**：升级树 gating / 显示 / 升级 API 校验(全归 #7)；真专精分类与数值(内容轮)；灵魂球(#7/Ch3)；洗点(永不可洗)；其它职业专精树(内容轮)；`applySkillLevelCurve` 维持 no-op。
 
 ### ② 修改边界
-- **可动**：新增 `specializations/mage.yaml`、`handlers/character/specialization.js`、`handlers/ui/specialization.js`、`frontend/.../SpecializationPanel.vue`；改 `modifier_types.yaml`、`leveling.js`、`select.js`、`recalculate_hooks.js`、`00_skill_lib.js`、`WorldSnapshot.java`、`ScriptRuntime.java`、`SnapshotService.java`、`SnapshotRenderer.vue`。
+- **可动**：新增 `specializations/mage.yaml`、`handlers/character/specialization.js`、`handlers/ui/specialization.js`、`frontend/.../SpecializationPanel.vue`；改 `modifier_types.yaml`、`leveling.js`、`select.js`、`recalculate_hooks.js`、`00_skill_lib.js`、`WorldSnapshot.java`、`ScriptRuntime.java`、`SnapshotService.java`、**`SnapshotController.java`(action 失败 result 通路,见 Task A5 Step 0)**、`SnapshotRenderer.vue`。
 - **别碰**：战斗流程/动画/伤害管线；`ModifierChain.java` 引擎本体（只新增 modifier type 数据，不改 Java 链逻辑）；golden（`SkillFidelityTest` 不重生成）；sim 包；`allocate_point` 的休眠语义（只守卫不复活）。
 - 允许就地微调不适配处，但偏离本 plan 的结构性决定要在回话里标注，等 review 判。
 
@@ -43,6 +43,8 @@
 ### ⑤ 现有代码约束
 - **priority 由 `modifier_types.yaml` 决定，不是注册顺序**：equipment50/passive70/level90/class180/derived300。新 `spec` 取 **220**。
 - modifier 从不持久化：`entity.loaded` 复位 stat 组件 → 重注册全部 modifier → recalculate。`ModifierChain.addModifier` 按 id 先删后加（幂等）。
+- **`ModifierChainService.addModifier` 每次调用自动 `recalculate`(`:57`)**：`applySpec` 内多次 addModifier 触发多次 recalc(幂等可接受)。**关键是 `applySpec` 必须在 derived modifier 已注册之后调用**，否则中间 recalc 读不到 derived → 时序噪音/测试不稳。
+- **action 失败 result 通路不存在(已核实)**：`SnapshotController.performAction(:46)` fire 后直接 `buildSnapshot(token)`；`buildInGameSnapshot(:88)` 硬编码 `ActionResult(true,"ok")`，JS `event.set("success",false)` **不进快照**。本 feature 必须补(Task A5 Step 0)。
 - `Specialization` 是**非 base 结构性组件**（像 EquipmentSlots），靠 `persistent` tag 自动存，**不进** `charSchema.baseComponents()` / `setBaseSelective`。
 - weaponAttr 是 PrimaryStats 的 base 字段（select.js 在 setBase 前写 class 默认；load 期还原 class 默认）。专精覆写**只能是 modifier 输出**，绝不写 base。
 - JS↔Java 桥：快照 record 由 `ScriptRuntime` 暴露 `newXxx` 工厂 + 事件回填（参考 `newSkillEntry` / `ui.render_skillbook` / `SnapshotService.buildSkillbook`）。
@@ -64,7 +66,8 @@
 | `mods/base-rules/handlers/ui/specialization.js` | `ui.render_specialization`：组 path/pending/locked |
 | `backend/.../snapshot/WorldSnapshot.java` | +`Specialization` records + `inGame` 字段 |
 | `backend/.../script/ScriptRuntime.java` | +`newSpecialization*` 工厂桥 |
-| `backend/.../snapshot/SnapshotService.java` | +`buildSpecialization(playerId)` fire `ui.render_specialization` |
+| `backend/.../snapshot/SnapshotService.java` | +`buildSpecialization(playerId)` fire `ui.render_specialization`；+`buildSnapshot(token, ActionResult)` 重载 + `buildInGameSnapshot` 用 override |
+| `backend/.../snapshot/SnapshotController.java` | `performAction` 把 event `success/message` 透出为 `ActionResult`（Task A5 Step 0） |
 | `frontend/src/components/SpecializationPanel.vue` | 面包屑 path + pending N 选一卡片 + locked 灰显 + 不可洗确认 |
 | `frontend/src/components/SnapshotRenderer.vue` | 点亮专精按钮 + 接 Modal |
 | `backend/src/test/.../SpecializationTest.java`(+`SpecializationSnapshotTest`) | 见 Task A5 / B1 |
@@ -122,15 +125,15 @@ nodes:
 
 - [ ] **Step 3: `effectiveGrowth(entity)`** — 取 `classSchema.growth` 为基；遍历 `pathNodes(entity)`，**最深**一个声明了 `growth` 的节点**整表替换**（不 merge）；返回普通 JS map。无 path/无覆写 → 职业 growth 原样。
 
-- [ ] **Step 4: 改 `leveling.js` 的 `registerLevelGrowthModifier`** — apply 内把 `var growth = classSchema.raw().get("growth")` 换成 `var growth = effectiveGrowth(entity)`（apply 时按当前 entity 实时算，故 recalc 自动 spec-aware）。保留 id `level_growth`、`× (capturedLevel-1)` 语义不变。
+- [ ] **Step 4: 改 `leveling.js` 的 `registerLevelGrowthModifier`** — apply 内把 `var growth = classSchema.raw().get("growth")` 换成 `var growth = effectiveGrowth(entity)`（apply 时按当前 entity 实时算，故 recalc 自动 spec-aware）。保留 id `level_growth`、`× (capturedLevel-1)` 语义不变。**同时把 `action.allocate_point` 手动加点分支彻底休眠**：本 feature 内它不得注册同 id `level_growth`（`pendingPoints<=0` 早退已有；额外确保即便未来 `pendingPoints>0` 也 no-op/拒绝，不覆盖 spec-aware 成长)。
 
-- [ ] **Step 5: `registerSpecModifier(entityId)`** — `engine.addModifier(id, {typeId:"spec", id:"spec_mod", label:"专精", apply:function(ent){...}})`：遍历 `pathNodes(ent)`，对声明 `main_attr` 的节点 `ent.getComponent("PrimaryStats").set("weaponAttr", node.main_attr)`（**覆写，不读 base**）；对节点其它 flat 属性加值用 `+=`。空 path → apply 内什么都不做（modifier 仍注册，幂等）。
+- [ ] **Step 5: `registerSpecModifier(entityId)`** — `engine.addModifier(id, {typeId:"spec", id:"spec_mod", label:"专精", apply:function(ent){...}})`：遍历 `pathNodes(ent)`，对声明 `main_attr` 的节点 `ent.getComponent("PrimaryStats").set("weaponAttr", node.main_attr)`（**覆写，不读 base**）。**本 feature 只处理 `main_attr` 一种效果**——不实现"其它 flat 属性 +="(spec 未定义,YAGNI;别把 tier/requires_level 等节点元字段误当属性)。空 path → apply 内什么都不做（modifier 仍注册，幂等）。
 
-- [ ] **Step 6: `applySpec(entityId)`（choose 与 load 共用的唯一 codepath）**：
+- [ ] **Step 6: `applySpec(entityId)`（choose 与 load 共用的唯一 codepath；调用点必须在 derived modifier 已注册之后）**：
   1. `registerSpecModifier(entityId)`
-  2. `registerLevelGrowthModifier(entityId, currentLevel)`（重注册，确保 spec-aware）
+  2. `registerLevelGrowthModifier(entityId, <entity 当前 Experience.level>)`（自取当前等级重注册，确保 spec-aware;build 时 level=1 为 no-op）
   3. 对 path 上每个节点的 `grant_passives`：若 `Skillbook.known` 无同 base 条目则 push `{base, node:null, level:1}`（**查重防 dup**），然后 `Passive.registerStatMods(entityId)`
-  4. `engine.recalculate(entityId)`
+  4. `engine.recalculate(entityId)`（终态 settle;前面 addModifier 的自动 recalc 是幂等中间态）
 
 - [ ] **Step 7: 跑 Step 1 测试转绿** `mvn test -Dtest=SpecializationTest`。
 - [ ] **Step 8: Commit** `feat(ch1-f6): Specialization 组件 + effectiveGrowth(R 追溯) + spec modifier + applySpec`
@@ -143,15 +146,15 @@ nodes:
 
 - [ ] **Step 1（测试）** 在 `SpecializationTest` 加："建法师角色→有 `Specialization` 组件且 `path` 为空 List；未专精属性与本 feature 前一致（拿一条基准断言，如 L1 法师智力 = base11+class）"。
 
-- [ ] **Step 2: `select.js` 建角** — 在创建其它非 stat 组件处加：
+- [ ] **Step 2: `select.js` 建角** — 在 `setBase(charId)` **之后**(结构组件区,与 Skillbook/EquipmentSlots 同段)创建组件,**不进 base snapshot**：
 ```js
 var specComp = engine.newComponent("Specialization");
 specComp.set("path", engine.newList());
 entity.addComponent(specComp);
 ```
-并在现有 `Passive.registerStatMods` + recalculate 之前/之后调 `applySpec(charId)`（空 path → 注册空 spec modifier，无副作用，保证 load 对称）。
+然后**把现有结尾的 `Passive.registerStatMods(charId); engine.recalculate(charId);` 这一段替换为 `applySpec(charId)`**（applySpec 内含 registerSpecModifier + level_growth + grant_passives + registerStatMods + recalculate）。**位置必须在 `registerDerivedModifier(charId)` 之后**(derived 已注册)。空 path 下 applySpec ≈ 旧 registerStatMods+recalc,行为等价。
 
-- [ ] **Step 3: `recalculate_hooks.js` 的 `entity.loaded`** — 在现有 `Passive.registerStatMods` 一段附近调 `applySpec(entity.getId())`（重注册 spec modifier + spec-aware level_growth + 重发 grant_passives 查重 + recalculate）。注意：若实体无 `Specialization` 组件（老存档），先补一个空 path 组件再 applySpec（向后兼容）。
+- [ ] **Step 3: `recalculate_hooks.js` 的 `entity.loaded`** — 在 `registerDerivedModifier` **之后**，**把现有结尾的 `Passive.registerStatMods + recalculate` 段替换为 `applySpec(entity.getId())`**；并把现有那条独立的 `registerLevelGrowthModifier`(level>1 分支)**移除**(改由 applySpec 统一拥有 level_growth,单一真相源,避免双注册歧义)。**老存档兜底**：load 时若实体无 `Specialization` 组件,先 `addComponent` 一个空 path 组件(**内存兜底即可,不强制 save**;下次自然 save 落盘,重复兜底幂等无害),再 applySpec。
 
 - [ ] **Step 4: load 往返测试** — 仿 `ReloadInflationBugTest`：建法师→set path=[arcanist]→applySpec→save→clear store→load→断言属性/成长**逐位等于** reload 前（无膨胀）。跑红→绿。
 
@@ -164,7 +167,7 @@ entity.addComponent(specComp);
 
 - [ ] **Step 1（测试）** 在 `ResolveSpecTest` 加："带 path 的法师施法，技能 spec 经 `resolveSpec` 后字段不变（demo 节点无 skill_patches）；管线含 specialization 阶段不破坏 level/node/passive 既有结果"。
 
-- [ ] **Step 2: 加 `applySpecializationPatches(ctx, baseId, spec)`** — 镜像 `applyPassivePatches`：遍历施法者 `Specialization.path` 节点，读节点可选 `skill_patches`(数组，元素 `{match, patch}`)，复用现成 `_matchSkill`/`_applyPatch`。demo 节点无此字段 → pass-through。
+- [ ] **Step 2: 加 `applySpecializationPatches(ctx, baseId, spec)`** — 镜像 `applyPassivePatches`：遍历施法者 `Specialization.path` 节点，读节点可选 `skill_patches`(数组，元素 `{match, patch}`)，**复用现成 `_matchSkill`/`_applyPatch`(不另写匹配逻辑)**。**施法者无 `Specialization` 组件 / 无 class tree / path 空 / 节点无 `skill_patches`(怪物、demo) → 必须安全 no-op 原样返回 spec**。
 
 - [ ] **Step 3: 挂进 `resolveSpec`** — 在 `applyPassivePatches` 之后：
 ```js
@@ -182,7 +185,12 @@ return spec;
 - Modify: `mods/base-rules/handlers/character/specialization.js`
 - Test: `backend/src/test/java/com/epic/engine/character/SpecializationTest.java`
 
-- [ ] **Step 1: `action.choose_specialization` handler**（mirror `SkillbookActionsTest` 驱动的 action 形状）：取 token→active char、`specId`；`loadSpecTree(classId)` 找节点；**校验**：节点存在 ∧ `parent == path 末端`(根则 parent==null ∧ path 空) ∧ `requires_level ≤ 等级` ∧ 该 tier 未在 path。任一失败 → 设 action result `success=false` + 中文 message，**不改状态**、不 save。通过 → `path.push(specId)` → `applySpec` → `persistence.save`。
+- [ ] **Step 0: 补 action 失败 result 通路(阻塞前置)** — 现有 `performAction` 丢弃 event 的 `success`/`message`。最小改动：
+  - `SnapshotController.performAction`：`eventBus.fire` 后,若 `actionEvent` 有 `success==false`,构造 `new WorldSnapshot.ActionResult(false, String.valueOf(actionEvent.getOrDefault("message","")))`,传给新重载 `snapshotService.buildSnapshot(token, override)`;否则 `buildSnapshot(token)`(传 null)。
+  - `SnapshotService`：`buildSnapshot(token)` 委托 `buildSnapshot(token, null)`;`buildInGameSnapshot(token, playerId, override)` 用 `override != null ? override : new ActionResult(true,"ok")` 替换 `:88` 硬编码。其它调用点(form/select)不受影响。
+  - 测试(`SpecializationTest` 或 `ui` 包):拒绝的 choose → 返回快照 `result.success==false` 且 message 非空。
+
+- [ ] **Step 1: `action.choose_specialization` handler**（mirror `SkillbookActionsTest` 驱动的 action 形状）：取 token→active char、`specId`；`loadSpecTree(classId)` 找节点；**校验(全满足才通过)**：节点存在 ∧ **`node.tier == path.size()+1`** ∧ `parent == path 末端`(根则 parent==null ∧ path 空) ∧ `requires_level ≤ 等级` ∧ 该 tier 未在 path。任一失败 → `event.set("success",false)` + 中文 message,**不改状态**、不 save。通过 → `path.push(specId)` → `applySpec` → `persistence.save`。
 
 - [ ] **Step 2: 补齐测试矩阵**（全部在 `SpecializationTest`，harness 仿 `CharacterFlowTest`/`PassiveStatModTest`）：
   - `arcanist` 追溯成长（智力 ×4、敏捷 ×0、体质 ×1 per (level-1)）+ maxHp 升 + 当前血夹顶。
@@ -190,9 +198,13 @@ return spec;
   - `pyromancer`(需先 elementalist + L≥50) → `lifesteal_on_kill` 入 known + `Passive.registerStatMods` 生效 + `path==[elementalist,pyromancer]`。
   - 拒绝三连：未到级 tier2 / 跨大类 parent 不匹配 / 同 tier 重选 → `success=false`、状态不变。
   - **合成 `main_attr` 节点**（测试内临时树或在 mage.yaml 加一个隐藏测试节点声明 `main_attr:体质`）：`spec`(220) 覆写 weaponAttr → derived(300) 后 `物理强度` 改吃体质；装备武器在身时不误改武器 `weaponAttr/base` 元数据。
-  - `allocate_point` 休眠（`pendingPoints=0`）下 spec-aware `level_growth` 不被覆盖。
+  - `allocate_point` 休眠：`pendingPoints=0` 不注册 `level_growth`(不覆盖 spec 成长);**且 `pendingPoints>0` 也 no-op/拒绝**(本 feature 维持休眠)。
   - 终态：选到 tier2 后 `pending=null`（此断言可放 Task B1 快照测试）。
   - 被动 grant 重复 choose/load 不产生 duplicate。
+  - **action 失败 result**:拒绝的 choose → 快照 `result.success==false` + message 非空(依赖 Step 0)。
+  - **坏数据**:`node.tier != path.size()+1`(如 path 空时直接选 tier2 节点)→ 拒绝。
+  - **老存档**:构造无 `Specialization` 组件的实体 load → 兜底补空 path、no-op、快照可渲染(`pending` 给根 tier)。
+  - **未专精 L>1 load 往返**:法师升到 L>1、不专精、save→load,属性/成长与本 feature 前逐位一致(显式断言,非仅口径)。
 
 - [ ] **Step 3: 全量回归** `cd backend && mvn test`（全绿；现有 modifier/快照/战斗/passive/resolveSpec 测试不破）。
 - [ ] **Step 4: Commit** `feat(ch1-f6): choose_specialization action + 校验 + 全量后端测试`
@@ -261,3 +273,17 @@ public record Specialization(List<SpecPathNode> path, SpecPending pending, List<
 - **占位扫描**：无 TBD；test step 给了具体断言数值(智力×4 等)与 mirror 测试类名，Java 测试体由 Codex 按 harness 补全（团队约定 Codex 实现+测试）。
 - **类型一致**：`applySpec`/`effectiveGrowth`/`registerSpecModifier`/`registerLevelGrowthModifier`/`applySpecializationPatches`/`loadSpecTree` 跨任务同名;快照 record 名(`Specialization`/`SpecPending`/`SpecOption`/`SpecEffects`/`SpecPathNode`/`SpecLocked`)与桥工厂、JS handler 字段对齐。
 - **顺序**:A1→A2(依赖 spec type)→A3(依赖 applySpec)→A4(独立)→A5(依赖 action)→B1(依赖组件/树)→B2(依赖快照)→B3。
+
+---
+
+## Codex plan review 已纳(2026-06-04,`codex-runs/feature6/plan-review-reply.md`)
+
+第二轮 `codex exec` 只读 review plan,REQUEST-CHANGES 5 阻塞项 + 数条收紧**已全部纳入**(2 项关键声称已亲自读源码核实):
+
+1. ✅ **action 失败 result 通路不存在**(核实:`buildInGameSnapshot:88` 硬编码 `(true,"ok")`、`performAction` 丢 success)→ Task A5 **Step 0** 补 `SnapshotController`+`SnapshotService` 重载 + 测试;`SnapshotController` 入修改边界/文件表。
+2. ✅ **`applySpec` 精确调用点**(核实:`addModifier:57` 每次自动 recalc)→ A3 明确"在 `registerDerivedModifier` 之后、替换原 `Passive+recalc` 段";A2 注明多次 recalc 幂等可接受。
+3. ✅ **删除模糊的"flat 属性 +="** → A2 Step 5 改为只处理 `main_attr`(YAGNI)。
+4. ✅ **校验加 `node.tier == path.size()+1`** → A5 Step 1 + 坏数据测试。
+5. ✅ **`allocate_point` 彻底休眠**(`pendingPoints>0` 也 no-op,不注册 `level_growth`)→ A2 Step 4 + 测试。
+- 收紧:A4 no-op 安全(怪物/无组件)、A3 老存档兜底不强制 save、补测试(action result message / tier 坏数据 / 老存档 no-op / 未专精 L>1 load 往返)。
+- 范围:Codex 认可 2 phase;commit 已按 task 粒度拆(A4/B1 各自独立),无需再拆。
