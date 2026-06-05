@@ -1,7 +1,7 @@
-# 下一轮 Prompt — Ch1 收尾期:挑 #5 被动 / #6 专精 / #7 升级树(或补 #3 装备三抗)
+# 下一轮 Prompt — Ch1 收尾期:挑 #6 专精 / #7 升级树(或补 #3 装备三抗)
 
 > `master`:后端绿(全量 `mvn test` 通过)、前端 `npm run build` 通过。
-> 本轮(2026-06-04)产出:**#4 Skillbook 出战配置已合并**(`0ccb859` 实现 + `9b53a88` 文档),**#3 slice-2 锁定公式/模拟器/tester 也补提交了**(`8a4532f`)。
+> 本轮(2026-06-04)产出:**#5 被动技能框架已合并**(`7124678` 实现 + `0f83580` 测试 + `e4475c0` Codex run;spec/plan `docs/superpowers/{specs,plans}/2026-06-04-feature5-passive-skills*`)。技能 spec 合并管道(`Skill.resolveSpec`,base→level→node→被动→[装备/专精空槽])落地,三通路通(stat_mod 常驻 modifier / skill_patch 改字段 / handler JS)。**只搭框架、内容真空**——真被动/数值/等级曲线留「Ch1 内容设计轮」。
 
 ## 团队工作流(2026-06-04 升级为 Claude orchestrate Codex,详见 memory `team-roles-codex-workflow`)
 - **用户只在头尾出现**:brainstorm 定需求(头)+ 真人 verify & approve(尾)。中间不当传话筒。
@@ -17,14 +17,14 @@
 2. ✅ **#2 属性表扩展**
 3. ✅ **#3 伤害类型/抗性**:slice-1 减伤地基 + slice-2 锁定公式落真默认(PoE 护甲曲线 + 抗性 cap/floor 75/−50 + variance + `combat.mitigation` 事件)+ 数值模拟器包 `com.epic.engine.sim`(REST `/api/sim/reports/*`)+ tester 遭遇战(`forest_goblin` sim_scaling、`mitigation_high_resist_test` 法抗90)。
 4. ✅ **#4 Skillbook 出战配置**:`Skillbook` 组件(改名自 `Skills`)`{slots,known:[{base,node,equipped}]}`;通用技能(攻击/防御/逃跑)移出 known、战斗永远发;模态技能书(`Modal.vue` 通用外壳=首租户 + `SkillbookPanel` 主动 tab)+ 右下角常驻菜单 + BattleGrid 指令栏固定 3×2 + 技能子菜单 3×2 + 纵跨取消键(移动/道具前端占位)。`node` 预留给 #7。spec/plan:`docs/superpowers/{specs,plans}/2026-06-03-feature4-skillbook-loadout*`。
-5. ⬜ **#5 被动技能**(依赖 1,4):被动轨 + 纯属性被动(走 ModifierChain)+ 特殊效果被动(挂战斗事件专属 JS)。技能书 `被动` tab 现是占位空壳,等这轮填。
-6. ⬜ **#6 专精**(依赖 2,4,等级):选专精 + 改主属性 + gating 升级树 + 不可洗。右下角常驻菜单 `专精` 按钮现禁用占位。
+5. ✅ **#5 被动技能(框架)**(`7124678`+`0f83580`):父类技能+active/passive 子类(统一 `known`,实体无关)。`Skill.resolveSpec` 合并管道接 dispatch + bespoke 技能,passthrough 保回归。三通路:stat_mod→常驻 modifier(typeId `passive`=70,早于 derived);skill_patch→按 match/patch 改 spec 已声明字段;handler→`mods/base-rules/passives/*.js`+kind 守卫。快照吐 `kind`/`level`、equippedCount 只数主动;前端被动 tab 只读;debug `/api/debug/{passive,skill-level}/{token}`。**node/装备/专精/灵魂球各留空槽**。3 个 demo 被动(铁壁/余烬/嗜血)当夹具。**内容真空,留 Ch1 内容轮填。**
+6. ⬜ **#6 专精**(依赖 2,4,等级):选专精 + 改主属性 + gating 升级树 + 不可洗。右下角常驻菜单 `专精` 按钮现禁用占位。**接 #5 留的口子**:专精是技能 spec 管道的 patch 源之一(`applySpecPatches` 空槽)、可给专属被动(走现成被动框架)。
 7. ⬜ **#7 技能升级树(旗舰)**(依赖 1–6):升级树数据 + 灵魂球材料 + 节点变换 patch + 花钱重置 + debug 给球。技能书主动 tab 每条留了 `树` 接缝入口。skillbook(列表)≠ skilltree(加点)。
 
 ## 起手(下一轮)挑一个
-- **推荐 #5 被动**:与 #4 衔接最顺(技能书被动 tab 已占好位、ModifierChain 现成),前后端双改但 case 清楚。先 brainstorm → spec → plan → 派 Codex。
-- 或 **#6 专精**(影响最大,联动职业/等级/技能,值得先把 design 拍透)。
-- 或 **#7 升级树**(旗舰本体,可能再拆)。
+- **推荐 #6 专精**(依赖 2/4/等级,影响最大,联动职业/等级/技能):升级子系统总闸——未专精用基础技能组不能升级,选专精=升级树整个解锁;改主属性;可给专属被动;不可洗(可逆性非对称)。架构上是技能 spec 管道的又一 patch 源(#5 已留 `applySpecPatches` 空槽)+ 可授予被动(走 #5 现成框架)。值得先把 design 拍透。先 brainstorm → spec →`codex review`→ plan → 派 Codex。
+- 或 **#7 升级树**(旗舰本体,可能再拆):node 变换是 #5 留的 `applyNode` 空槽;灵魂球材料 + 花钱重置 + debug 给球。注意 #6 是 #7 的 gating 前置(未专精不解锁树),正常应先 #6。
+- ⚠️ **#5 留给后续的口子(实现 #6/#7/Ch2/内容轮时接)**:`Skill.resolveSpec` 里 `applyNode`(#7)、`applySpecPatches`(#6 专精)、装备 patch(Ch2)都是空实现;`applySkillLevelCurve(entityId)`(`recalculate_hooks.js`)是 no-op 接缝,等内容轮填 charLevel→skillLevel 曲线;真被动内容/数值留「Ch1 内容设计轮」。
 - 或 **补 #3 收尾遗留**:slice-2 做了怪物抗性内容(高抗 tester 怪)+ 锁定公式,但 **prompt 原列的"装备三抗词缀(items.yaml flat % 三抗)"没做** —— 若想让"穿法抗戒指打火法怪"手感落地,这块仍 open(零公式,存%/显示%,负抗=易伤)。可单独小轮做掉。
 
 ## 非阻塞 follow-up(记账,随手清)
