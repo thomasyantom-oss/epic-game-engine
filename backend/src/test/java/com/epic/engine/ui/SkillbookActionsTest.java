@@ -42,7 +42,8 @@ class SkillbookActionsTest {
         skillbook.set("known", new ArrayList<>(List.of(
                 skill("fireball", true),
                 skill("light_field", true),
-                skill("ice_beam", false)
+                skill("ice_beam", false),
+                skill("iron_skin", false)
         )));
         player.addComponent(skillbook);
         store.add(player);
@@ -102,6 +103,21 @@ class SkillbookActionsTest {
                 .containsExactly("fireball", "light_field");
     }
 
+    @Test
+    void passive_doesNotRenderAsCombatAction_evenIfKnown() {
+        store.get("player1").addTag("combat:c1");
+
+        GameEvent event = new GameEvent("ui.render_actions");
+        event.set("entityId", "player1");
+        event.set("actions", new ArrayList<WorldSnapshot.ActionOption>());
+        bus.fire("ui.render_actions", event);
+
+        @SuppressWarnings("unchecked")
+        List<WorldSnapshot.ActionOption> actions = event.get("actions");
+        assertThat(actions.stream().map(a -> String.valueOf(a.params().get("command"))))
+                .doesNotContain("iron_skin");
+    }
+
     private void fireSkillbook(String type, String base) {
         GameEvent event = new GameEvent("action." + type);
         event.set("playerId", "player1");
@@ -122,6 +138,7 @@ class SkillbookActionsTest {
         Map<String, Object> skill = new HashMap<>();
         skill.put("base", base);
         skill.put("node", null);
+        skill.put("level", 1);
         skill.put("equipped", equipped);
         return skill;
     }

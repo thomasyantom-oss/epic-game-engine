@@ -100,7 +100,9 @@ class CharacterFlowTest {
         assertThat(bases).contains("cleave", "war_cry");
         assertThat(bases).doesNotContain("basic_attack", "defend", "flee");
         for (Map<String,Object> skill : known) {
-            assertThat(skill.get("equipped")).isEqualTo(Boolean.TRUE);
+            if (bases.contains(String.valueOf(skill.get("base")))) {
+                assertThat(skill.get("equipped")).isEqualTo(Boolean.TRUE);
+            }
             assertThat(skill.get("node")).isNull();
         }
     }
@@ -125,7 +127,7 @@ class CharacterFlowTest {
 
         List<Map<String,Object>> known = (List<Map<String,Object>>) skillbook.get("known");
         List<String> bases = known.stream().map(m -> String.valueOf(m.get("base"))).toList();
-        assertThat(bases).contains("fireball", "light_field");
+        assertThat(bases).contains("fireball", "light_field", "iron_skin", "lingering_burn");
         assertThat(bases).doesNotContain("basic_attack", "defend", "flee");
     }
 }
