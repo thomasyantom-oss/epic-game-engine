@@ -73,7 +73,13 @@
       <div class="menu-bar">
         <button class="menu-btn" disabled title="待后续开放">背包</button>
         <button class="menu-btn" @click="openSkillbook">技能</button>
-        <button class="menu-btn" @click="openSpec">专精</button>
+        <button
+          class="menu-btn"
+          :title="talentEntryTitle"
+          @click="openTalent"
+        >
+          天赋
+        </button>
       </div>
       <button v-if="isDev" class="menu-btn menu-exit" @click="$emit('action', { type: 'logout', params: {} })">退出角色</button>
     </div>
@@ -83,13 +89,22 @@
     <Modal :visible="modalActive === 'skillbook'" @close="close">
       <SkillbookPanel
         :skillbook="snapshot.skillbook"
+        :talent-tree="snapshot.talentTree"
+        :readonly="!!snapshot.combat"
+        @action="$emit('action', $event)"
+        @open-talent="openTalent"
+      />
+    </Modal>
+    <Modal :visible="modalActive === 'talent'" @close="close">
+      <SpecializationPanel
+        v-if="hasPendingSpecialization"
+        :specialization="snapshot.specialization"
         :readonly="!!snapshot.combat"
         @action="$emit('action', $event)"
       />
-    </Modal>
-    <Modal :visible="modalActive === 'spec'" @close="close">
-      <SpecializationPanel
-        :specialization="snapshot.specialization"
+      <TalentTreePanel
+        v-else
+        :talent-tree="snapshot.talentTree"
         :readonly="!!snapshot.combat"
         @action="$emit('action', $event)"
       />
@@ -110,6 +125,7 @@ import MapInfoPanel from './MapInfoPanel.vue'
 import Modal from './Modal.vue'
 import SkillbookPanel from './SkillbookPanel.vue'
 import SpecializationPanel from './SpecializationPanel.vue'
+import TalentTreePanel from './TalentTreePanel.vue'
 import BattleGrid from './combat/BattleGrid.vue'
 import { useSettings } from '../composables/useSettings.js'
 import { useTooltip } from '../composables/useTooltip.js'
@@ -128,9 +144,16 @@ function openSkillbook() {
   open('skillbook')
 }
 
-function openSpec() {
-  open('spec')
+function openTalent() {
+  open('talent')
 }
+
+const hasPendingSpecialization = computed(() => !!props.snapshot?.specialization?.pending)
+const talentEntryTitle = computed(() => {
+  if (hasPendingSpecialization.value) return '选择专精'
+  if (props.snapshot?.talentTree) return '打开天赋树'
+  return '专精后解锁'
+})
 
 // 战斗结束时清除残留 tooltip
 watch(() => props.snapshot?.combat, (combat) => { if (!combat) hideTooltip() })

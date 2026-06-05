@@ -82,6 +82,21 @@ public class DebugController {
         return ResponseEntity.ok(Map.of("ok", Boolean.TRUE.equals(event.get("ok"))));
     }
 
+    // 调试脚手架(Feature #7 verify 用):给分型灵魂球,真供给留到后续内容/掉落系统。verify 完可删。
+    @PostMapping("/orb/{token}")
+    public ResponseEntity<Map<String, Object>> grantOrb(@PathVariable String token,
+                                                        @RequestParam String type,
+                                                        @RequestParam int count) {
+        String playerId = activeCharacter(token);
+        if (playerId == null) return ResponseEntity.notFound().build();
+        GameEvent event = new GameEvent("debug.grant_orb");
+        event.set("entityId", playerId);
+        event.set("type", type);
+        event.set("count", count);
+        eventBus.fire("debug.grant_orb", event);
+        return ResponseEntity.ok(Map.of("ok", Boolean.TRUE.equals(event.get("ok"))));
+    }
+
     // 调试脚手架(Feature #6 verify 用):一键设角色等级,跳过 gain_xp grind,
     // 便于真人验证专精等级门(L10/L50)与选定后的属性/成长变化。verify 完可删。
     @PostMapping("/level/{token}")

@@ -189,6 +189,11 @@ var Skill = {
   },
 
   applyNode: function(spec, node) {
+    if (node === null || node === undefined) return spec;
+    if (typeof Talent === "undefined" || Talent === null) return spec;
+    if (typeof Talent.buildEvolutionIndex === "function") Talent.buildEvolutionIndex();
+    var patch = typeof Talent.evolutionPatch === "function" ? Talent.evolutionPatch(node) : null;
+    if (patch !== null && patch !== undefined) this._applyPatch(spec, patch);
     return spec;
   },
 
@@ -237,7 +242,11 @@ var Skill = {
   ownedPassives: function(ctx) {
     var out = [];
     var c = ctx ? ctx.caster : null;
-    if (c === null || c === undefined || !c.hasComponent("Skillbook")) return out;
+    if (c === null || c === undefined) return out;
+    if (typeof Passive !== "undefined" && Passive !== null && typeof Passive.ownedSpecs === "function") {
+      return Passive.ownedSpecs(c);
+    }
+    if (!c.hasComponent("Skillbook")) return out;
     var known = c.getComponent("Skillbook").get("known");
     if (known === null) return out;
     for (var i = 0; i < known.size(); i++) {

@@ -100,7 +100,8 @@ public class SnapshotService {
                 buildPendingPoints(playerId),
                 buildEquipmentData(playerId),
                 buildSkillbook(playerId),
-                buildSpecialization(playerId));
+                buildSpecialization(playerId),
+                buildTalentTree(playerId));
     }
 
     private WorldSnapshot.Skillbook buildSkillbook(String playerId) {
@@ -144,6 +145,35 @@ public class SnapshotService {
                 path != null ? path : List.of(),
                 pending,
                 locked != null ? locked : List.of());
+    }
+
+    private WorldSnapshot.TalentTree buildTalentTree(String playerId) {
+        Entity player = entityStore.get(playerId);
+        if (player == null || !player.hasComponent("TalentTree") || !player.hasComponent("Specialization")) return null;
+        Component spec = player.getComponent("Specialization");
+        @SuppressWarnings("unchecked")
+        List<Object> path = (List<Object>) spec.get("path");
+        if (path == null || path.isEmpty()) return null;
+
+        GameEvent event = new GameEvent("ui.render_talent_tree");
+        event.set("entityId", playerId);
+        event.set("nodes", new ArrayList<WorldSnapshot.TalentNode>());
+        event.set("orbInventory", new ArrayList<WorldSnapshot.OrbStack>());
+        event.set("points", null);
+        event.set("root", null);
+        eventBus.fire("ui.render_talent_tree", event);
+
+        @SuppressWarnings("unchecked")
+        List<WorldSnapshot.TalentNode> nodes = event.get("nodes");
+        @SuppressWarnings("unchecked")
+        List<WorldSnapshot.OrbStack> orbs = event.get("orbInventory");
+        WorldSnapshot.TalentPoints points = event.get("points");
+        Object root = event.get("root");
+        return new WorldSnapshot.TalentTree(
+                root != null ? String.valueOf(root) : String.valueOf(path.getFirst()),
+                points,
+                nodes != null ? nodes : List.of(),
+                orbs != null ? orbs : List.of());
     }
 
     private Integer buildPendingPoints(String playerId) {

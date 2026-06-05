@@ -22,7 +22,8 @@ public record WorldSnapshot(
         EquipmentData equipment,
         List<ClassPreview> classPreviews,
         Skillbook skillbook,
-        Specialization specialization
+        Specialization specialization,
+        TalentTree talentTree
 ) {
     public record ActionResult(boolean success, String message) {}
     public record CharacterInfo(String id, String name, int level, String classId, String classLabel,
@@ -64,7 +65,7 @@ public record WorldSnapshot(
                            Map<String, Integer> stats) {}
     public record EquipmentData(Map<String, ItemInfo> slots, List<ItemInfo> inventory) {}
     public record SkillEntry(String base, String name, String description, String icon,
-                             boolean equipped, String node, int level, String kind) {}
+                             boolean equipped, String node, int level, String kind, String source) {}
     public record Skillbook(int slots, int equippedCount, List<SkillEntry> known) {}
     public record SpecOption(String id, String label, String description, SpecEffects effects) {}
     public record SpecEffects(String mainAttr, Map<String, Object> growth, List<String> grantPassives) {}
@@ -72,17 +73,27 @@ public record WorldSnapshot(
     public record SpecPathNode(String id, String label) {}
     public record SpecLocked(int tier, int requiresLevel) {}
     public record Specialization(List<SpecPathNode> path, SpecPending pending, List<SpecLocked> locked) {}
+    public record TalentTree(String root, TalentPoints points, List<TalentNode> nodes, List<OrbStack> orbInventory) {}
+    public record TalentPoints(int total, int spent, int available) {}
+    public record OrbStack(String type, int count) {}
+    public record TalentNode(String id, String label, String icon, String type,
+                             List<String> parents, List<String> children,
+                             int tier, int order, String state, boolean selected,
+                             String requiresSpec, String effectSummary,
+                             TalentSlot slot, TalentActions actions) {}
+    public record TalentSlot(String skill, String orbType, int orbCount, String evolution, boolean filled) {}
+    public record TalentActions(boolean canUnlock, boolean canPlaceOrb, String reason) {}
 
     public static WorldSnapshot characterSelect(String sessionToken, List<CharacterInfo> characters, int maxSlots, Map<String, String> colors, List<ClassPreview> classPreviews) {
         return new WorldSnapshot("character_select", sessionToken, null,
                 new ActionResult(true, "ok"), characters, maxSlots, null,
-                null, null, null, null, null, null, colors, null, null, classPreviews, null, null);
+                null, null, null, null, null, null, colors, null, null, classPreviews, null, null, null);
     }
 
     public static WorldSnapshot characterCreate(String sessionToken, FormData form, Map<String, String> colors, List<ClassPreview> classPreviews) {
         return new WorldSnapshot("character_create", sessionToken, null,
                 new ActionResult(true, "ok"), null, null, form,
-                null, null, null, null, null, null, colors, null, null, classPreviews, null, null);
+                null, null, null, null, null, null, colors, null, null, classPreviews, null, null, null);
     }
 
     public static WorldSnapshot inGame(String sessionToken, String playerId, ActionResult result,
@@ -92,9 +103,10 @@ public record WorldSnapshot(
                                         Map<String, String> colors,
                                         Integer pendingPoints, EquipmentData equipment,
                                         Skillbook skillbook,
-                                        Specialization specialization) {
+                                        Specialization specialization,
+                                        TalentTree talentTree) {
         return new WorldSnapshot("in_game", sessionToken, playerId, result,
                 null, null, null, statusBars, buffs, map, combat, actions, log, colors,
-                pendingPoints, equipment, null, skillbook, specialization);
+                pendingPoints, equipment, null, skillbook, specialization, talentTree);
     }
 }

@@ -104,6 +104,9 @@ engine.on("entity.loaded", 100, function(event) {
         specComp.set("path", engine.newList());
         entity.addComponent(specComp);
     }
+    if (typeof Talent !== 'undefined' && Talent !== null) {
+        Talent.ensureComponents(entity);
+    }
     if (typeof applySpec !== 'undefined') {
         applySpec(entity.getId());
     } else if (typeof Passive !== 'undefined') {

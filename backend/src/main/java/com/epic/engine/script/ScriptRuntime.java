@@ -173,7 +173,14 @@ public class ScriptRuntime implements AutoCloseable {
         public WorldSnapshot.SkillEntry newSkillEntry(String base, String name, String description,
                                                       String icon, boolean equipped, String node,
                                                       int level, String kind) {
-            return new WorldSnapshot.SkillEntry(base, name, description, icon, equipped, node, level, kind);
+            return new WorldSnapshot.SkillEntry(base, name, description, icon, equipped, node, level, kind, null);
+        }
+
+        @HostAccess.Export
+        public WorldSnapshot.SkillEntry newSkillEntryWithSource(String base, String name, String description,
+                                                                String icon, boolean equipped, String node,
+                                                                int level, String kind, String source) {
+            return new WorldSnapshot.SkillEntry(base, name, description, icon, equipped, node, level, kind, source);
         }
 
         @HostAccess.Export
@@ -208,6 +215,45 @@ public class ScriptRuntime implements AutoCloseable {
                                                               WorldSnapshot.SpecPending pending,
                                                               List<WorldSnapshot.SpecLocked> locked) {
             return new WorldSnapshot.Specialization(path, pending, locked);
+        }
+
+        @HostAccess.Export
+        public WorldSnapshot.TalentPoints newTalentPoints(int total, int spent, int available) {
+            return new WorldSnapshot.TalentPoints(total, spent, available);
+        }
+
+        @HostAccess.Export
+        public WorldSnapshot.OrbStack newOrbStack(String type, int count) {
+            return new WorldSnapshot.OrbStack(type, count);
+        }
+
+        @HostAccess.Export
+        public WorldSnapshot.TalentSlot newTalentSlot(String skill, String orbType, int orbCount,
+                                                      String evolution, boolean filled) {
+            return new WorldSnapshot.TalentSlot(skill, orbType, orbCount, evolution, filled);
+        }
+
+        @HostAccess.Export
+        public WorldSnapshot.TalentActions newTalentActions(boolean canUnlock, boolean canPlaceOrb, String reason) {
+            return new WorldSnapshot.TalentActions(canUnlock, canPlaceOrb, reason);
+        }
+
+        @HostAccess.Export
+        public WorldSnapshot.TalentNode newTalentNode(String id, String label, String icon, String type,
+                                                      List<String> parents, List<String> children,
+                                                      int tier, int order, String state, boolean selected,
+                                                      String requiresSpec, String effectSummary,
+                                                      WorldSnapshot.TalentSlot slot,
+                                                      WorldSnapshot.TalentActions actions) {
+            return new WorldSnapshot.TalentNode(id, label, icon, type, parents, children, tier, order,
+                    state, selected, requiresSpec, effectSummary, slot, actions);
+        }
+
+        @HostAccess.Export
+        public WorldSnapshot.TalentTree newTalentTree(String root, WorldSnapshot.TalentPoints points,
+                                                      List<WorldSnapshot.TalentNode> nodes,
+                                                      List<WorldSnapshot.OrbStack> orbInventory) {
+            return new WorldSnapshot.TalentTree(root, points, nodes, orbInventory);
         }
 
         @HostAccess.Export

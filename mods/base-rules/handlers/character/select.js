@@ -179,6 +179,9 @@ engine.on("action.confirm_character", 100, function(event) {
     var specComp = engine.newComponent("Specialization");
     specComp.set("path", engine.newList());
     entity.addComponent(specComp);
+    if (typeof Talent !== "undefined" && Talent !== null) {
+        Talent.ensureComponents(entity);
+    }
 
     var invComp = engine.newComponent("Inventory");
     var startingItems = engine.newList();

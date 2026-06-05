@@ -1,0 +1,57 @@
+root: elementalist
+nodes:
+  - id: elem_root
+    label: "元素精通"
+    icon: "*"
+    parents: []
+    tier: 1
+    order: 0
+    effect: { passive: { stat_mod: { 法强: 5 } } }
+    overrides:
+      pyromancer: { passive: { stat_mod: { 火属性: 8 } } }
+
+  - id: fireball_slot
+    label: "火球术"
+    icon: "火"
+    parents: [elem_root]
+    tier: 2
+    order: 0
+    skill_slot: { skill: fireball, orb: { type: 爆破, count: 2 }, evolution: pyroblast }
+
+  - id: ember_passive
+    label: "余烬精通"
+    icon: "盾"
+    parents: [elem_root]
+    tier: 2
+    order: 1
+    requires_spec: pyromancer
+    effect: { passive: { ref: lifesteal_on_kill } }
+
+  - id: light_field_slot
+    label: "光击阵"
+    icon: "光"
+    parents: [elem_root]
+    tier: 2
+    order: 2
+    requires_spec: pyromancer
+    skill_slot: { skill: light_field, orb: { type: 多重, count: 1 }, evolution: prism_field }
+
+  - id: fb_damage
+    label: "火球强化"
+    icon: "+"
+    parents: [fireball_slot]
+    tier: 3
+    order: 0
+    effect: { passive: { skill_patch: { match: { skill: fireball }, patch: { "damage.add": 5 } } } }
+
+evolutions:
+  pyroblast:
+    name: "炎爆"
+    icon: "火"
+    description: "火球进化:一排 AOE,灼烧更强"
+    patch: { name: "炎爆", "damage.add": 8, "targeting.pattern": [[0,0],[0,1],[0,-1]] }
+  prism_field:
+    name: "棱镜阵"
+    icon: "光"
+    description: "光击阵进化:多重光束覆盖更大范围"
+    patch: { name: "棱镜阵", "damage.add": 4, "targeting.pattern": [[0,0],[-1,0],[1,0],[0,-1],[0,1],[-1,-1],[1,1]] }

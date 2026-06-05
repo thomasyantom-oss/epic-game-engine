@@ -266,3 +266,26 @@ pyroblast:
 12. 全量 `mvn test` 绿、前端 `npm run build` 通过、无回归。
 
 **不做什么:** 不填真内容数值;不做灵魂球掉落;不做洗点收费;不碰结构性技能改写;不填 skill-level 曲线;不加具名变换注册表。
+
+---
+
+## 12. 迭代 2 修订(2026-06-05 真人 verify 反馈,覆盖前述冲突处)
+
+**A. 树视觉(已落地前端)**:节点+连线染色——已点亮节点亮白边、未点亮灰;两端都点亮的连线亮白加粗、否则灰。插球图标=**平面 checkbox 式**(外圈仅边框、中间空白环、内圈仅填充),非 3D。洗点后的槽节点=灰外环 + **灰内圆仍在**(标记"球已花、重点免费")。
+
+**B. 球/进化与点位解耦改写(覆盖 §3.3 第 2 层 + §11 验收 5/6/8)**:
+- 技能槽节点就是**普通天赋点**:洗点照常退还该点。
+- 插球=一次性消耗不可退,但**进化只在该槽节点当前点亮时生效**。
+- **洗点后:槽节点退回未点亮态,进化效果不生效(技能回到原始形态,如炎爆→火球)。**
+- "球已花"是**永久记忆**(新增 `TalentTree.evolved` 集):重新点这个槽节点时,因已在 `evolved` 中 → **免费直接恢复进化态(无需再插球)**。
+- 数据落法:`known[i].node` = **当前激活**的进化(点亮且已花球→evolution;否则 null);`TalentTree.evolved` = 永久已花球记录。`place_orb`:扣球 + 加入 `evolved` + 写 `known.node`;`talent_respec`:清 unlocked + 对所有槽 `known.node=null`(保留 `evolved`);`talent_unlock` 槽节点:若其 evolution ∈ `evolved` → 直接写 `known.node`(免费恢复)。
+- `applyNode` 仍读 `known.node`(现在它=激活态),无需改。
+
+**C. 专精 + 天赋合并为单一面板/入口(覆盖 §8 入口 + #6 SpecializationPanel 定位)**:
+- **一个入口**(撤掉单独的"专精"按钮)。打开统一面板时:`specialization.pending != null`(L10 三选一 / L50 二选一)→ **自动弹专精选择**;`确定`(choose_specialization)后 → 面板变天赋树(L50 后含二级专精扩展)。无 pending → 直接天赋树;path 空且无 pending → "专精后解锁"。
+- 即:统一面板 = `pending ? 专精选择 : (talentTree ? 树 : 锁)`。复用 #6 的 `choose_specialization` action 与选择卡片 UI 当面板内步骤。
+
+**D. 隐式被动 vs 显示被动(细化 §4 的"全部隐式"决定)**:
+- **隐式被动 = 只加固定属性**(`stat_mod`)→ 折进属性、**不在被动列表显示**(维持现状)。
+- **显示被动 = 需要计算的**(`skill_patch` 改技能 / `handler` 特殊效果 / 吃加成的效果)→ **作为只读条目出现在被动列表(被动 tab)**,来源标 talent、不可卸不可洗(除非 respec)。
+- 落法:被动列表快照(`ui.render_skillbook` 的 passive 部分)追加 talent 的**显示类**派生被动(`effect ∈ {skill_patch, handler}`);`stat_mod` 类不追加。

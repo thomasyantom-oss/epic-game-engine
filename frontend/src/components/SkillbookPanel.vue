@@ -26,7 +26,14 @@
           <div class="sb-name">{{ skill.name }}</div>
           <div class="sb-desc">{{ skill.description }}</div>
         </div>
-        <span class="sb-tree" title="进化树待后续开放">树</span>
+        <button
+          class="sb-tree"
+          type="button"
+          :title="talentTree ? '打开天赋树' : '专精后解锁'"
+          @click="emit('open-talent')"
+        >
+          树
+        </button>
         <template v-if="!readonly">
           <button v-if="skill.equipped" class="sb-btn sb-remove" @click="emitAction('skillbook_unequip', skill.base)">移除</button>
           <button v-else class="sb-btn" :disabled="equippedCount >= slots" @click="emitAction('skillbook_equip', skill.base)">出战</button>
@@ -36,10 +43,14 @@
     </div>
 
     <div v-else-if="tab === 'passive'" class="sb-list">
-      <div v-for="p in passiveKnown" :key="p.base" class="sb-row">
+      <div v-for="p in passiveKnown" :key="passiveKey(p)" class="sb-row">
         <div class="sb-icon">{{ p.icon }}</div>
         <div class="sb-info">
-          <div class="sb-name">{{ p.name }} <span class="sb-lv">Lv{{ p.level ?? 1 }}</span></div>
+          <div class="sb-name">
+            {{ p.name }}
+            <span class="sb-lv">Lv{{ p.level ?? 1 }}</span>
+            <span v-if="p.source === 'talent'" class="sb-source">天赋</span>
+          </div>
           <div class="sb-desc">{{ p.description }}</div>
         </div>
       </div>
@@ -55,9 +66,10 @@ import { computed, ref } from 'vue'
 
 const props = defineProps({
   skillbook: { type: Object, default: null },
+  talentTree: { type: Object, default: null },
   readonly: Boolean,
 })
-const emit = defineEmits(['action'])
+const emit = defineEmits(['action', 'open-talent'])
 
 const tab = ref('active')
 const tabs = [
@@ -80,6 +92,10 @@ const sortedKnown = activeKnown
 
 function emitAction(type, base) {
   emit('action', { type, params: { base } })
+}
+
+function passiveKey(passive) {
+  return `${passive.source ?? 'skill'}:${passive.base}`
 }
 </script>
 
@@ -192,10 +208,27 @@ function emitAction(type, base) {
   margin-left: 0.3rem;
 }
 
+.sb-source {
+  margin-left: 0.3rem;
+  padding: 0 0.3rem;
+  border: 2px solid var(--color-border);
+  border-radius: 3px;
+  font-size: 0.75rem;
+  opacity: 0.75;
+}
+
 .sb-tree {
   flex-shrink: 0;
   font-size: 0.75rem;
-  opacity: 0.4;
+  min-width: 2rem;
+  min-height: 1.8rem;
+  background: transparent;
+  border: 2px solid var(--color-border);
+  border-radius: 3px;
+  color: var(--color-highlight);
+  cursor: pointer;
+  font-family: inherit;
+  font-weight: 700;
 }
 
 .sb-btn:disabled {
