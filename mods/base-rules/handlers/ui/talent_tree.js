@@ -50,7 +50,7 @@ engine.on("ui.render_talent_tree", 100, function(event) {
       slot = engine.newTalentSlot(
         String(s.skill),
         orb.type !== undefined && orb.type !== null ? String(orb.type) : "",
-        parseInt(orb.count || 0),
+        (typeof Talent !== "undefined" ? Talent.orbCount(orb) : parseInt(orb.count || 1)),
         String(s.evolution),
         known !== null && known.get("node") !== null
       );

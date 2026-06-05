@@ -1,0 +1,20 @@
+# progression.yaml — Ch1 数值骨架调参板（内容无关，跨职业共享）
+level:
+  cap: 100
+  xp_curve:
+    base: 100
+    exp: 1.5
+skill_level:
+  cap: 10
+  default: smooth
+  tiers:
+    smooth:   { start: 1,  per: 2 }
+    standard: { start: 20, per: 3 }
+    chunky:   { start: 50, per: 5 }
+scaling_budget:
+  baseline_multiplier: 5.0
+orb:
+  cost_per_evolution: 1
+passive_budget:
+  unit_primary_stat: 10
+  tiers: { minor: 1, normal: 2, major: 4 }

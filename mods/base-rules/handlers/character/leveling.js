@@ -1,5 +1,5 @@
 function xpForLevel(level) {
-    return level * 100;
+    return (typeof Progression !== "undefined") ? Progression.xpForLevel(level) : level * 100;
 }
 
 function registerLevelGrowthModifier(entityId, level) {
@@ -41,10 +41,13 @@ engine.on("debug.set_level", 100, function(event) {
     var level = parseInt(event.get("level"));
     var entity = store.get(entityId);
     if (entity === null || level < 1) { event.set("ok", false); return; }
+    var __cap = (typeof Progression !== "undefined") ? Progression.cap() : 100;
+    if (level > __cap) level = __cap;
     var exp = entity.getComponent("Experience");
     if (exp !== null) exp.set("level", level);
     var ch = entity.getComponent("Character");
     if (ch !== null) ch.set("level", level);
+    if (typeof applySkillLevelCurve !== "undefined") applySkillLevelCurve(entityId);
     if (typeof applySpec !== "undefined") {
         applySpec(entityId);
     } else if (typeof registerLevelGrowthModifier !== "undefined") {
@@ -68,25 +71,28 @@ engine.on("action.gain_xp", 100, function(event) {
 
     var currentXp = exp.getInt("xp") + amount;
     var currentLevel = exp.getInt("level");
-    var threshold = xpForLevel(currentLevel);
+    var cap = (typeof Progression !== "undefined") ? Progression.cap() : 100;
 
-    if (currentXp >= threshold) {
-        currentXp -= threshold;
+    var leveled = false;
+    while (currentLevel < cap && currentXp >= xpForLevel(currentLevel)) {
+        currentXp -= xpForLevel(currentLevel);
         currentLevel++;
-        exp.set("level", currentLevel);
-        exp.set("xp", currentXp);
+        leveled = true;
+    }
+    if (currentLevel >= cap) { currentLevel = cap; currentXp = 0; }
 
-        var charComp = player.getComponent("Character");
-        if (charComp !== null) charComp.set("level", currentLevel);
+    exp.set("level", currentLevel);
+    exp.set("xp", currentXp);
+    var charComp = player.getComponent("Character");
+    if (charComp !== null) charComp.set("level", currentLevel);
 
+    if (leveled) {
         registerLevelGrowthModifier(playerId, currentLevel);
 
         var levelUpEvent = engine.newEvent("entity.level_up");
         levelUpEvent.set("entity", player);
         levelUpEvent.set("level", currentLevel);
         engine.fire("entity.level_up", levelUpEvent);
-    } else {
-        exp.set("xp", currentXp);
     }
 
     persistence.save(player);

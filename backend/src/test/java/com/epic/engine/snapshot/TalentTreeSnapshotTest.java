@@ -120,7 +120,7 @@ class TalentTreeSnapshotTest {
         assertThat(fireballSlot.path("state").asText()).isEqualTo("slot-empty");
         assertThat(fireballSlot.path("slot").path("skill").asText()).isEqualTo("fireball");
         assertThat(fireballSlot.path("slot").path("orbType").asText()).isEqualTo("爆破");
-        assertThat(fireballSlot.path("slot").path("orbCount").asInt()).isEqualTo(2);
+        assertThat(fireballSlot.path("slot").path("orbCount").asInt()).isEqualTo(1);
         assertThat(fireballSlot.path("slot").path("evolution").asText()).isEqualTo("pyroblast");
         assertThat(fireballSlot.path("slot").path("filled").asBoolean()).isFalse();
         assertThat(fireballSlot.path("actions").path("canUnlock").asBoolean()).isFalse();

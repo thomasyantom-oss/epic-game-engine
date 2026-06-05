@@ -306,7 +306,7 @@ class TalentTreeTest {
             probe.set('noSkillKnownSize', store.get('noskill').getComponent('Skillbook').get('known').size());
             var noOrb = action('talent_place_orb', 'hero', 'fireball_slot');
             probe.set('noOrbRejected', noOrb.get('success') === false);
-            store.get('hero').getComponent('OrbPouch').set('爆破', 2);
+            store.get('hero').getComponent('OrbPouch').set('爆破', 1);
             var placed = action('talent_place_orb', 'hero', 'fireball_slot');
             probe.set('placeSuccess', placed.get('success') === true);
             probe.set('orbLeft', safeInt(store.get('hero').getComponent('OrbPouch'), '爆破'));

@@ -38,6 +38,11 @@ var Talent = {
     }
   },
 
+  orbCount: function(orb) {
+    if (orb && orb.count != null) return parseInt(orb.count);
+    return (typeof Progression !== "undefined") ? Progression.orbCost() : 1;
+  },
+
   totalPoints: function(level) {
     var lv = parseInt(level || 1);
     if (lv < 10) return 0;
@@ -384,7 +389,7 @@ var Talent = {
     if (node.skill_slot !== undefined && node.skill_slot !== null) {
       var s = node.skill_slot;
       var orb = s.orb || {};
-      return "主动增强 " + s.skill + " -> " + s.evolution + "; 灵魂球 " + orb.type + " x" + orb.count;
+      return "主动增强 " + s.skill + " -> " + s.evolution + "; 灵魂球 " + orb.type + " x" + Talent.orbCount(orb);
     }
     var effect = this.effectiveNodeEffect(entity, node);
     if (effect === null || effect.passive === undefined || effect.passive === null) return "";
@@ -481,7 +486,7 @@ engine.on("action.talent_place_orb", 100, function(event) {
   var pouch = entity.getComponent("OrbPouch");
   var orb = slot.orb || {};
   var type = String(orb.type);
-  var count = parseInt(orb.count || 0);
+  var count = Talent.orbCount(orb);
   var have = pouch !== null && pouch.has(type) ? pouch.getInt(type) : 0;
   if (have < count) {
     Talent._reject(event, "灵魂球不足");

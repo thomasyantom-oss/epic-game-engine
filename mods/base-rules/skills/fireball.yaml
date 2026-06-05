@@ -2,12 +2,15 @@ id: fireball
 name: "火球术"
 description: "对目标造成火焰魔法伤害，附带灼烧效果"
 category: skill
+tier: standard
 silenceable: true
 effect: damage_with_debuff
 damage:
   type: 法术
   add: 10
   scaling: { 智力: 0.2 }
+level_scaling:
+  "damage.add": 5
 targeting:
   mode: pattern
   field: enemy

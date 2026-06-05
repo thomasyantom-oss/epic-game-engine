@@ -16,7 +16,7 @@ nodes:
     parents: [elem_root]
     tier: 2
     order: 0
-    skill_slot: { skill: fireball, orb: { type: 爆破, count: 2 }, evolution: pyroblast }
+    skill_slot: { skill: fireball, orb: { type: 爆破 }, evolution: pyroblast }
 
   - id: ember_passive
     label: "余烬精通"
@@ -34,7 +34,7 @@ nodes:
     tier: 2
     order: 2
     requires_spec: pyromancer
-    skill_slot: { skill: light_field, orb: { type: 多重, count: 1 }, evolution: prism_field }
+    skill_slot: { skill: light_field, orb: { type: 多重 }, evolution: prism_field }
 
   - id: fb_damage
     label: "火球强化"

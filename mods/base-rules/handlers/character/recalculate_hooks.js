@@ -119,9 +119,23 @@ engine.on("entity.loaded", 100, function(event) {
 });
 
 // 接缝：人物等级 → 技能等级。Ch1 内容设计轮在此填 charLevel→skillLevel 曲线（每技能不同）。
-// 现为 no-op：技能 level 维持实例存储值（默认 1 / debug 设定）。
 function applySkillLevelCurve(entityId) {
-    // TODO(Ch1 内容轮): 遍历 Skillbook.known，按各技能曲线据人物 level 写 level 字段。
+    var entity = store.get(entityId);
+    if (entity === null) return;
+    if (!entity.hasComponent("Skillbook")) return;
+    var charLevel = 1;
+    var ch = entity.getComponent("Character");
+    if (ch !== null) charLevel = ch.getInt("level");
+    var known = entity.getComponent("Skillbook").get("known");
+    if (known === null) return;
+    for (var i = 0; i < known.size(); i++) {
+        var entry = known.get(i);
+        var base = String(entry.get("base"));
+        var raw = (typeof Skill !== "undefined") ? Skill.loadSpecAny(base) : null;
+        var spec = (raw !== null && raw !== undefined) ? Skill._toJs(raw) : null;
+        var lv = (typeof Progression !== "undefined") ? Progression.skillLevelFor(charLevel, spec) : 1;
+        entry.put("level", lv);
+    }
 }
 
 engine.on("entity.level_up", 100, function(event) {
