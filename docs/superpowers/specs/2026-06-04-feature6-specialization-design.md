@@ -81,7 +81,7 @@ nodes:
 
 | 字段 | 含义 | 落到哪 |
 |------|------|--------|
-| `main_attr` | 覆写 `PrimaryStats.weaponAttr`(物理强度吃哪条属性,§1.10 战士→盾战场景) | 走 spec modifier / load 期 weaponAttr 覆写 |
+| `main_attr` | 覆写 `PrimaryStats.weaponAttr`(物理强度吃哪条属性,§1.10 战士→盾战场景) | **作为 `spec` modifier 的输出在 recalculate 时覆写**(priority 见 §3,在 class-base weaponAttr 之后、derived 之前);**不写入 base** |
 | `growth` | 覆写每级成长模板(R 追溯重推) | `effectiveGrowth()` 喂 `level_growth` modifier |
 | `grant_passives` | 授予的专属被动 id 列表 | 选定时塞进 `Skillbook.known`,走 #5 框架 |
 
@@ -93,6 +93,8 @@ nodes:
 
 新增组件 `Specialization { path: [<nodeId>, ...] }`——**持久化的唯一真相源**,与 `classId` 同级。空数组 = 未专精。属性值不是真相源(见 §3)。
 
+> **它是非 base 结构性组件**(像 `EquipmentSlots`/`Skillbook`),靠 `persistent` tag 自动存(对齐 `PersistenceService`),`path` = `List<String>`(Jackson list ↔ JS `size/get`)。**绝不放进 `setBaseSelective` 的 stat 组件表**——否则 recalculate 的 restoreBaseState 会干扰真实选择状态。
+
 ---
 
 ## 3. 生命周期:套现成 modifier 路,零新机制
@@ -101,11 +103,15 @@ nodes:
 
 专精接这条路,**加三样、无新持久化负担:**
 
-1. **`registerSpecModifier(entityId)`** —— 读 `Specialization.path`,注册 `typeId:"spec"` modifier:对 path 上声明了 `main_attr` 的节点覆写 `PrimaryStats.weaponAttr`(+ 任何 flat 属性加值);与 `class` modifier 逐行同构。weaponAttr 覆写复用 load 期"按 class 还原 weaponAttr"的同一位置(class 先写默认 → 专精紧跟覆写)。
-2. **成长追溯(R)** —— `level_growth` modifier 现读 `classSchema.growth`;改为读 `effectiveGrowth(entity)` = 职业 growth,被 path 上**最深**声明了 `growth` 的节点覆盖(整表替换,非合并)。因 modifier 从干净 base `level × 模板` 重推,**前 N 级自动按新模板长出**——无迁移、无脏数据。
-3. **专属被动** —— 选定时把 `grant_passives` 塞进 `Skillbook.known`(kind=passive 条目)。它本就持久化 + load 期 `Passive.registerStatMods` 自动重注册,**专精搭便车,reload 不用管**。
+1. **`registerSpecModifier(entityId)`** —— 读 `Specialization.path`,注册新 `typeId:"spec"` modifier;apply 时对 path 上声明了 `main_attr` 的节点**覆写 `PrimaryStats.weaponAttr`**(+ 任何 flat 属性加值)。**weaponAttr 覆写是这个 modifier 的输出,不写入 base**:class 在 load/建角写的是 base 默认值,recalculate 时 restoreBaseState 还原成 class 默认,`spec` modifier 随后覆写。语义干净,choose/load/setBase 不混。
+2. **成长追溯(R)** —— `level_growth` modifier 现读 `classSchema.growth`;改为读 `effectiveGrowth(entity)` = 职业 growth,被 path 上**最深**声明了 `growth` 的节点**整表替换**(非 merge)。因 modifier 从干净 base `level × 模板` 重推,**前 N 级自动按新模板长出**——无迁移、无脏数据。
+3. **专属被动** —— 选定时把 `grant_passives` 塞进 `Skillbook.known`(kind=passive 条目;**塞前查重,避免重复 choose/load 产生 duplicate**)。它本就持久化 + load 期 `Passive.registerStatMods` 自动重注册,**专精搭便车,reload 不用管**。
 
-**装配顺序**(在 `select.js` 建角 + `recalculate_hooks.js` load 两处接):`class → level_growth(spec-aware) → equipment → spec(weaponAttr/flat) → derived(300) → passive`,最后一次 `recalculate`。HP/MP 由现成 `before/after_recalculate` 的 scratch 钩子夹到新上限(选奥术体质涨→maxHp 升、当前血保留并夹顶,平滑不破)。
+**priority(关键):执行顺序由 `modifier_types.yaml` 的 priority 决定,不是注册顺序。** 现有:equipment=50 / passive=70 / level=90 / class=180 / derived=300。**新增 `spec` type,priority 置于 class(180)之后、derived(300)之前**(取 **220**):保证 `spec` 覆写的 weaponAttr 在 class base 默认之后落、且 derived 算 `物理强度` 时已读到新 weaponAttr。`level_growth`(level=90)在 derived 前跑,成长模板已 spec-aware。
+
+**`allocate_point` 冲突(阻塞)**:`leveling.js` 的 `action.allocate_point` 用**同 id `level_growth`** 注册一套不同逻辑,会盖掉 spec-aware 成长。§1.8 已搁置手动加点(建角 `pendingPoints=0`、UI 不发),故正常流程不触发;但 handler 仍活。**处理:守卫该 handler(`pendingPoints<=0` 早 return 已有,额外确保它不与 spec-aware `level_growth` 抢同 id)**——本 feature 维持手动加点休眠,测试钉死它不覆盖 spec 成长。
+
+**统一 `applySpec` codepath(choose 与 load 共用)**:`set path → registerSpecModifier → 用 effectiveGrowth 重注册 level_growth → 授 grant_passives → recalculate`。choose_specialization **必须走完整条**(只注册 spec modifier 不重注册 level_growth,则追溯不生效)。接在 `select.js` 建角 + `recalculate_hooks.js` 的 `entity.loaded` 两处。HP/MP 由现成 `before/after_recalculate` 的 scratch 钩子夹到新上限(选奥术体质涨→maxHp 升、当前血保留并夹顶,平滑不破)。
 
 ---
 
@@ -127,7 +133,9 @@ nodes:
 - #6 **只**把 `Specialization.path` 存下来并持久化。
 - #6 **不实现任何 gating**——升级入口在 #7 的技能树 UI 里,未专精则树不渲染、天然无入口;现在 #7 不存在,没有消费者可挡。
 - #7 落地时读 `path`:① UI 决定显示哪棵对应技能树;② 升级 API 校验"请求的升级节点 `requires_spec` 是否在 `path` 内",不在则 reject(防伪造 call 作弊兜底,单机里就是防改包)。
-- 规则(显示/校验)全长在 #7 那侧 → 专精天然只发钥匙(选项 B)。灵魂球纯 #7,#6 不碰。
+- 规则(显示/校验)全长在 #7 那侧 → 专精天然只发钥匙(选项 B)。**#7 是唯一 gating 执行点;#6 不实现任何消费者。** 这与母文档 §1.10"选专精=升级树解锁"不冲突——解锁的执行落在 #7,#6 只提供被读的 path。灵魂球纯 #7,#6 不碰。
+
+**#6 现在必须立的接缝(否则 #7 返工技能 spec 管线)**:§1.2 明列专精是技能 spec ModifierChain 的 patch 源之一(开关 enabled / 改 scaling / 改主属性)。`00_skill_lib.js` 的 `resolveSpec` 现为 `level → node → passive`,**本 feature 补一段空接缝 `applySpecializationPatches(ctx, baseId, spec)`**(读 path 上节点未来声明的 `skill_patches`,本轮 demo 不放真实 patch,等内容轮/#7 填),挂在 passive patch 之后。这把 §1.5 提到的"专精 patch 空槽"真正落到管线里。
 
 ---
 
@@ -140,13 +148,19 @@ specialization: {
   path: [ { id, label }, ... ],            // 已选路径
   pending: {                               // 当前可选的下一层;无可选则 null
     tier, requires_level,
-    options: [ { id, label, description } ]
+    options: [ {
+      id, label, description,
+      effects: { main_attr?, growth?, grant_passives? }   // 不可洗确认需展示效果摘要
+    } ]
   } | null,
   locked: [ { tier, requires_level } ]     // 更深、尚未到级的层(灰显提示)
 }
 ```
 
-`pending` 计算:取 path 末端为 parent、`requires_level ≤ 等级` 且该 tier 未选的节点集;为空则 null。
+- `pending` 计算:取 path 末端为 parent、`requires_level ≤ 等级` 且该 tier 未选的节点集;为空则 null。
+- **三态都要前端可辨**:未专精(path 空 + pending 给根 tier)/ 有可选(pending 非 null)/ **终态**(最深层已选,`pending=null && locked=[]`,前端文案明示"已达最深专精")。
+- **`options.effects` 暴露 main_attr/growth/grant_passives 摘要**——不可洗选择信息量必须够。
+- **`action.choose_specialization` 的拒绝结果**(未到级 / parent 不匹配 / 同 tier 重选)**走现有 action result 错误通路**,带可读 message,前端能展示拒绝原因。
 
 ### 6.2 前端
 
@@ -165,8 +179,11 @@ specialization: {
 - L50 选 `pyromancer` → `lingering_burn` 进 `Skillbook.known` 且 `Passive.registerStatMods` 生效;`path == [elementalist, pyromancer]`。
 - 校验拒绝:未到级选 tier2 / 跨大类选(parent 不匹配) / 同 tier 重选 → 全拒,状态不变。
 - **load 往返**:选专精 → 持久化 → 重载,属性/成长/被动**逐位一致**(验证 `registerSpecModifier` 重注册 + 幂等,无重启膨胀)。
-- **`main_attr` 通路**:用合成测试节点(声明 `main_attr`)验证 weaponAttr 覆写 + 物理强度改吃新属性(覆盖去掉盾战 demo 后的空白)。
-- **回归**:未专精角色(path 空)行为与本 feature 前完全一致;现有 modifier/快照/战斗测试全绿。
+- **`main_attr` 通路**:用合成测试节点(声明 `main_attr`)验证 `spec`(priority 220)覆写 weaponAttr 后,**derived(300)读到新 weaponAttr** → `物理强度` 改吃新属性(覆盖去掉盾战 demo 后的空白)。
+- **weaponAttr 隔离**:装备武器在身时,专精覆写只影响 `物理强度` 查找,**不误改武器自身的 `weaponAttr/base` 元数据**。
+- **`allocate_point` 不抢**:确认手动加点休眠(`pendingPoints=0`)下,spec-aware `level_growth` 不被旧逻辑覆盖。
+- **回归**:未专精角色(path 空、含 L>1 的 load 往返)行为与本 feature 前完全一致;现有 modifier/快照/战斗测试全绿。
+- **终态快照**:最深层已选 → `pending=null && locked=[]`。
 
 **前端构建:** `npm run build` 通过;专精面板渲染路径/pending/locked 三态。
 
@@ -187,3 +204,18 @@ specialization: {
 
 - `applySkillLevelCurve`(人物 level→技能 level 曲线)仍是 no-op 接缝,内容轮填;本 feature 不动。
 - 其它职业(战士/盗贼/守护/德鲁伊)的专精树 = 内容轮补;本 feature 只交付法师 demo + 机制。
+
+---
+
+## 10. Codex review 已纳(2026-06-04,`codex-runs/feature6/review-reply.md`)
+
+首轮 `codex exec` 只读 review 给 REQUEST-CHANGES,5 阻塞项 + 数条非阻塞**已全部纳入上文**:
+
+1. ✅ 新 `spec` modifier type,priority **220**(class 180 后、derived 300 前)→ §3 / §2.1。
+2. ✅ `main_attr`/weaponAttr 覆写定性为 **modifier 输出、不写 base** → §3 / §2.1。
+3. ✅ `allocate_point` 同 id `level_growth` 冲突 → 守卫 + 测试钉死休眠 → §3 / §7。
+4. ✅ `resolveSpec` 补 `applySpecializationPatches` 空接缝(落 §1.2/§1.5 专精 patch 源)→ §5。
+5. ✅ `WorldSnapshot` 加 `specialization` 块 + 选项 `effects` 摘要 + 拒绝走 action result 通路 + 终态 → §6.1。
+- 非阻塞:`Specialization` 不进 `setBaseSelective`(§2.2)、补 weaponAttr 隔离/未专精 load 往返/终态/被动查重测试(§7)、表述上 #7 为唯一 gating 执行点(§5)。
+
+范围:Codex 提"偏大但可吞,更稳是先后端机制+snapshot+tests、再前端 panel"——**plan 里据此切两 step(后端先、前端后)**,仍属单 feature 一轮。
