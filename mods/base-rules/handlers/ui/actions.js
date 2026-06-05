@@ -1,10 +1,12 @@
-// JS 坐标数组 [[x,y],...] → Java List<List>，供快照序列化(JS 数组直接塞 Map 不可序列化)
-function pairsToJavaList(arr) {
+// JS 坐标数组 [[a,b],...] → Java List<List>，供快照序列化(JS 数组直接塞 Map 不可序列化)。
+// swap=true:引擎 pattern 是 [rowIdxDelta,slotDelta]=[gridCol差,gridRow差]，
+// 前端 aoeOffsets 要 [gridRow差,gridCol差]，故交换每对。
+function pairsToJavaList(arr, swap) {
     var out = engine.newList();
     for (var i = 0; i < arr.length; i++) {
         var cell = engine.newList();
-        cell.add(arr[i][0]);
-        cell.add(arr[i][1]);
+        cell.add(swap ? arr[i][1] : arr[i][0]);
+        cell.add(swap ? arr[i][0] : arr[i][1]);
         out.add(cell);
     }
     return out;
@@ -60,11 +62,12 @@ function emitCombatCommand(entityId, actions, skillId, categoryOverride, node) {
             var resolved = Skill.resolveSpec({ caster: caster }, skillId, Skill._toJs(skillDef));
             var rt = resolved !== null && resolved !== undefined ? resolved.targeting : null;
             var off = null;
+            var swap = false;
             if (rt !== null && rt !== undefined) {
-                if (rt.aoe_offsets !== undefined && rt.aoe_offsets !== null) off = rt.aoe_offsets;
-                else if (rt.pattern !== undefined && rt.pattern !== null && rt.pattern.length > 1) off = rt.pattern;
+                if (rt.aoe_offsets !== undefined && rt.aoe_offsets !== null) { off = rt.aoe_offsets; swap = false; }
+                else if (rt.pattern !== undefined && rt.pattern !== null && rt.pattern.length > 1) { off = rt.pattern; swap = true; }
             }
-            if (off !== null) aoeOffsets = pairsToJavaList(off);
+            if (off !== null) aoeOffsets = pairsToJavaList(off, swap);
         }
     }
     if (aoeOffsets !== null) {
