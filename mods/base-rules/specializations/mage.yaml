@@ -1,0 +1,12 @@
+class: mage
+nodes:
+  - { id: elementalist, label: "元素法师", tier: 1, requires_level: 10, parent: null }
+  - { id: arcanist, label: "奥术法师", tier: 1, requires_level: 10, parent: null, growth: { 智力: 4, 体质: 1 } }
+  - { id: naturalist, label: "自然法师", tier: 1, requires_level: 10, parent: null, growth: { 智力: 2, 敏捷: 2, 体质: 1 } }
+  - { id: pyromancer, label: "火", tier: 2, requires_level: 50, parent: elementalist, grant_passives: [lifesteal_on_kill] }
+  - { id: cryomancer, label: "冰", tier: 2, requires_level: 50, parent: elementalist }
+  - { id: stormmancer, label: "电/射线", tier: 2, requires_level: 50, parent: elementalist }
+  - { id: aoe_arcane, label: "范围", tier: 2, requires_level: 50, parent: arcanist }
+  - { id: bolt_arcane, label: "投射/召唤", tier: 2, requires_level: 50, parent: arcanist }
+  - { id: toxinist, label: "毒性", tier: 2, requires_level: 50, parent: naturalist }
+  - { id: psionicist, label: "灵能", tier: 2, requires_level: 50, parent: naturalist }

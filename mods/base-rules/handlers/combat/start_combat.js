@@ -82,6 +82,11 @@ engine.on("combat.start_encounter", 100, function(event) {
         nameComp.set("value", enemyDef.get("name"));
         enemy.addComponent(nameComp);
 
+        var metaComp = engine.newComponent("CombatantMeta");
+        metaComp.set("race", enemyDef.get("race") !== null ? enemyDef.get("race") : enemyDef.get("name"));
+        metaComp.set("level", enemyDef.get("level") !== null ? enemyDef.get("level") : 1);
+        enemy.addComponent(metaComp);
+
         var combatPos = engine.newComponent("CombatPosition");
         combatPos.set("row", enemyDef.get("row") || "FRONT");
         combatPos.set("slot", enemyDef.get("slot") !== null ? enemyDef.get("slot") : i % 3);

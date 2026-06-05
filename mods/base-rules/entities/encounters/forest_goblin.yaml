@@ -9,6 +9,7 @@ sim_scaling:
 enemies:
   - id: goblin1
     name: "哥布林"
+    race: "哥布林"
     row: FRONT
     slot: 0
     defense: 2
@@ -20,6 +21,7 @@ enemies:
     weaponAttr: "敏捷"
   - id: goblin2
     name: "哥布林弓手"
+    race: "哥布林"
     row: BACK
     slot: 0
     defense: 1

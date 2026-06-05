@@ -14,17 +14,48 @@ function registerLevelGrowthModifier(entityId, level) {
             if (ch === null || p === null) return;
             var classSchema = schemas.get(ch.getString("classId"));
             if (classSchema === null) return;
-            var growth = classSchema.raw().get("growth");
+            var growth = (typeof effectiveGrowth !== "undefined") ? effectiveGrowth(entity) : classSchema.raw().get("growth");
             if (growth === null) return;
             var gained = capturedLevel - 1;   // L1 不加,每升一级加一份模板
-            var keys = growth.keySet().iterator();
-            while (keys.hasNext()) {
-                var stat = keys.next();
-                p.set(stat, p.getInt(stat) + growth.get(stat) * gained);
+            if (typeof growth.keySet === "function") {
+                var keys = growth.keySet().iterator();
+                while (keys.hasNext()) {
+                    var stat = keys.next();
+                    p.set(stat, p.getInt(stat) + growth.get(stat) * gained);
+                }
+            } else {
+                var jsKeys = Object.keys(growth);
+                for (var i = 0; i < jsKeys.length; i++) {
+                    var k = jsKeys[i];
+                    p.set(k, p.getInt(k) + parseInt(growth[k]) * gained);
+                }
             }
         }
     });
 }
+
+// 调试脚手架(Feature #6 verify):一键设等级,跳过 gain_xp grind。复用 applySpec 重推
+// 等级成长(spec-aware)+ recalc;回满血便于观察。verify 完可删(连同 DebugController /level)。
+engine.on("debug.set_level", 100, function(event) {
+    var entityId = event.get("entityId");
+    var level = parseInt(event.get("level"));
+    var entity = store.get(entityId);
+    if (entity === null || level < 1) { event.set("ok", false); return; }
+    var exp = entity.getComponent("Experience");
+    if (exp !== null) exp.set("level", level);
+    var ch = entity.getComponent("Character");
+    if (ch !== null) ch.set("level", level);
+    if (typeof applySpec !== "undefined") {
+        applySpec(entityId);
+    } else if (typeof registerLevelGrowthModifier !== "undefined") {
+        registerLevelGrowthModifier(entityId, level);
+        engine.recalculate(entityId);
+    }
+    var hp = entity.getComponent("Health");
+    if (hp !== null) hp.set("hp", hp.getInt("maxHp"));
+    event.set("ok", true);
+    if (typeof persistence !== "undefined" && persistence !== null) persistence.save(entity);
+});
 
 engine.on("action.gain_xp", 100, function(event) {
     var playerId = event.get("playerId");
@@ -63,37 +94,11 @@ engine.on("action.gain_xp", 100, function(event) {
 
 engine.on("action.allocate_point", 100, function(event) {
     var playerId = event.get("playerId");
-    var stat = event.get("stat");
     var player = store.get(playerId);
     if (player === null) return;
 
     var exp = player.getComponent("Experience");
     if (exp === null || exp.getInt("pendingPoints") <= 0) return;
-
-    exp.set("pendingPoints", exp.getInt("pendingPoints") - 1);
-
-    var isHealthStat = (stat === "maxHp");
-
-    engine.addModifier(playerId, {
-        typeId: "level",
-        id: "level_growth",
-        label: exp.getInt("level") + "级成长（含加点）",
-        apply: function(entity) {
-            var level = entity.getComponent("Experience").getInt("level");
-            var health = entity.getComponent("Health");
-            if (health !== null) {
-                health.set("maxHp", health.getInt("maxHp") + level * 5);
-            }
-            var stats2 = entity.getComponent("CombatStats");
-            if (stats2 !== null) {
-                stats2.set("attack", stats2.getInt("attack") + level);
-            }
-            var allocComp = entity.getComponent(isHealthStat ? "Health" : "CombatStats");
-            if (allocComp !== null && allocComp.has(stat)) {
-                allocComp.set(stat, allocComp.getInt(stat) + 1);
-            }
-        }
-    });
-
-    persistence.save(player);
+    event.set("success", false);
+    event.set("message", "手动加点暂未开放");
 });

@@ -5,16 +5,50 @@ engine.on("session.list_characters", 100, function(event) {
     var entities = persistence.findByTag("session:" + token);
 
     for (var i = 0; i < entities.size(); i++) {
-        var entity = entities.get(i);
+        var persisted = entities.get(i);
+        var live = store.get(persisted.getId());
+        var entity = live !== null ? live : persisted;
         if (!entity.hasComponent("Character")) continue;
         var charComp = entity.getComponent("Character");
         var name = charComp.getString("name");
-        var level = charComp.has("level") ? charComp.getInt("level") : 1;
+        var expComp = entity.getComponent("Experience");
+        var level = expComp !== null && expComp.has("level") ? expComp.getInt("level") : (charComp.has("level") ? charComp.getInt("level") : 1);
         var classId = charComp.has("classId") ? charComp.getString("classId") : "";
-        var classLabel = charComp.has("classLabel") ? charComp.getString("classLabel") : "";
-        characters.add(engine.newCharacterInfo(entity.getId(), name, level, classId, classLabel));
+        var classLabel = typeof effectiveClassLabel !== "undefined"
+            ? effectiveClassLabel(entity)
+            : (charComp.has("classLabel") ? charComp.getString("classLabel") : "");
+        var growth = typeof effectiveGrowth !== "undefined" ? effectiveGrowth(entity) : {};
+        var description = typeof effectiveDescription !== "undefined" ? effectiveDescription(entity) : "";
+        var portrait = typeof effectivePortrait !== "undefined" ? effectivePortrait(entity) : null;
+        characters.add(engine.newCharacterInfo(
+            entity.getId(), name, level, classId, classLabel,
+            copyPrimaryStats(entity),
+            copyJsMap(growth),
+            description,
+            portrait
+        ));
     }
 });
+
+function copyPrimaryStats(entity) {
+    var out = engine.newMap();
+    var primary = entity.getComponent("PrimaryStats");
+    if (primary === null) return out;
+    var keys = primary.getAll().keySet().iterator();
+    while (keys.hasNext()) {
+        var key = keys.next();
+        out.put(String(key), primary.get(String(key)));
+    }
+    return out;
+}
+
+function copyJsMap(src) {
+    var out = engine.newMap();
+    if (src === null || src === undefined) return out;
+    var keys = Object.keys(src);
+    for (var i = 0; i < keys.length; i++) out.put(keys[i], src[keys[i]]);
+    return out;
+}
 
 // 创建角色：根据 schema 构建表单
 engine.on("action.create_character", 100, function(event) {
@@ -142,6 +176,10 @@ engine.on("action.confirm_character", 100, function(event) {
     slotsComp.set("accessory", null);
     entity.addComponent(slotsComp);
 
+    var specComp = engine.newComponent("Specialization");
+    specComp.set("path", engine.newList());
+    entity.addComponent(specComp);
+
     var invComp = engine.newComponent("Inventory");
     var startingItems = engine.newList();
     // 给每个职业发全部 5 把武器，用户逐一测试不同武器在不同职业手上的表现
@@ -194,7 +232,9 @@ engine.on("action.confirm_character", 100, function(event) {
     if (typeof applySkillLevelCurve !== 'undefined') {
         applySkillLevelCurve(charId);
     }
-    if (typeof Passive !== 'undefined') {
+    if (typeof applySpec !== 'undefined') {
+        applySpec(charId);
+    } else if (typeof Passive !== 'undefined') {
         Passive.registerStatMods(charId);
         engine.recalculate(charId);
     }

@@ -9,6 +9,11 @@ modifier_types:
     stack_rule: exclusive
     base_priority: 180
 
+  - id: spec
+    label: 专精
+    stack_rule: exclusive
+    base_priority: 220
+
   - id: subclass
     label: 子职业
     stack_rule: exclusive

@@ -17,9 +17,11 @@ engine.on("ui.render_status", 100, function(event) {
         var charComp = entity.getComponent("Character");
         var name = charComp.getString("name");
         var level = charComp.has("level") ? charComp.getInt("level") : 1;
-        var classLabel = charComp.has("classLabel") ? charComp.getString("classLabel") : "";
+        var classLabel = typeof effectiveClassLabel !== "undefined"
+            ? effectiveClassLabel(entity)
+            : (charComp.has("classLabel") ? charComp.getString("classLabel") : "");
         bars.add(engine.newStatusBar("name", name, level, level, playerColor, 0));
-        bars.add(engine.newStatusBar("class", classLabel, level, 99, textColor, 0));
+        bars.add(engine.newStatusBar("class", classLabel, level, 99, playerColor, 0));
     }
 
     if (entity.hasComponent("Health")) {

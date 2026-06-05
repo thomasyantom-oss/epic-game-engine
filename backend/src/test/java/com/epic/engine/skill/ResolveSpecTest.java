@@ -110,6 +110,28 @@ class ResolveSpecTest {
     }
 
     @Test
+    void specializationPatchSeam_noOpsForDemoPathAndMissingComponent() throws Exception {
+        ScriptRuntime runtime = withSkillLib();
+        runtime.execute(Files.readString(Path.of("../mods/base-rules/handlers/character/specialization.js")), "specialization.js");
+        runtime.execute("""
+            var hero = engine.createEntity('hero');
+            var ch = engine.newComponent('Character'); ch.set('classId', 'mage'); hero.addComponent(ch);
+            var specComp = engine.newComponent('Specialization');
+            var path = engine.newList(); path.add('elementalist'); specComp.set('path', path); hero.addComponent(specComp);
+            store.add(hero);
+            var raw = Skill._toJs(engine.loadYaml('skills/fireball.yaml'));
+            var out = Skill.resolveSpec({ caster: hero, actorId: 'hero' }, 'fireball', raw);
+            var monster = engine.createEntity('monster'); store.add(monster);
+            var out2 = Skill.resolveSpec({ caster: monster, actorId: 'monster' }, 'fireball', raw);
+            var e = engine.createEntity('probe');
+            var c = engine.newComponent('Probe');
+            c.set('ok', JSON.stringify(out) === JSON.stringify(raw) && JSON.stringify(out2) === JSON.stringify(raw));
+            e.addComponent(c); store.add(e);
+            """, "probe.js");
+        assertThat(Boolean.TRUE.equals(store.get("probe").getComponent("Probe").get("ok"))).isTrue();
+    }
+
+    @Test
     void levelScaling_addsConfiguredPerLevelDelta() throws Exception {
         ScriptRuntime runtime = withSkillLib();
         runtime.execute("""

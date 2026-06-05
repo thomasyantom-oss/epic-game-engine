@@ -28,6 +28,10 @@ public class SnapshotService {
     }
 
     public WorldSnapshot buildSnapshot(String token) {
+        return buildSnapshot(token, null);
+    }
+
+    public WorldSnapshot buildSnapshot(String token, WorldSnapshot.ActionResult override) {
         SessionData session = sessionService.getSession(token);
         if (session == null) {
             return WorldSnapshot.characterSelect(token, List.of(), sessionService.getMaxSlots(), buildColorMap(), buildClassPreviews());
@@ -42,7 +46,7 @@ public class SnapshotService {
             return buildCharacterSelectSnapshot(token);
         }
 
-        return buildInGameSnapshot(token, session.activeCharacterId());
+        return buildInGameSnapshot(token, session.activeCharacterId(), override);
     }
 
     private WorldSnapshot buildCharacterSelectSnapshot(String token) {
@@ -58,7 +62,7 @@ public class SnapshotService {
                 sessionService.getMaxSlots(), buildColorMap(), buildClassPreviews());
     }
 
-    private WorldSnapshot buildInGameSnapshot(String token, String playerId) {
+    private WorldSnapshot buildInGameSnapshot(String token, String playerId, WorldSnapshot.ActionResult override) {
         Entity player = entityStore.get(playerId);
         if (player == null) {
             sessionService.clearActiveCharacter(token);
@@ -85,7 +89,7 @@ public class SnapshotService {
         List<WorldSnapshot.ActionOption> actions = actionsEvent.get("actions");
 
         return WorldSnapshot.inGame(token, playerId,
-                new WorldSnapshot.ActionResult(true, "ok"),
+                override != null ? override : new WorldSnapshot.ActionResult(true, "ok"),
                 bars != null ? bars : List.of(),
                 buffs != null ? buffs : List.of(),
                 buildMapSnapshot(player),
@@ -95,7 +99,8 @@ public class SnapshotService {
                 buildColorMap(),
                 buildPendingPoints(playerId),
                 buildEquipmentData(playerId),
-                buildSkillbook(playerId));
+                buildSkillbook(playerId),
+                buildSpecialization(playerId));
     }
 
     private WorldSnapshot.Skillbook buildSkillbook(String playerId) {
@@ -117,6 +122,28 @@ public class SnapshotService {
                 .filter(e -> "active".equals(e.kind()) && e.equipped())
                 .count();
         return new WorldSnapshot.Skillbook(slots, equipped, known);
+    }
+
+    private WorldSnapshot.Specialization buildSpecialization(String playerId) {
+        Entity player = entityStore.get(playerId);
+        if (player == null || !player.hasComponent("Specialization")) return null;
+
+        GameEvent event = new GameEvent("ui.render_specialization");
+        event.set("entityId", playerId);
+        event.set("path", new ArrayList<WorldSnapshot.SpecPathNode>());
+        event.set("pending", null);
+        event.set("locked", new ArrayList<WorldSnapshot.SpecLocked>());
+        eventBus.fire("ui.render_specialization", event);
+
+        @SuppressWarnings("unchecked")
+        List<WorldSnapshot.SpecPathNode> path = event.get("path");
+        @SuppressWarnings("unchecked")
+        List<WorldSnapshot.SpecLocked> locked = event.get("locked");
+        WorldSnapshot.SpecPending pending = event.get("pending");
+        return new WorldSnapshot.Specialization(
+                path != null ? path : List.of(),
+                pending,
+                locked != null ? locked : List.of());
     }
 
     private Integer buildPendingPoints(String playerId) {
@@ -372,8 +399,10 @@ public class SnapshotService {
                     // HP/MP 颜色从 colorMap 读取语义色
                     String hpColor = colorMap.getOrDefault("hp", "#e84848");
                     String mpColor = colorMap.getOrDefault("mp", "#2eb8cc");
+                    int level = resolveCombatantLevel(c);
+                    String typeLabel = resolveCombatantTypeLabel(c, name);
                     combatants.add(new WorldSnapshot.CombatantInfo(
-                            c.getId(), name, side,
+                            c.getId(), name, side, level, typeLabel,
                             health.getInt("hp"), health.getInt("maxHp"),
                             mp, maxMp,
                             health.getInt("hp") > 0, buffList, row, slot, hpColor, mpColor));
@@ -424,5 +453,40 @@ public class SnapshotService {
             }
         }
         return null;
+    }
+
+    private int resolveCombatantLevel(Entity entity) {
+        Component exp = entity.getComponent("Experience");
+        if (exp != null && exp.has("level")) return exp.getInt("level");
+        Component character = entity.getComponent("Character");
+        if (character != null && character.has("level")) return character.getInt("level");
+        Component meta = entity.getComponent("CombatantMeta");
+        if (meta != null && meta.has("level")) return meta.getInt("level");
+        return 1;
+    }
+
+    private String resolveCombatantTypeLabel(Entity entity, String name) {
+        if (entity.hasTag("player")) {
+            GameEvent event = new GameEvent("ui.render_status");
+            event.set("entityId", entity.getId());
+            event.set("bars", new ArrayList<WorldSnapshot.StatusBar>());
+            event.set("buffs", new ArrayList<WorldSnapshot.BuffEntry>());
+            eventBus.fire("ui.render_status", event);
+
+            @SuppressWarnings("unchecked")
+            List<WorldSnapshot.StatusBar> bars = event.get("bars");
+            if (bars != null) {
+                for (WorldSnapshot.StatusBar bar : bars) {
+                    if ("class".equals(bar.id()) && bar.label() != null && !bar.label().isBlank()) {
+                        return bar.label();
+                    }
+                }
+            }
+            Component character = entity.getComponent("Character");
+            if (character != null && character.has("classLabel")) return character.getString("classLabel");
+        }
+        Component meta = entity.getComponent("CombatantMeta");
+        if (meta != null && meta.has("race")) return meta.getString("race");
+        return name;
     }
 }

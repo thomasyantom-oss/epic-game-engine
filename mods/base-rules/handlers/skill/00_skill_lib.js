@@ -174,6 +174,7 @@ var Skill = {
     spec = this.applyLevelScaling(spec, inst.level);
     spec = this.applyNode(spec, inst.node);
     spec = this.applyPassivePatches(ctx, baseId, spec);
+    spec = this.applySpecializationPatches(ctx, baseId, spec);
     return spec;
   },
 
@@ -198,6 +199,37 @@ var Skill = {
       if (ps.effect !== "skill_patch") continue;
       if (!this._matchSkill(ps.match, baseId, spec)) continue;
       this._applyPatch(spec, ps.patch);
+    }
+    return spec;
+  },
+
+  applySpecializationPatches: function(ctx, baseId, spec) {
+    var caster = ctx ? ctx.caster : null;
+    if (caster === null || caster === undefined) return spec;
+    if (!caster.hasComponent("Character") || !caster.hasComponent("Specialization")) return spec;
+    var classId = caster.getComponent("Character").getString("classId");
+    var path = caster.getComponent("Specialization").get("path");
+    if (path === null) return spec;
+    var size = typeof path.size === "function" ? path.size() : path.length;
+    for (var i = 0; i < size; i++) {
+      var nodeId = typeof path.get === "function" ? path.get(i) : path[i];
+      var node = null;
+      if (typeof Specialization !== "undefined") {
+        node = Specialization.specNode(classId, nodeId);
+      } else {
+        var tree = this._toJs(engine.loadYaml("specializations/" + classId + ".yaml"));
+        if (tree !== null && tree !== undefined && tree.nodes !== undefined) {
+          for (var n = 0; n < tree.nodes.length; n++) {
+            if (String(tree.nodes[n].id) === String(nodeId)) node = tree.nodes[n];
+          }
+        }
+      }
+      if (node === null || node.skill_patches === undefined || node.skill_patches === null) continue;
+      for (var p = 0; p < node.skill_patches.length; p++) {
+        var patch = node.skill_patches[p];
+        if (!this._matchSkill(patch.match, baseId, spec)) continue;
+        this._applyPatch(spec, patch.patch);
+      }
     }
     return spec;
   },

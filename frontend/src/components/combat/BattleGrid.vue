@@ -11,11 +11,14 @@
         <template v-if="playerCompressed && playerHovered !== unit.id">
           <div class="compact-bar" :style="{ background: hpColor('player', unit) }"></div>
           <span class="compact-name player-name">{{ unit.name }}</span>
+          <span class="compact-meta player-name">Lv.{{ unit.level ?? 1 }} {{ unit.typeLabel || '' }}</span>
         </template>
         <!-- 完整态 -->
         <template v-else>
           <div class="unit-header" :class="{ active: unit.id === currentActorId }">
             <span class="unit-name player-name">{{ unit.name }}</span>
+            <span class="unit-level">Lv.{{ unit.level ?? 1 }}</span>
+            <span class="unit-type player-name">{{ unit.typeLabel }}</span>
           </div>
           <div class="stat-bar-row">
             <span class="stat-label" :style="{ color: unit.hpColor }">HP</span>
@@ -148,11 +151,14 @@
         <template v-if="enemyCompressed && enemyHovered !== unit.id">
           <div class="compact-bar" :style="{ background: hpColor('enemy', unit) }"></div>
           <span class="compact-name enemy-name">{{ unit.name }}</span>
+          <span class="compact-meta enemy-name">Lv.{{ unit.level ?? 1 }} {{ unit.typeLabel || '' }}</span>
         </template>
         <!-- 完整态 -->
         <template v-else>
         <div class="unit-header">
           <span class="unit-name enemy-name">{{ unit.name }}</span>
+          <span class="unit-level">Lv.{{ unit.level ?? 1 }}</span>
+          <span class="unit-type enemy-name">{{ unit.typeLabel }}</span>
         </div>
         <div class="stat-bar-row">
           <span class="stat-label" :style="{ color: unit.hpColor }">HP</span>
@@ -750,6 +756,14 @@ onUnmounted(() => stopTimer())
   text-overflow: ellipsis;
   line-height: 1.2;
 }
+.compact-meta {
+  font-size: 8px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  opacity: 0.8;
+  line-height: 1.1;
+}
 
 /* Buff 状态行 */
 .buff-status-row {
@@ -816,6 +830,7 @@ onUnmounted(() => stopTimer())
   display: flex;
   align-items: center;
   justify-content: space-between;
+  gap: 4px;
   flex-shrink: 0;
   line-height: 1.2;
 }
@@ -826,6 +841,28 @@ onUnmounted(() => stopTimer())
 
 .player-name { color: var(--color-player); }
 .enemy-name { color: var(--color-enemy); }
+.unit-name {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-weight: 700;
+}
+.unit-level {
+  flex-shrink: 0;
+  color: var(--color-text);
+  font-size: 0.72em;
+  white-space: nowrap;
+}
+.unit-type {
+  min-width: 0;
+  margin-left: auto;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  text-align: right;
+  font-size: 0.72em;
+}
 
 /* ── 能量条：标签(固定宽) + 条(flex:1) + 数值(固定宽) ── */
 .stat-bar-row {

@@ -1,6 +1,7 @@
 package com.epic.engine.core;
 
 import org.junit.jupiter.api.Test;
+import java.nio.file.Path;
 import java.util.List;
 import java.util.Map;
 import static org.assertj.core.api.Assertions.assertThat;
@@ -31,5 +32,15 @@ class ModifierTypeRegistryTest {
     void getStackRule_unknownType_returnsAdditive() {
         ModifierTypeRegistry reg = new ModifierTypeRegistry();
         assertThat(reg.getStackRule("unknown")).isEqualTo("additive");
+    }
+
+    @Test
+    void baseRules_registersSpecModifierAtPriority220() {
+        ModifierTypeRegistry reg = new ModifierTypeRegistry();
+        reg.loadFromModPath(Path.of("../mods/base-rules"));
+        ModifierType spec = reg.get("spec");
+        assertThat(spec).isNotNull();
+        assertThat(spec.stackRule()).isEqualTo("exclusive");
+        assertThat(spec.basePriority()).isEqualTo(220);
     }
 }

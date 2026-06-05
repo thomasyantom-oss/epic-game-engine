@@ -21,10 +21,13 @@ public record WorldSnapshot(
         Integer pendingPoints,
         EquipmentData equipment,
         List<ClassPreview> classPreviews,
-        Skillbook skillbook
+        Skillbook skillbook,
+        Specialization specialization
 ) {
     public record ActionResult(boolean success, String message) {}
-    public record CharacterInfo(String id, String name, int level, String classId, String classLabel) {}
+    public record CharacterInfo(String id, String name, int level, String classId, String classLabel,
+                                Map<String, Object> primaryStats, Map<String, Object> growth,
+                                String description, String portrait) {}
     public record ClassPreview(String id, String label, String description,
                                Map<String, Object> growth, Map<String, String> modifiers,
                                String portrait) {}
@@ -41,7 +44,9 @@ public record WorldSnapshot(
     public record PoiInfo(String id, int x, int y, String type, String target, String label) {}
     public record CombatSnapshot(String combatId, String phase, int round, int turnTimer,
                                      List<CombatantInfo> combatants, List<CombatEvent> events) {}
-    public record CombatantInfo(String id, String name, String side, int hp, int maxHp, int mp, int maxMp, boolean alive, List<BuffInfo> buffs, String row, int slot, String hpColor, String mpColor) {}
+    public record CombatantInfo(String id, String name, String side, int level, String typeLabel,
+                                int hp, int maxHp, int mp, int maxMp, boolean alive,
+                                List<BuffInfo> buffs, String row, int slot, String hpColor, String mpColor) {}
     public record BuffInfo(String id, int stacks, String color, boolean positive, int remaining) {}
     public record CombatEvent(List<TextSegment> segments, List<Effect> effects, List<Map<String, Object>> animation, int logCount) {}
     public record Effect(String target, String type, Map<String, Object> data) {}
@@ -61,17 +66,23 @@ public record WorldSnapshot(
     public record SkillEntry(String base, String name, String description, String icon,
                              boolean equipped, String node, int level, String kind) {}
     public record Skillbook(int slots, int equippedCount, List<SkillEntry> known) {}
+    public record SpecOption(String id, String label, String description, SpecEffects effects) {}
+    public record SpecEffects(String mainAttr, Map<String, Object> growth, List<String> grantPassives) {}
+    public record SpecPending(int tier, int requiresLevel, List<SpecOption> options) {}
+    public record SpecPathNode(String id, String label) {}
+    public record SpecLocked(int tier, int requiresLevel) {}
+    public record Specialization(List<SpecPathNode> path, SpecPending pending, List<SpecLocked> locked) {}
 
     public static WorldSnapshot characterSelect(String sessionToken, List<CharacterInfo> characters, int maxSlots, Map<String, String> colors, List<ClassPreview> classPreviews) {
         return new WorldSnapshot("character_select", sessionToken, null,
                 new ActionResult(true, "ok"), characters, maxSlots, null,
-                null, null, null, null, null, null, colors, null, null, classPreviews, null);
+                null, null, null, null, null, null, colors, null, null, classPreviews, null, null);
     }
 
     public static WorldSnapshot characterCreate(String sessionToken, FormData form, Map<String, String> colors, List<ClassPreview> classPreviews) {
         return new WorldSnapshot("character_create", sessionToken, null,
                 new ActionResult(true, "ok"), null, null, form,
-                null, null, null, null, null, null, colors, null, null, classPreviews, null);
+                null, null, null, null, null, null, colors, null, null, classPreviews, null, null);
     }
 
     public static WorldSnapshot inGame(String sessionToken, String playerId, ActionResult result,
@@ -80,9 +91,10 @@ public record WorldSnapshot(
                                         List<ActionOption> actions, List<LogEntry> log,
                                         Map<String, String> colors,
                                         Integer pendingPoints, EquipmentData equipment,
-                                        Skillbook skillbook) {
+                                        Skillbook skillbook,
+                                        Specialization specialization) {
         return new WorldSnapshot("in_game", sessionToken, playerId, result,
                 null, null, null, statusBars, buffs, map, combat, actions, log, colors,
-                pendingPoints, equipment, null, skillbook);
+                pendingPoints, equipment, null, skillbook, specialization);
     }
 }

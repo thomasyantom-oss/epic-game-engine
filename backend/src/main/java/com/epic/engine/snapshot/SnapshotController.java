@@ -51,6 +51,12 @@ public class SnapshotController {
             return WorldSnapshot.characterCreate(token, form, snapshotService.buildColorMap(), snapshotService.buildClassPreviews());
         }
 
+        if (actionEvent.has("success") && Boolean.FALSE.equals(actionEvent.get("success"))) {
+            Object message = actionEvent.has("message") ? actionEvent.get("message") : "";
+            return snapshotService.buildSnapshot(token,
+                    new WorldSnapshot.ActionResult(false, String.valueOf(message)));
+        }
+
         return snapshotService.buildSnapshot(token);
     }
 

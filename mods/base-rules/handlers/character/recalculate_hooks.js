@@ -93,18 +93,20 @@ engine.on("entity.loaded", 100, function(event) {
         }
     }
 
-    var exp = entity.getComponent("Experience");
-    if (exp !== null && exp.getInt("level") > 1 && typeof registerLevelGrowthModifier !== 'undefined') {
-        registerLevelGrowthModifier(entity.getId(), exp.getInt("level"));
-    }
-
     if (typeof registerDerivedModifier !== 'undefined' && entity.getComponent("PrimaryStats") !== null) {
         registerDerivedModifier(entity.getId());
     }
     if (typeof applySkillLevelCurve !== 'undefined') {
         applySkillLevelCurve(entity.getId());
     }
-    if (typeof Passive !== 'undefined') {
+    if (!entity.hasComponent("Specialization")) {
+        var specComp = engine.newComponent("Specialization");
+        specComp.set("path", engine.newList());
+        entity.addComponent(specComp);
+    }
+    if (typeof applySpec !== 'undefined') {
+        applySpec(entity.getId());
+    } else if (typeof Passive !== 'undefined') {
         Passive.registerStatMods(entity.getId());
         engine.recalculate(entity.getId());
     }

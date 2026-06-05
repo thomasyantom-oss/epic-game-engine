@@ -128,8 +128,20 @@ public class ScriptRuntime implements AutoCloseable {
         }
 
         @HostAccess.Export
-        public WorldSnapshot.CharacterInfo newCharacterInfo(String id, String name, int level, String classId, String classLabel) {
-            return new WorldSnapshot.CharacterInfo(id, name, level, classId, classLabel);
+        public WorldSnapshot.CharacterInfo newCharacterInfo(String id, String name, int level, String classId, String classLabel,
+                                                            Map<String, Object> primaryStats, Map<String, Object> growth,
+                                                            String description, String portrait) {
+            return new WorldSnapshot.CharacterInfo(id, name, level, classId, classLabel,
+                    primaryStats, growth, description, portrait);
+        }
+
+        @HostAccess.Export
+        public WorldSnapshot.CombatantInfo newCombatantInfo(String id, String name, String side, int level, String typeLabel,
+                                                            int hp, int maxHp, int mp, int maxMp, boolean alive,
+                                                            List<WorldSnapshot.BuffInfo> buffs, String row, int slot,
+                                                            String hpColor, String mpColor) {
+            return new WorldSnapshot.CombatantInfo(id, name, side, level, typeLabel,
+                    hp, maxHp, mp, maxMp, alive, buffs, row, slot, hpColor, mpColor);
         }
 
         @HostAccess.Export
@@ -162,6 +174,40 @@ public class ScriptRuntime implements AutoCloseable {
                                                       String icon, boolean equipped, String node,
                                                       int level, String kind) {
             return new WorldSnapshot.SkillEntry(base, name, description, icon, equipped, node, level, kind);
+        }
+
+        @HostAccess.Export
+        public WorldSnapshot.SpecEffects newSpecEffects(String mainAttr, Map<String, Object> growth, List<String> grantPassives) {
+            return new WorldSnapshot.SpecEffects(mainAttr, growth, grantPassives);
+        }
+
+        @HostAccess.Export
+        public WorldSnapshot.SpecOption newSpecOption(String id, String label, String description,
+                                                      WorldSnapshot.SpecEffects effects) {
+            return new WorldSnapshot.SpecOption(id, label, description, effects);
+        }
+
+        @HostAccess.Export
+        public WorldSnapshot.SpecPending newSpecPending(int tier, int requiresLevel,
+                                                        List<WorldSnapshot.SpecOption> options) {
+            return new WorldSnapshot.SpecPending(tier, requiresLevel, options);
+        }
+
+        @HostAccess.Export
+        public WorldSnapshot.SpecPathNode newSpecPathNode(String id, String label) {
+            return new WorldSnapshot.SpecPathNode(id, label);
+        }
+
+        @HostAccess.Export
+        public WorldSnapshot.SpecLocked newSpecLocked(int tier, int requiresLevel) {
+            return new WorldSnapshot.SpecLocked(tier, requiresLevel);
+        }
+
+        @HostAccess.Export
+        public WorldSnapshot.Specialization newSpecialization(List<WorldSnapshot.SpecPathNode> path,
+                                                              WorldSnapshot.SpecPending pending,
+                                                              List<WorldSnapshot.SpecLocked> locked) {
+            return new WorldSnapshot.Specialization(path, pending, locked);
         }
 
         @HostAccess.Export

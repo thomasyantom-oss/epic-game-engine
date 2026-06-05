@@ -11,6 +11,7 @@
         {{ item.label }}
       </button>
       <span v-if="tab === 'active'" class="sb-count">出战 {{ equippedCount }}/{{ slots }}</span>
+      <span v-if="readonly" class="sb-readonly">战斗中</span>
     </div>
 
     <div v-if="tab === 'active'" class="sb-list">
@@ -118,6 +119,20 @@ function emitAction(type, base) {
   margin-left: auto;
   color: var(--color-highlight);
   font-weight: 700;
+}
+
+.sb-readonly {
+  margin-left: auto;
+  padding: 0.1rem 0.4rem;
+  border: 2px solid var(--color-enemy);
+  border-radius: 3px;
+  color: var(--color-enemy);
+  font-size: 0.8rem;
+  font-weight: 700;
+}
+
+.sb-count + .sb-readonly {
+  margin-left: 0;
 }
 
 .sb-list {

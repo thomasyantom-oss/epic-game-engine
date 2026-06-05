@@ -48,6 +48,7 @@ onUnmounted(() => window.removeEventListener('keydown', onKey))
   position: absolute;
   top: 0.5rem;
   right: 0.5rem;
+  z-index: 2;          /* 高于 slot 面板内容(如专精面板 position:relative 的根),保证关闭按钮始终可点;仍低于面板内 confirm-overlay(z-index:10) */
   width: 1.8rem;
   height: 1.8rem;
   background: transparent;

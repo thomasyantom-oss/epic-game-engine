@@ -40,9 +40,9 @@
         <!-- Left: attributes + growth -->
         <div class="detail-left">
           <div class="block-title">属性</div>
-          <table v-if="preview" class="stat-table">
+          <table v-if="selectedChar" class="stat-table">
             <tbody>
-              <tr v-for="stat in primaryStats(preview)" :key="stat.name">
+              <tr v-for="stat in primaryStats(selectedChar)" :key="stat.name">
                 <td class="stat-name">{{ stat.name }}</td>
                 <td class="stat-val">{{ stat.value }}</td>
               </tr>
@@ -51,8 +51,8 @@
           <div v-else class="muted">无职业数据</div>
 
           <div class="block-title">升级加成</div>
-          <ul v-if="preview && growthList(preview).length" class="growth-list">
-            <li v-for="g in growthList(preview)" :key="g.name">
+          <ul v-if="growthList(selectedChar).length" class="growth-list">
+            <li v-for="g in growthList(selectedChar)" :key="g.name">
               {{ g.name }} <span class="growth-val">每级 +{{ g.value }}</span>
             </li>
           </ul>
@@ -62,13 +62,13 @@
         <!-- Right: portrait + description -->
         <div class="detail-right">
           <div class="portrait">
-            <img v-if="preview && preview.portrait" :src="preview.portrait" :alt="preview.label" />
+            <img v-if="selectedChar.portrait" :src="selectedChar.portrait" :alt="selectedChar.classLabel" />
             <div v-else class="portrait-empty">
               <span class="portrait-glyph">立绘</span>
-              <span class="portrait-hint">{{ preview ? preview.label : selectedChar.classLabel }}</span>
+              <span class="portrait-hint">{{ selectedChar.classLabel }}</span>
             </div>
           </div>
-          <div class="description">{{ preview ? preview.description : '' }}</div>
+          <div class="description">{{ selectedChar.description || '' }}</div>
         </div>
       </div>
     </div>
@@ -109,25 +109,19 @@ const selectedChar = computed(() =>
   (props.characters || []).find(c => c.id === selectedId.value) || null
 )
 
-function previewFor(classId) {
-  return (props.classPreviews || []).find(p => p.id === classId) || null
-}
-
-const preview = computed(() =>
-  selectedChar.value ? previewFor(selectedChar.value.classId) : null
-)
-
-function primaryStats(p) {
-  return Object.entries(p.modifiers || {})
-    .filter(([k]) => k.startsWith('PrimaryStats.'))
-    .map(([k, v]) => ({
-      name: k.slice('PrimaryStats.'.length),
-      value: parseInt(String(v).replace('+', ''), 10) || 0
+function primaryStats(char) {
+  const stats = char?.primaryStats || {}
+  const order = ['力量', '敏捷', '智力', '体质', '意志']
+  return order
+    .filter(name => stats[name] !== undefined && stats[name] !== null)
+    .map(name => ({
+      name,
+      value: parseInt(String(stats[name]), 10) || 0
     }))
 }
 
-function growthList(p) {
-  return Object.entries(p.growth || {}).map(([name, value]) => ({ name, value }))
+function growthList(char) {
+  return Object.entries(char?.growth || {}).map(([name, value]) => ({ name, value }))
 }
 
 function confirmDelete(char) {

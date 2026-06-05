@@ -82,6 +82,20 @@ public class DebugController {
         return ResponseEntity.ok(Map.of("ok", Boolean.TRUE.equals(event.get("ok"))));
     }
 
+    // 调试脚手架(Feature #6 verify 用):一键设角色等级,跳过 gain_xp grind,
+    // 便于真人验证专精等级门(L10/L50)与选定后的属性/成长变化。verify 完可删。
+    @PostMapping("/level/{token}")
+    public ResponseEntity<Map<String, Object>> setLevel(@PathVariable String token,
+                                                        @RequestParam int level) {
+        String playerId = activeCharacter(token);
+        if (playerId == null) return ResponseEntity.notFound().build();
+        GameEvent event = new GameEvent("debug.set_level");
+        event.set("entityId", playerId);
+        event.set("level", level);
+        eventBus.fire("debug.set_level", event);
+        return ResponseEntity.ok(Map.of("ok", Boolean.TRUE.equals(event.get("ok"))));
+    }
+
     private String activeCharacter(String token) {
         SessionData session = sessionService.getSession(token);
         return session != null ? session.activeCharacterId() : null;
