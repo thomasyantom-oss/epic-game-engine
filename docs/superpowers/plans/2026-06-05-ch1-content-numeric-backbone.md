@@ -30,6 +30,7 @@
 - 读技能定义用 `Skill.loadSpecAny(base)` + `Skill._toJs`(参照 `04_passive_lib.js:36`)。
 - `engine.loadYaml("progression.yaml")` 按需读,非 ModuleLoader 自动加载;HotReloader 重放脚本时 `Progression` 重声明→缓存自清。
 - `Skillbook.known` 不增字段(`learnedAt` 已撤回);`level` 语义变派生值。
+- **无 JS 日志 facility**(全代码无 `engine.log`)。spec 提的「未知 tier warn」无落点 → `resolveCurve` 对未知 tier **静默 fallback 到 default**(与现有 loader 容错惯例一致;tier 由作者控的 dev 内容,坏值在测试期即暴露)。不为此引入新日志通道。
 
 ---
 
@@ -133,7 +134,7 @@ var Progression = {
 };
 ```
 
-- [ ] **Step 3: 写失败测试**
+- [ ] **Step 3: 写失败测试(已用 Codex 核实的真实 API:`engine.createEntity`/`newComponent`/`newList`/`newMap`/`newEvent`;无 `runtime.evalInt`;Map 取值要 cast)**
 
 Create `backend/src/test/java/com/epic/engine/progression/ProgressionBackboneTest.java`:
 
@@ -151,6 +152,8 @@ import org.junit.jupiter.api.Test;
 
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.List;
+import java.util.Map;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -180,38 +183,11 @@ class ProgressionBackboneTest {
         runtime.close();
     }
 
-    /** 在 runtime 里跑一段返回数字的 JS，取回 int。 */
-    int evalInt(String js) {
-        runtime.execute("var __probe = engine.newComponent('P'); __probe.set('v', (" + js + "));", "probe.js");
-        // ScriptRuntime 暴露 eval 取值途径：用全局存取
-        return runtime.evalInt("(" + js + ")");
-    }
-
-    @Test
-    void xpCurve_isExponential() {
-        assertThat(runtime.evalInt("Progression.xpForLevel(1)")).isEqualTo(100);
-        assertThat(runtime.evalInt("Progression.xpForLevel(4)")).isEqualTo(800);
-        assertThat(runtime.evalInt("Progression.xpForLevel(10)")).isEqualTo(3162);
-    }
-
-    @Test
-    void cap_is100() {
-        assertThat(runtime.evalInt("Progression.cap()")).isEqualTo(100);
-    }
-}
-```
-
-> **说明给实现者:** `ScriptRuntime` 若没有 `evalInt(String)` 便捷方法,在测试里改用现有 Probe idiom(参照 `TalentTreeTest`:执行 JS 写一个 `Probe` 组件到 store,再从 Java 端 `store.get(...).getComponent("Probe").getInt(...)` 读)。本计划后续测试统一用 Probe idiom 写,避免依赖 `evalInt`。删掉上面 `evalInt` helper,改成 Probe 版(见 Step 3b)。
-
-- [ ] **Step 3b: 用 Probe idiom 重写测试主体(替换 Step 3 的两个 @Test 与 evalInt)**
-
-把 `evalInt` helper 删除,替换为:
-
-```java
+    /** 执行返回数字的 JS：写进临时实体的 Probe 组件，Java 端读回。 */
     long probe(String expr) {
         runtime.execute(
             "var __p = engine.newComponent('Probe'); __p.set('v', (" + expr + ")); " +
-            "var __e = engine.newEntity('probe_holder'); __e.addComponent(__p); store.add(__e);",
+            "var __e = engine.createEntity('probe_holder'); __e.addComponent(__p); store.add(__e);",
             "probe.js");
         long v = store.get("probe_holder").getComponent("Probe").getInt("v");
         store.remove("probe_holder");
@@ -229,9 +205,10 @@ class ProgressionBackboneTest {
     void cap_is100() {
         assertThat(probe("Progression.cap()")).isEqualTo(100L);
     }
+}
 ```
 
-> 若 `engine.newEntity` / `store.remove` 签名不符,实现者按 `EntityStore`/`Entity` 实际 API 调整(参照 `TalentTreeTest` 如何 `store.add(hero)`、如何构造 `Entity`)。核心:执行 JS、把数值写进一个组件、Java 端读回断言。
+> API 已 Codex 核实:`engine.createEntity(id)`(只 `new Entity`,不自动入 store,故需 `store.add`)、`engine.newComponent`、`engine.newList`、`engine.newMap`、`engine.newEvent`、`store.remove(id)` 均存在;`Component.getInt` 走 `((Number)..).intValue()`。**Probe 组件值用 `getInt` 读没问题;但 `Skillbook.known` 是 `List<Map>`,Map 无 `getInt`,读 level 要显式 cast(见 Task 3 `skillLevelOf`)。**
 
 - [ ] **Step 4: 跑测试确认通过**
 
@@ -262,12 +239,16 @@ git commit -m "feat(ch1-backbone): progression.yaml 调参板 + Progression 访�
 
 ```java
         runtime.execute(Files.readString(ch.resolve("leveling.js")), "leveling.js");
-        // stub 掉成长 modifier 与持久化，隔离 gain_xp 的 XP/等级数学
+        // stub 掉成长 modifier 与持久化，隔离 gain_xp 的 XP/等级数学。
+        // 这些单测 runtime 未 bindService('persistence')，故直接在全局定义即可（每个测试新建 runtime，互不影响）。
+        // registerLevelGrowthModifier 是 leveling.js 里的 function 声明，可被全局重新赋值覆盖。
         runtime.execute(
             "registerLevelGrowthModifier = function(){}; " +
-            "if (typeof persistence === 'undefined' || persistence === null) { var persistence = { save: function(){} }; }",
+            "var persistence = { save: function(){} };",
             "stubs.js");
 ```
+
+> 注:Task 4 会让 `debug.set_level` 在 `applySpec` 前调 `applySkillLevelCurve`,而 `applySpec` 此处也未加载 → 在 setUp 同一 `stubs.js` 串里再追加 `applySpec = function(){};`(见 Task 4 Step 1)。`applySkillLevelCurve` 由 Task 3 加载 `recalculate_hooks.js` 提供。
 
 新增测试方法:
 
@@ -275,7 +256,7 @@ git commit -m "feat(ch1-backbone): progression.yaml 调参板 + Progression 访�
     /** 造一个带 Experience+Character 的实体，存进 store，返回 id。 */
     void makeHero(String id, int level, int xp) {
         runtime.execute(
-            "var e = engine.newEntity('" + id + "'); " +
+            "var e = engine.createEntity('" + id + "'); " +
             "var exp = engine.newComponent('Experience'); exp.set('level', " + level + "); exp.set('xp', " + xp + "); e.addComponent(exp); " +
             "var ch = engine.newComponent('Character'); ch.set('level', " + level + "); ch.set('classId', 'mage'); e.addComponent(ch); " +
             "store.add(e);",
@@ -397,7 +378,7 @@ setUp 末尾追加加载被动库(`applySkillLevelCurve` 不依赖它,但保持�
 ```java
     void makeHeroWithSkill(String id, int charLevel, String base) {
         runtime.execute(
-            "var e = engine.newEntity('" + id + "'); " +
+            "var e = engine.createEntity('" + id + "'); " +
             "var ch = engine.newComponent('Character'); ch.set('level', " + charLevel + "); ch.set('classId','mage'); e.addComponent(ch); " +
             "var sb = engine.newComponent('Skillbook'); " +
             "var known = engine.newList(); " +
@@ -407,32 +388,39 @@ setUp 末尾追加加载被动库(`applySkillLevelCurve` 不依赖它,但保持�
             "mkheroskill.js");
     }
 
+    @SuppressWarnings("unchecked")
     long skillLevelOf(String id) {
-        return store.get(id).getComponent("Skillbook").get("known").get(0).getInt("level");
+        List<Map<String, Object>> known =
+            store.get(id).getComponent("Skillbook").get("known");
+        return ((Number) known.get(0).get("level")).longValue();
     }
 
+    // 用注入的合成 spec 解耦真实技能（避免依赖 fireball 的 tier，且确保「先失败」不假绿）
     @Test
-    void curve_smoothSkill_maxesEarly() {
-        // fireball 在 Task 5 设为 tier: smooth(start1,per2)。50 级 → 满级 10
-        makeHeroWithSkill("c1", 50, "fireball");
+    void curve_respectsTier_chunkyLateGame() {
+        runtime.execute("Skill._specs['probe_chunky'] = { id:'probe_chunky', tier:'chunky' };", "inject.js");
+        makeHeroWithSkill("c1", 60, "probe_chunky");
         runtime.execute("applySkillLevelCurve('c1');", "curve.js");
-        assertThat(skillLevelOf("c1")).isEqualTo(10L);
+        // chunky(start50,per5)@60 = 1+floor((60-50)/5)=3（no-op 现状会得 1 → 失败）
+        assertThat(skillLevelOf("c1")).isEqualTo(3L);
     }
 
     @Test
-    void curve_smoothSkill_level1AtStart() {
-        makeHeroWithSkill("c2", 1, "fireball");
+    void curve_respectsTier_smoothMid() {
+        runtime.execute("Skill._specs['probe_smooth'] = { id:'probe_smooth', tier:'smooth' };", "inject.js");
+        makeHeroWithSkill("c2", 10, "probe_smooth");
         runtime.execute("applySkillLevelCurve('c2');", "curve.js");
-        assertThat(skillLevelOf("c2")).isEqualTo(1L);
+        // smooth(start1,per2)@10 = 1+floor(9/2)=5（no-op 现状会得 1 → 失败）
+        assertThat(skillLevelOf("c2")).isEqualTo(5L);
     }
 ```
 
-> 若 `engine.newList()` / `engine.newMap()` 不存在,改用 `TalentTreeTest` 同款构造(Java 侧 `new ArrayList<>`/`new HashMap<>` 塞进 Component,见该测试 `known(...)` helper)。`getInt` 读 Map value 若类型问题,按实际 API(可能 `parseInt(String(...))`)调整。
+> **为何注入合成 spec:** `Skill.loadSpecAny` 先查 `Skill._specs` 缓存,注入即命中,返回我们指定 `tier` 的对象(`Skill._toJs` 对纯 JS 对象原样返回)。两个断言值(3、5)都≠初始 1,故 no-op 现状必失败,杜绝假绿;且与 fireball 后续改 `tier` 无耦合。
 
 - [ ] **Step 2: 跑测试确认失败**
 
-Run: `cd backend && mvn test -Dtest=ProgressionBackboneTest#curve_smoothSkill_maxesEarly`
-Expected: FAIL —— 现 `applySkillLevelCurve` 是 no-op,level 维持 1。
+Run: `cd backend && mvn test -Dtest=ProgressionBackboneTest#curve_respectsTier_chunkyLateGame+curve_respectsTier_smoothMid`
+Expected: FAIL —— 现 `applySkillLevelCurve` 是 no-op,level 维持 1(≠3、≠5)。
 
 - [ ] **Step 3: 填 applySkillLevelCurve(`recalculate_hooks.js:123-125`)**
 
@@ -462,9 +450,9 @@ function applySkillLevelCurve(entityId) {
 - [ ] **Step 4: 跑测试确认通过**
 
 Run: `cd backend && mvn test -Dtest=ProgressionBackboneTest`
-Expected: PASS。`curve_smoothSkill_maxesEarly`:50 级 smooth → `1+floor((50-1)/2)=25→cap10`;`curve_smoothSkill_level1AtStart`:1 级 → `1+floor(0/2)=1`。
+Expected: PASS。`curve_respectsTier_chunkyLateGame`:`1+floor((60-50)/5)=3`;`curve_respectsTier_smoothMid`:`1+floor((10-1)/2)=5`。
 
-> **依赖说明:** 这两个测试断言依赖 fireball 在 Task 5 标记 `tier: smooth`。若 Task 5 尚未做,fireball 无 tier 字段时 `resolveCurve` fallback 到 `default(=smooth)`,参数相同,断言仍成立 —— 故本任务可独立通过。
+> 两测试用注入合成 spec,与任何真实技能解耦,可独立通过,不依赖 Task 5。
 
 - [ ] **Step 5: Commit**
 
@@ -510,47 +498,50 @@ setUp 的 `stubs.js` 追加一行:
 Run: `cd backend && mvn test -Dtest=ProgressionBackboneTest#debugSetLevel_clampsToCap`
 Expected: FAIL —— 现 `debug.set_level` 不 clamp,level=250。
 
-- [ ] **Step 3: 改 debug.set_level**
+- [ ] **Step 3: 改 debug.set_level(`leveling.js:39-58`)**
 
-`leveling.js:42-43` 现为:
+**关键时序(Codex 阻塞项):** 被动 modifier 在 `04_passive_lib.js:135` 把 `level` **烤进闭包** `deltas[k]=mods[k]*level` 后 `addModifier`,单纯 `engine.recalculate` 不会用新 level 重建。故 `applySkillLevelCurve` 必须在 `applySpec`(内部 `Passive.registerStatMods`)**之前**跑,让被动按新派生 level 注册。
+
+当前 handler 体(`:42` 起):
 
 ```javascript
     var entity = store.get(entityId);
     if (entity === null || level < 1) { event.set("ok", false); return; }
+    var exp = entity.getComponent("Experience");
+    if (exp !== null) exp.set("level", level);
+    var ch = entity.getComponent("Character");
+    if (ch !== null) ch.set("level", level);
+    if (typeof applySpec !== "undefined") {
+        applySpec(entityId);
+    } else if (typeof registerLevelGrowthModifier !== "undefined") {
+        registerLevelGrowthModifier(entityId, level);
+        engine.recalculate(entityId);
+    }
 ```
 
-改为(加 cap clamp):
+整段替换为(加 cap clamp + 在 applySpec 前调曲线):
 
 ```javascript
     var entity = store.get(entityId);
     if (entity === null || level < 1) { event.set("ok", false); return; }
     var __cap = (typeof Progression !== "undefined") ? Progression.cap() : 100;
     if (level > __cap) level = __cap;
-```
-
-并在该 handler 末尾(`persistence.save` 之前、recalc/applySpec 之后)追加触发曲线。当前末尾片段:
-
-```javascript
-    var hp = entity.getComponent("Health");
-    if (hp !== null) hp.set("hp", hp.getInt("maxHp"));
-    event.set("ok", true);
-    if (typeof persistence !== "undefined" && persistence !== null) persistence.save(entity);
-```
-
-改为在 `var hp = ...` **之前**插入曲线调用(确保在被动注册后、但 set_level 里 applySpec 已先跑,故此处补一次刷新主动/被动 level 即可;再补一次 recalc 让派生 level 生效于被动):
-
-```javascript
-    if (typeof applySkillLevelCurve !== "undefined") {
-        applySkillLevelCurve(entityId);
+    var exp = entity.getComponent("Experience");
+    if (exp !== null) exp.set("level", level);
+    var ch = entity.getComponent("Character");
+    if (ch !== null) ch.set("level", level);
+    if (typeof applySkillLevelCurve !== "undefined") applySkillLevelCurve(entityId);
+    if (typeof applySpec !== "undefined") {
+        applySpec(entityId);
+    } else if (typeof registerLevelGrowthModifier !== "undefined") {
+        registerLevelGrowthModifier(entityId, level);
         engine.recalculate(entityId);
     }
-    var hp = entity.getComponent("Health");
-    if (hp !== null) hp.set("hp", hp.getInt("maxHp"));
-    event.set("ok", true);
-    if (typeof persistence !== "undefined" && persistence !== null) persistence.save(entity);
 ```
 
-> **时序注:** `debug.set_level` 调 `applySpec`(内部 registerStatMods+recalc)在前;此处补 `applySkillLevelCurve` + `recalculate` 让基于新 level 的被动 stat_mod 重算生效。生产 loaded 路径(`recalculate_hooks.js:99`)曲线本就在被动注册前,无需改。
+handler 末尾(`var hp = ...`/`persistence.save`)**保持不动**。
+
+> 生产 loaded 路径(`recalculate_hooks.js:99` 曲线 → `:110/112` 被动)本就此序,无需改。
 
 - [ ] **Step 4: 跑测试确认通过**
 
@@ -574,19 +565,21 @@ git commit -m "feat(ch1-backbone): debug.set_level cap clamp + 跳级后刷新�
 
 - [ ] **Step 1: 写失败测试(level_scaling 随 skillLevel 生效 + tier 选档)**
 
-验证两点:(a) fireball 标 `tier: standard` 后,人物 50 级该技能满级;(b) `Skill.resolveSpec` 在 level=10 时把 `damage.add` 按 `level_scaling` 抬高。
+验证两点:(a) fireball 标 `tier: standard` 后,曲线按 standard 档而非默认 smooth 算;(b) `Skill.resolveSpec` 在 level=10 时把 `damage.add` 按 `level_scaling` 抬高。
 
 ```java
     @Test
-    void fireball_tierStandard_maxesAt50() {
-        makeHeroWithSkill("t1", 50, "fireball"); // 注意：需先把 fireball 改 standard
+    void fireball_tierStandard_usesStandardCurve() {
+        // 用 level 30 区分:无 tier(fallback smooth)@30 = 1+floor(29/2)=10；
+        // 标 standard(start20,per3)@30 = 1+floor(10/3)=4。改前得 10、改后得 4。
+        makeHeroWithSkill("t1", 30, "fireball");
         runtime.execute("applySkillLevelCurve('t1');", "curve.js");
-        assertThat(skillLevelOf("t1")).isEqualTo(10L);
+        assertThat(skillLevelOf("t1")).isEqualTo(4L);
     }
 
     @Test
     void fireball_levelScaling_raisesDamage() {
-        // resolveSpec 读 known level → applyLevelScaling。lv1 damage.add=10；lv10 应≈10+delta*9
+        // resolveSpec 读 known level → applyLevelScaling。standard@50=cap10；lv10 damage.add=10+5*9
         makeHeroWithSkill("t2", 50, "fireball");
         runtime.execute("applySkillLevelCurve('t2');", "curve.js");
         runtime.execute(
@@ -594,7 +587,7 @@ git commit -m "feat(ch1-backbone): debug.set_level cap clamp + 跳级后刷新�
             "var base = Skill._toJs(Skill.loadSpecAny('fireball')); " +
             "var spec = Skill.resolveSpec(ctx, 'fireball', base); " +
             "var p = engine.newComponent('Probe'); p.set('v', Math.round(spec.damage.add)); " +
-            "var pe = engine.newEntity('probe_holder'); pe.addComponent(p); store.add(pe);",
+            "var pe = engine.createEntity('probe_holder'); pe.addComponent(p); store.add(pe);",
             "resolve.js");
         long dmg = store.get("probe_holder").getComponent("Probe").getInt("v");
         store.remove("probe_holder");
@@ -603,12 +596,12 @@ git commit -m "feat(ch1-backbone): debug.set_level cap clamp + 跳级后刷新�
     }
 ```
 
-> `resolveSpec(ctx, base, baseSpec)` 签名见 `00_skill_lib.js:171`;它内部 `ownerInstance(ctx, baseId)` 读 caster 的 Skillbook.known level。本测试 caster 即 t2,已有 fireball known level=10。
+> `resolveSpec(ctx, base, baseSpec)` 签名见 `00_skill_lib.js:171`;内部 `ownerInstance` 读 caster 的 Skillbook.known level。本测试 caster t2 的 fireball known level 已被曲线设为 10。
 
 - [ ] **Step 2: 跑测试确认失败**
 
-Run: `cd backend && mvn test -Dtest=ProgressionBackboneTest#fireball_tierStandard_maxesAt50+fireball_levelScaling_raisesDamage`
-Expected: FAIL —— fireball 无 `tier`(fallback smooth,50 级也满级故 (a) 可能假过)与无 `level_scaling`(damage.add 维持 10,(b) 失败得 10≠55)。
+Run: `cd backend && mvn test -Dtest=ProgressionBackboneTest#fireball_tierStandard_usesStandardCurve+fireball_levelScaling_raisesDamage`
+Expected: FAIL —— 改前 fireball 无 `tier`(fallback smooth,@30 得 10≠4)、无 `level_scaling`(damage.add 维持 10≠55)。
 
 - [ ] **Step 3: 改 fireball.yaml**
 
@@ -639,7 +632,7 @@ level_scaling:
 - [ ] **Step 4: 跑测试确认通过**
 
 Run: `cd backend && mvn test -Dtest=ProgressionBackboneTest`
-Expected: PASS。(a) standard@50 = `1+floor((50-20)/3)=11→cap10` ✓;(b) damage.add lv10 = `10+5*(10-1)=55` ✓。
+Expected: PASS。(a) standard@30 = `1+floor((30-20)/3)=4` ✓;(b) standard@50=cap10,damage.add lv10 = `10+5*(10-1)=55` ✓。
 
 - [ ] **Step 5: Commit**
 
@@ -656,7 +649,8 @@ git commit -m "feat(ch1-backbone): 技能 tier/level_curve 约定 + fireball lev
 - Modify: `mods/base-rules/handlers/character/talent.js:387`(summary)、`:484`(扣除)
 - Modify: `mods/base-rules/handlers/ui/talent_tree.js:53`(快照成本)
 - Modify: `mods/base-rules/talents/elementalist.yaml:19,37`
-- Test: `ProgressionBackboneTest`
+- Test: `ProgressionBackboneTest`(新断言)
+- **回归测试同步(Codex 阻塞项):** `backend/src/test/java/com/epic/engine/character/TalentTreeTest.java:309,350`、`backend/src/test/java/com/epic/engine/snapshot/TalentTreeSnapshotTest.java:123` —— 默认成本由 2 变 1,这些既有断言必须同步。
 
 - [ ] **Step 1: 写失败测试**
 
@@ -755,17 +749,45 @@ Expected: FAIL —— `Talent.orbCount` 尚不存在。
     skill_slot: { skill: light_field, orb: { type: 多重 }, evolution: prism_field }
 ```
 
-- [ ] **Step 6: 跑测试 + 全量回归**
+- [ ] **Step 6: 同步既有回归测试(默认成本 2→1)**
+
+(a) `TalentTreeTest.java:309` 现为(grant 2 颗 → 花 cost 后断言剩 0):
+
+```java
+            store.get('hero').getComponent('OrbPouch').set('爆破', 2);
+```
+
+改为(grant 1 颗,保持「恰好花光 → 余 0」语义,`:350` 的 `orbLeft==0` 断言不变):
+
+```java
+            store.get('hero').getComponent('OrbPouch').set('爆破', 1);
+```
+
+(b) `TalentTreeSnapshotTest.java:123` 现为(火球槽**进化成本**展示):
+
+```java
+        assertThat(fireballSlot.path("slot").path("orbCount").asInt()).isEqualTo(2);
+```
+
+改为:
+
+```java
+        assertThat(fireballSlot.path("slot").path("orbCount").asInt()).isEqualTo(1);
+```
+
+> **只改「成本」断言,别动「背包存量」断言:** 同文件 `:91`/`:113` 的 `orbInventory ... count==2` 是玩家**持有**的球数(与成本无关),保持 2 不变。改前先确认该处确实是 `slot.orbCount`(进化成本)而非 inventory。
+
+- [ ] **Step 7: 跑测试 + 全量回归**
 
 Run: `cd backend && mvn test -Dtest=ProgressionBackboneTest`
 Expected: PASS(`orbCost_defaultsWhenMissing`)。
 Run: `cd backend && mvn test`
-Expected: 全绿(确认未回归 `TalentTreeTest`/`SpecializationTest` 等)。
+Expected: 全绿(`TalentTreeTest`/`TalentTreeSnapshotTest`/`SpecializationTest` 等无回归)。
 
-- [ ] **Step 7: Commit**
+- [ ] **Step 8: Commit**
 
 ```bash
-git add mods/base-rules/handlers/character/talent.js mods/base-rules/handlers/ui/talent_tree.js mods/base-rules/talents/elementalist.yaml backend/src/test/java/com/epic/engine/progression/ProgressionBackboneTest.java
+git add mods/base-rules/handlers/character/talent.js mods/base-rules/handlers/ui/talent_tree.js mods/base-rules/talents/elementalist.yaml backend/src/test/java/com/epic/engine/progression/ProgressionBackboneTest.java backend/src/test/java/com/epic/engine/character/TalentTreeTest.java backend/src/test/java/com/epic/engine/snapshot/TalentTreeSnapshotTest.java
 git commit -m "feat(ch1-backbone): 进化成本缺省读 orb.cost_per_evolution（修 missing→0 免费）"
 ```
 
