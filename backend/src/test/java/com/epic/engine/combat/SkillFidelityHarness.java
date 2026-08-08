@@ -27,7 +27,7 @@ public class SkillFidelityHarness implements AutoCloseable {
         runtime.setModuleContext(Path.of("../mods/base-rules"));
         runtime.bindService("buffs", new BuffService(bus, store));
         Path h = Path.of("../mods/base-rules/handlers/combat");
-        for (String f : new String[]{"initiative.js", "damage_calc.js", "death_check.js",
+        for (String f : new String[]{"initiative.js", "death_check.js",
                 "combat_flow.js", "combat_events.js", "combat_log.js"}) {
             runtime.execute(Files.readString(h.resolve(f)), f);
         }

@@ -13,6 +13,9 @@ engine.on("combat.start_encounter", 100, function(event) {
     var combatState = engine.newComponent("CombatState");
     combatState.set("round", 1);
     combatState.set("phase", "COMMAND");
+    combatState.set("turnTimer", 30);
+    combatState.set("roundStartTime", engine.now());
+    combatState.set("lastInteractionTime", engine.now());
     combatEntity.addComponent(combatState);
     combatEntity.addTag("active_combat");
     store.add(combatEntity);
@@ -127,6 +130,16 @@ engine.on("action.combat_command", 100, function(event) {
     }
     if (combatId === null) return;
 
+    var timeoutEvent = engine.newEvent("combat.check_timeouts");
+    timeoutEvent.set("playerId", playerId);
+    engine.fire("combat.check_timeouts", timeoutEvent);
+    if (timeoutEvent.has("ended") && timeoutEvent.get("ended")) return;
+
+    var combat = store.get(combatId);
+    if (combat === null || !combat.hasComponent("CombatState")) return;
+    var currentPhase = combat.getComponent("CombatState").getString("phase");
+    if (currentPhase === "VICTORY" || currentPhase === "DEFEAT") return;
+
     // Handle FLEE — exit combat immediately
     if (command === "flee") {
         endCombat(player, combatId, "FLEE");
@@ -161,13 +174,131 @@ engine.on("action.combat_command", 100, function(event) {
     resolveEvent.set("commands", commands);
     engine.fire("combat.resolve_round", resolveEvent);
 
-    // Check if combat ended
-    var combat = store.get(combatId);
+    // Check if combat ended. Keep the combat entity alive so the frontend can
+    // play the final event queue before requesting cleanup.
     var state = combat.getComponent("CombatState");
     var phase = state.getString("phase");
     if (phase === "VICTORY" || phase === "DEFEAT") {
+        state.set("awaitingCleanup", true);
+    }
+});
+
+engine.on("action.combat_finish", 100, function(event) {
+    var playerId = event.get("playerId");
+    var player = store.get(playerId);
+    if (player === null) return;
+
+    var combatId = activeCombatIdFor(player);
+    if (combatId === null) return;
+    var combat = store.get(combatId);
+    if (combat === null || !combat.hasComponent("CombatState")) return;
+
+    var phase = combat.getComponent("CombatState").getString("phase");
+    if (phase === "VICTORY" || phase === "DEFEAT") {
         endCombat(player, combatId, phase);
     }
+});
+
+function activeCombatIdFor(entity) {
+    if (entity === null) return null;
+    var tags = entity.getTags().toArray();
+    for (var i = 0; i < tags.length; i++) {
+        var tag = tags[i].toString();
+        if (tag.indexOf("combat:") === 0) return tag.substring(7);
+    }
+    return null;
+}
+
+function isAliveCombatant(entity) {
+    return entity !== null && entity.hasComponent("Health") && entity.getComponent("Health").getInt("hp") > 0;
+}
+
+function firstAliveTarget(combatants, wantEnemy) {
+    for (var i = 0; i < combatants.size(); i++) {
+        var c = combatants.get(i);
+        if (!isAliveCombatant(c)) continue;
+        if (wantEnemy && c.hasTag("enemy")) return c.getId();
+        if (!wantEnemy && c.hasTag("player")) return c.getId();
+    }
+    return null;
+}
+
+function buildAutoCommands(combatId) {
+    var combatants = store.getByTagAsList("combat:" + combatId);
+    var firstEnemy = firstAliveTarget(combatants, true);
+    var firstPlayer = firstAliveTarget(combatants, false);
+    var commands = engine.newMap();
+    for (var i = 0; i < combatants.size(); i++) {
+        var entity = combatants.get(i);
+        if (!isAliveCombatant(entity)) continue;
+        var targetId = entity.hasTag("enemy") ? firstPlayer : firstEnemy;
+        if (targetId === null) continue;
+        var cmd = engine.newMap();
+        cmd.put("type", "basic_attack");
+        cmd.put("targetId", targetId);
+        commands.put(entity.getId(), cmd);
+    }
+    return commands;
+}
+
+function compNumber(comp, key, fallback) {
+    if (comp === null || !comp.has(key)) return fallback;
+    var value = comp.get(key);
+    if (value === null || value === undefined) return fallback;
+    return Number(value);
+}
+
+engine.on("combat.check_timeouts", 100, function(event) {
+    var playerId = event.get("playerId");
+    var player = store.get(playerId);
+    var combatId = activeCombatIdFor(player);
+    if (combatId === null) return;
+
+    var combat = store.get(combatId);
+    if (combat === null || !combat.hasComponent("CombatState")) return;
+    var state = combat.getComponent("CombatState");
+    if (state.getString("phase") !== "COMMAND") return;
+
+    var now = engine.now();
+    var lastInteraction = compNumber(state, "lastInteractionTime", now);
+    if (now - lastInteraction >= 15 * 60 * 1000) {
+        endCombat(player, combatId, "FLEE");
+        event.set("ended", true);
+        return;
+    }
+
+    var turnTimer = state.has("turnTimer") ? state.getInt("turnTimer") : 30;
+    var timeoutMs = turnTimer * 1000;
+    var roundStart = compNumber(state, "roundStartTime", now);
+    var resolved = false;
+    var guard = 0;
+
+    while (state.getString("phase") === "COMMAND" && now - roundStart >= timeoutMs && guard < 100) {
+        var resolveEvent = engine.newEvent("combat.resolve_round");
+        resolveEvent.set("combatId", combatId);
+        resolveEvent.set("commands", buildAutoCommands(combatId));
+        engine.fire("combat.resolve_round", resolveEvent);
+        resolved = true;
+
+        combat = store.get(combatId);
+        if (combat === null || !combat.hasComponent("CombatState")) break;
+        state = combat.getComponent("CombatState");
+        if (state.getString("phase") !== "COMMAND") break;
+        roundStart += timeoutMs;
+        state.set("roundStartTime", roundStart);
+        guard++;
+    }
+
+    if (resolved) {
+        var phase = state.getString("phase");
+        if (phase === "VICTORY" || phase === "DEFEAT") {
+            state.set("awaitingCleanup", true);
+            event.set("ended", true);
+            return;
+        }
+    }
+
+    state.set("lastInteractionTime", now);
 });
 
 function endCombat(player, combatId, result) {

@@ -96,7 +96,7 @@ public class EngineBootstrap {
         log.info("=== EPIC BUILD: base-snapshot 修复已加载 (movement updateBase / tag-reset / dedup) ===");
 
         // Start JS hot reloader
-        hotReloader = new HotReloader(scriptRuntime, eventBus);
+        hotReloader = new HotReloader(scriptRuntime, eventBus, entityStore);
         hotReloader.startWatching(modsPath);
     }
 

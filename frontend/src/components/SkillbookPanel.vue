@@ -1,71 +1,92 @@
 <template>
   <div class="skillbook">
     <div class="sb-tabs">
-      <button
+      <FantasyButton
         v-for="item in tabs"
         :key="item.id"
         class="sb-tab"
-        :class="{ active: tab === item.id }"
+        :active="tab === item.id"
         @click="tab = item.id"
       >
         {{ item.label }}
-      </button>
+      </FantasyButton>
       <span v-if="tab === 'active'" class="sb-count">出战 {{ equippedCount }}/{{ slots }}</span>
       <span v-if="readonly" class="sb-readonly">战斗中</span>
     </div>
 
-    <div v-if="tab === 'active'" class="sb-list">
-      <div
-        v-for="skill in sortedKnown"
-        :key="skill.base"
-        class="sb-row"
-        :class="{ equipped: skill.equipped }"
-      >
-        <div class="sb-icon">{{ skill.icon }}</div>
-        <div class="sb-info">
-          <div class="sb-name">
-            {{ skill.name }}
-            <span class="sb-lv">Lv{{ skill.level ?? 1 }}</span>
-          </div>
-          <div class="sb-desc">{{ skill.description }}</div>
-        </div>
-        <button
-          class="sb-tree"
-          type="button"
-          :title="talentTree ? '打开天赋树' : '专精后解锁'"
-          @click="emit('open-talent')"
+    <div class="sb-body">
+      <div class="sb-list">
+        <div
+          v-for="skill in currentList"
+          :key="skillKey(skill)"
+          role="button"
+          tabindex="0"
+          class="sb-row"
+          :class="{ equipped: skill.equipped, selected: skillKey(skill) === selectedKey }"
+          @click="selectSkill(skill)"
+          @keydown.enter.prevent="selectSkill(skill)"
+          @keydown.space.prevent="selectSkill(skill)"
         >
-          树
-        </button>
-        <template v-if="!readonly">
-          <button v-if="skill.equipped" class="sb-btn sb-remove" @click="emitAction('skillbook_unequip', skill.base)">移除</button>
-          <button v-else class="sb-btn" :disabled="equippedCount >= slots" @click="emitAction('skillbook_equip', skill.base)">出战</button>
-        </template>
-      </div>
-      <div v-if="activeKnown.length === 0" class="sb-empty">暂无主动技能</div>
-    </div>
-
-    <div v-else-if="tab === 'passive'" class="sb-list">
-      <div v-for="p in passiveKnown" :key="passiveKey(p)" class="sb-row">
-        <div class="sb-icon">{{ p.icon }}</div>
-        <div class="sb-info">
-          <div class="sb-name">
-            {{ p.name }}
-            <span class="sb-lv">Lv{{ p.level ?? 1 }}</span>
-            <span v-if="p.source === 'talent'" class="sb-source">天赋</span>
+          <div class="sb-icon">{{ skill.icon }}</div>
+          <div class="sb-info">
+            <div class="sb-name">
+              {{ skill.name }}
+              <span class="sb-lv">Lv{{ skill.level ?? 1 }}</span>
+              <span v-if="skill.source === 'talent'" class="sb-source">天赋</span>
+            </div>
+            <div class="sb-desc">{{ skill.description }}</div>
           </div>
-          <div class="sb-desc">{{ p.description }}</div>
+          <template v-if="tab === 'active'">
+            <FantasyButton
+              class="sb-tree"
+              :title="talentTree ? '打开天赋树' : '专精后解锁'"
+              @click.stop="emit('open-talent')"
+            >
+              树
+            </FantasyButton>
+            <template v-if="!readonly">
+              <FantasyButton v-if="skill.equipped" class="sb-btn sb-remove" danger @click.stop="emitAction('skillbook_unequip', skill.base)">移除</FantasyButton>
+              <FantasyButton v-else class="sb-btn" :disabled="equippedCount >= slots" @click.stop="emitAction('skillbook_equip', skill.base)">出战</FantasyButton>
+            </template>
+          </template>
         </div>
+        <div v-if="currentList.length === 0" class="sb-empty">{{ emptyText }}</div>
       </div>
-      <div v-if="passiveKnown.length === 0" class="sb-empty">暂无被动</div>
-    </div>
 
-    <div v-else class="sb-empty">暂未开放</div>
+      <aside class="sb-detail">
+        <template v-if="selectedSkill">
+          <div class="detail-head">
+            <div class="detail-icon">{{ selectedSkill.icon }}</div>
+            <div class="detail-title-block">
+              <div class="detail-name">{{ selectedSkill.name }}</div>
+              <div class="detail-meta">
+                <span>Lv{{ selectedSkill.level ?? 1 }}</span>
+                <span v-if="selectedSkill.equipped">出战中</span>
+                <span v-if="selectedSkill.source === 'talent'">天赋</span>
+                <span>{{ tabLabel }}</span>
+              </div>
+            </div>
+          </div>
+
+          <div class="detail-rows">
+            <template v-for="(row, i) in detailRows" :key="i">
+              <div v-if="isDivider(row)" class="detail-divider"></div>
+              <div v-else class="detail-row">
+                <span class="detail-label">{{ row.label }}</span>
+                <span class="detail-value" :style="{ color: row.valueColor || 'inherit' }">{{ row.value }}</span>
+              </div>
+            </template>
+          </div>
+        </template>
+        <div v-else class="sb-empty">暂无可显示技能</div>
+      </aside>
+    </div>
   </div>
 </template>
 
 <script setup>
-import { computed, ref } from 'vue'
+import { computed, ref, watch } from 'vue'
+import FantasyButton from './ui/FantasyButton.vue'
 
 const props = defineProps({
   skillbook: { type: Object, default: null },
@@ -75,6 +96,7 @@ const props = defineProps({
 const emit = defineEmits(['action', 'open-talent'])
 
 const tab = ref('active')
+const selectedKey = ref(null)
 const tabs = [
   { id: 'active', label: '主动' },
   { id: 'passive', label: '被动' },
@@ -90,15 +112,52 @@ const activeKnown = computed(() =>
 const passiveKnown = computed(() =>
   known.value.filter(skill => skill.kind === 'passive')
 )
+const generalKnown = computed(() =>
+  known.value.filter(skill => skill.kind === 'general')
+)
 const equippedCount = computed(() => props.skillbook?.equippedCount ?? activeKnown.value.filter(skill => skill.equipped).length)
 const sortedKnown = activeKnown
+const currentList = computed(() => {
+  if (tab.value === 'active') return sortedKnown.value
+  if (tab.value === 'passive') return passiveKnown.value
+  return generalKnown.value
+})
+const selectedSkill = computed(() =>
+  currentList.value.find(skill => skillKey(skill) === selectedKey.value) ?? currentList.value[0] ?? null
+)
+const tabLabel = computed(() => tabs.find(item => item.id === tab.value)?.label ?? '')
+const emptyText = computed(() => {
+  if (tab.value === 'active') return '暂无主动技能'
+  if (tab.value === 'passive') return '暂无被动'
+  return '暂无通用技能'
+})
+const detailRows = computed(() => {
+  const skill = selectedSkill.value
+  if (!skill) return []
+  const rows = skill.tooltip?.rows
+  return rows?.length ? rows : [{ label: skill.description || '', value: '', valueColor: null }]
+})
+
+watch([tab, currentList], () => {
+  if (!currentList.value.some(skill => skillKey(skill) === selectedKey.value)) {
+    selectedKey.value = currentList.value.length ? skillKey(currentList.value[0]) : null
+  }
+}, { immediate: true })
 
 function emitAction(type, base) {
   emit('action', { type, params: { base } })
 }
 
-function passiveKey(passive) {
-  return `${passive.source ?? 'skill'}:${passive.base}`
+function skillKey(skill) {
+  return `${skill.source ?? 'skill'}:${skill.kind ?? 'active'}:${skill.base}`
+}
+
+function selectSkill(skill) {
+  selectedKey.value = skillKey(skill)
+}
+
+function isDivider(row) {
+  return String(row?.label ?? '').startsWith('──')
 }
 </script>
 
@@ -118,20 +177,12 @@ function passiveKey(passive) {
   border-bottom: 2px solid var(--panel-border-color);
 }
 
-.sb-tab,
 .sb-btn {
-  padding: 0.25rem 0.7rem;
-  background: transparent;
-  border: 2px solid var(--color-border);
-  border-radius: 3px;
-  color: var(--color-text);
-  cursor: pointer;
-  font-family: inherit;
+  min-width: 4rem;
 }
 
-.sb-tab.active {
-  border-color: var(--color-highlight);
-  color: var(--color-highlight);
+.sb-tab {
+  min-width: 4.5rem;
 }
 
 .sb-count {
@@ -154,10 +205,18 @@ function passiveKey(passive) {
   margin-left: 0;
 }
 
+.sb-body {
+  display: grid;
+  grid-template-columns: minmax(16rem, 1fr) minmax(14rem, 0.9fr);
+  gap: 0.75rem;
+  align-items: stretch;
+}
+
 .sb-list {
   display: flex;
   flex-direction: column;
   gap: 0.45rem;
+  min-width: 0;
 }
 
 .sb-row {
@@ -168,11 +227,22 @@ function passiveKey(passive) {
   padding: 0.45rem 0.6rem;
   border: 2px solid var(--color-border);
   border-radius: 3px;
+  background: transparent;
+  color: var(--color-text);
+  cursor: pointer;
+  font-family: inherit;
+  text-align: left;
+  width: 100%;
 }
 
 .sb-row.equipped {
   border-color: var(--color-highlight);
   background: color-mix(in srgb, var(--color-highlight) 8%, transparent);
+}
+
+.sb-row.selected {
+  border-color: var(--color-highlight);
+  background: color-mix(in srgb, var(--color-highlight) 14%, transparent);
 }
 
 .sb-icon {
@@ -225,13 +295,6 @@ function passiveKey(passive) {
   font-size: 0.75rem;
   min-width: 2rem;
   min-height: 1.8rem;
-  background: transparent;
-  border: 2px solid var(--color-border);
-  border-radius: 3px;
-  color: var(--color-highlight);
-  cursor: pointer;
-  font-family: inherit;
-  font-weight: 700;
 }
 
 .sb-btn:disabled {
@@ -240,7 +303,6 @@ function passiveKey(passive) {
 }
 
 .sb-remove {
-  border-color: color-mix(in srgb, var(--color-enemy) 50%, transparent);
   color: var(--color-enemy);
 }
 
@@ -248,5 +310,96 @@ function passiveKey(passive) {
   padding: 1rem;
   text-align: center;
   opacity: 0.55;
+}
+
+.sb-detail {
+  min-width: 0;
+  padding: 0.65rem;
+  border: 2px solid var(--color-border);
+  border-radius: 3px;
+}
+
+.detail-head {
+  display: flex;
+  align-items: center;
+  gap: 0.65rem;
+  padding-bottom: 0.55rem;
+  margin-bottom: 0.55rem;
+  border-bottom: 2px solid var(--panel-border-color);
+}
+
+.detail-icon {
+  width: 2.4rem;
+  height: 2.4rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  border: 2px solid var(--color-highlight);
+  border-radius: 4px;
+  color: var(--color-highlight);
+  font-weight: 700;
+}
+
+.detail-title-block {
+  min-width: 0;
+}
+
+.detail-name {
+  font-weight: 700;
+}
+
+.detail-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem;
+  margin-top: 0.2rem;
+  font-size: 0.75rem;
+  opacity: 0.75;
+}
+
+.detail-rows {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.detail-row {
+  display: grid;
+  grid-template-columns: minmax(5rem, auto) 1fr;
+  gap: 0.7rem;
+  align-items: start;
+  line-height: 1.45;
+  font-size: 0.86rem;
+}
+
+.detail-label {
+  opacity: 0.62;
+}
+
+.detail-value {
+  min-width: 0;
+  overflow-wrap: anywhere;
+  font-weight: 700;
+  text-align: right;
+}
+
+.detail-row:has(.detail-value:empty) {
+  grid-template-columns: 1fr;
+}
+
+.detail-row:has(.detail-value:empty) .detail-label {
+  opacity: 0.78;
+}
+
+.detail-divider {
+  border-top: 1px solid var(--panel-border-color);
+  margin: 0.25rem 0;
+}
+
+@media (max-width: 700px) {
+  .sb-body {
+    grid-template-columns: 1fr;
+  }
 }
 </style>

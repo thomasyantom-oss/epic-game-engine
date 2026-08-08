@@ -22,6 +22,13 @@ class ContentAuthoringValidationTest {
     private static final Set<String> DAMAGE_TYPES = Set.of("物理", "法术", "精神");
     private static final Set<String> DELIVERIES = Set.of("普攻", "技能");
     private static final Set<String> RESISTANCE_KEYS = Set.of("物理", "法术", "精神");
+    private static final Set<String> SKILL_CATEGORIES = Set.of("action", "skill");
+    private static final Set<String> TARGETING_MODES = Set.of("pattern", "group", "self");
+    private static final Set<String> TARGETING_FIELDS = Set.of("enemy", "ally", "self", "any");
+    private static final Set<String> SKILL_TIERS = Set.of("smooth", "standard", "chunky");
+    private static final Set<String> EFFECTS_REQUIRING_DAMAGE = Set.of("damage_only", "damage_with_debuff");
+    private static final Set<String> EFFECTS_REQUIRING_BUFF = Set.of("buff_only");
+    private static final Set<String> EFFECTS_REQUIRING_DEBUFF = Set.of("damage_with_debuff", "debuff_only");
     private static final Set<String> ALLOWED_SCALING_KEYS;
 
     static {
@@ -45,16 +52,36 @@ class ContentAuthoringValidationTest {
 
                 require(errors, id != null && id.equals(stem), skillFile, "id must match filename");
                 requireKeys(errors, skillFile, skill, "id", "name", "category", "silenceable", "targeting");
+                require(errors, nonBlank(skill.get("name")), skillFile, "name must be non-empty text");
+                require(errors, nonBlank(skill.get("description")), skillFile, "description must be non-empty text");
+                require(errors, SKILL_CATEGORIES.contains(string(skill.get("category"))), skillFile,
+                        "category must be one of " + SKILL_CATEGORIES + ": " + string(skill.get("category")));
+                require(errors, skill.get("silenceable") instanceof Boolean, skillFile, "silenceable must be boolean");
+                validateTargeting(errors, skillFile, map(skill.get("targeting")));
 
                 String effect = string(skill.get("effect"));
                 Path bespokeJs = MOD.resolve("skills").resolve(stem + ".js");
                 if (effect != null) {
                     require(errors, registeredEffects.contains(effect), skillFile, "effect is not registered: " + effect);
-                    require(errors, skill.containsKey("animation"), skillFile, "data-driven skill must declare runtime animation");
+                    require(errors, nonEmptyList(skill.get("animation")), skillFile,
+                            "data-driven skill must declare non-empty runtime animation");
+                    if (EFFECTS_REQUIRING_DAMAGE.contains(effect)) {
+                        require(errors, map(skill.get("damage")) != null, skillFile, effect + " requires damage block");
+                    }
+                    if (EFFECTS_REQUIRING_BUFF.contains(effect)) {
+                        require(errors, map(skill.get("buff")) != null, skillFile, effect + " requires buff block");
+                    }
+                    if (EFFECTS_REQUIRING_DEBUFF.contains(effect)) {
+                        require(errors, map(skill.get("debuff")) != null, skillFile, effect + " requires debuff block");
+                    }
                 } else if (!"flee".equals(stem)) {
                     require(errors, Files.exists(bespokeJs), skillFile, "skill without effect must have same-name bespoke JS");
                 }
 
+                String tier = string(skill.get("tier"));
+                require(errors, tier == null || SKILL_TIERS.contains(tier), skillFile,
+                        "tier must be one of " + SKILL_TIERS + ": " + tier);
+                validateLevelScaling(errors, skillFile, map(skill.get("level_scaling")));
                 validateScaling(errors, skillFile, map(skill.get("damage")), "damage.scaling");
                 validateDamageMetadata(errors, skillFile, map(skill.get("damage")));
                 String delivery = string(skill.get("delivery"));
@@ -110,6 +137,35 @@ class ContentAuthoringValidationTest {
         String type = string(damage.get("type"));
         require(errors, type == null || DAMAGE_TYPES.contains(type), file,
                 "damage.type must be one of " + DAMAGE_TYPES + ": " + type);
+        Object add = damage.get("add");
+        require(errors, add == null || add instanceof Number, file, "damage.add must be numeric when present");
+    }
+
+    private static void validateTargeting(List<String> errors, Path file, Map<String, Object> targeting) {
+        require(errors, targeting != null, file, "targeting must be a map");
+        if (targeting == null) return;
+        require(errors, targeting.get("steps") instanceof List<?>, file, "targeting.steps must be a list");
+        String mode = string(targeting.get("mode"));
+        require(errors, mode == null || TARGETING_MODES.contains(mode), file,
+                "targeting.mode must be one of " + TARGETING_MODES + ": " + mode);
+        String field = string(targeting.get("field"));
+        require(errors, field == null || TARGETING_FIELDS.contains(field), file,
+                "targeting.field must be one of " + TARGETING_FIELDS + ": " + field);
+        Object pattern = targeting.get("pattern");
+        require(errors, pattern == null || pattern instanceof List<?>, file, "targeting.pattern must be a list when present");
+        Object allowEmpty = targeting.get("allow_empty");
+        require(errors, allowEmpty == null || allowEmpty instanceof Boolean, file, "targeting.allow_empty must be boolean");
+    }
+
+    private static void validateLevelScaling(List<String> errors, Path file, Map<String, Object> scaling) {
+        if (scaling == null) return;
+        for (Map.Entry<String, Object> entry : scaling.entrySet()) {
+            require(errors, entry.getKey() != null && entry.getKey().contains(".") && !entry.getKey().startsWith(".")
+                            && !entry.getKey().endsWith("."),
+                    file, "level_scaling key must be a dotted path: " + entry.getKey());
+            require(errors, entry.getValue() instanceof Number, file,
+                    "level_scaling value must be numeric: " + entry.getKey());
+        }
     }
 
     private static void validateEquipmentStatKey(List<String> errors, Path file, String itemId, String key) {
@@ -184,6 +240,14 @@ class ContentAuthoringValidationTest {
     @SuppressWarnings("unchecked")
     private static List<Map<String, Object>> list(Object value) {
         return value instanceof List<?> ? (List<Map<String, Object>>) value : List.of();
+    }
+
+    private static boolean nonEmptyList(Object value) {
+        return value instanceof List<?> list && !list.isEmpty();
+    }
+
+    private static boolean nonBlank(Object value) {
+        return value instanceof String s && !s.isBlank();
     }
 
     private static String string(Object value) {

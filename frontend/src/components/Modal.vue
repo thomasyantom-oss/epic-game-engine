@@ -1,14 +1,15 @@
 <template>
   <div v-if="visible" class="modal-mask" @click.self="$emit('close')">
-    <div class="modal-frame">
+    <FantasyPanel class="modal-frame" content-class="modal-inner">
       <button class="modal-close" @click="$emit('close')">x</button>
       <slot />
-    </div>
+    </FantasyPanel>
   </div>
 </template>
 
 <script setup>
 import { onMounted, onUnmounted } from 'vue'
+import FantasyPanel from './ui/FantasyPanel.vue'
 
 const props = defineProps({ visible: Boolean })
 const emit = defineEmits(['close'])
@@ -37,11 +38,11 @@ onUnmounted(() => window.removeEventListener('keydown', onKey))
   width: min(42rem, 86vw);
   max-height: 82vh;
   overflow: auto;
-  padding: 1rem;
-  background: var(--panel-bg);
-  border: 2px solid var(--panel-border-color);
-  border-radius: 4px;
   box-shadow: 0 10px 30px rgba(0, 0, 0, 0.45);
+}
+
+.modal-frame :deep(.modal-inner) {
+  padding: 1rem;
 }
 
 .modal-close {

@@ -30,4 +30,26 @@
     --color-element_ice: #66ddff;
     --color-element_lightning: #ffee44;
     --color-border: #222c38;
+
+    /* Fantasy sliced UI assets. Put files under frontend/public/ui/. */
+    --ui-button-height: 36px;
+    --ui-button-cap-width: 53px;
+    --ui-button-normal-left: url("/ui/button_slices_padded_same_canvas_v2/button_normal_left.png");
+    --ui-button-normal-center: url("/ui/button_slices_padded_same_canvas_v2/button_normal_center.png");
+    --ui-button-normal-right: url("/ui/button_slices_padded_same_canvas_v2/button_normal_right.png");
+    --ui-button-hover-left: url("/ui/button_slices_padded_same_canvas_v2/button_hover_left.png");
+    --ui-button-hover-center: url("/ui/button_slices_padded_same_canvas_v2/button_hover_center.png");
+    --ui-button-hover-right: url("/ui/button_slices_padded_same_canvas_v2/button_hover_right.png");
+
+    --ui-panel-corner-size: 32px;
+    --ui-panel-content-padding: 0.75rem;
+    --ui-panel-tl: url("/ui/panel_tl.png");
+    --ui-panel-t: url("/ui/panel_t.png");
+    --ui-panel-tr: url("/ui/panel_tr.png");
+    --ui-panel-l: url("/ui/panel_l.png");
+    --ui-panel-c: url("/ui/panel_c.png");
+    --ui-panel-r: url("/ui/panel_r.png");
+    --ui-panel-bl: url("/ui/panel_bl.png");
+    --ui-panel-b: url("/ui/panel_b.png");
+    --ui-panel-br: url("/ui/panel_br.png");
 }

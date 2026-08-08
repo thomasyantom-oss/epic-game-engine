@@ -63,5 +63,6 @@ engine.on("combat.resolve_round", 100, function(event) {
         // Advance to next round
         state.set("round", state.getInt("round") + 1);
         state.set("phase", "COMMAND");
+        state.set("roundStartTime", engine.now());
     }
 });

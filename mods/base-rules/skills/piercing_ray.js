@@ -40,33 +40,14 @@ engine.on("combat.unit_action", 80, function(event) {
         Skill.applyDamage(results[i].entity, finalDamage);
     }
 
-    // Emit via direct queue push to preserve golden format (no logCount, nested effects.data)
-    var combat = store.get(ctx.combatId);
-    if (combat !== null && combat.hasComponent("CombatEvents")) {
-        var evt = engine.newMap();
+    // Emit via helper to preserve golden format (no logCount, nested effects.data).
+    if (store.get(ctx.combatId) !== null) {
+        var segments = Skill.summaryLog(ctx, " 的贯穿射线命中 " + results.length + " 个目标，各造成 ", damages.length > 0 ? damages[0] : 0, " 点伤害");
 
-        // Summary segments
-        var segments = engine.newList();
-        var s1 = engine.newMap(); s1.put("text", ctx.casterName); s1.put("color", ctx.casterSide); segments.add(s1);
-        var s2 = engine.newMap(); s2.put("text", " 的贯穿射线命中 " + results.length + " 个目标，各造成 "); s2.put("color", "text"); segments.add(s2);
-        var s3 = engine.newMap(); s3.put("text", "" + (damages.length > 0 ? damages[0] : 0)); s3.put("color", "damage"); segments.add(s3);
-        var s4 = engine.newMap(); s4.put("text", " 点伤害"); s4.put("color", "text"); segments.add(s4);
-        evt.put("segments", segments);
-
-        // Effects (nested data format, matching golden)
         var effects = engine.newList();
         for (var e = 0; e < results.length; e++) {
-            var eff = engine.newMap();
-            eff.put("target", results[e].entity.getId());
-            eff.put("type", "hp_change");
-            var effData = engine.newMap();
-            effData.put("amount", -damages[e]);
-            effData.put("hp", results[e].entity.getComponent("Health").getInt("hp"));
-            effData.put("maxHp", results[e].entity.getComponent("Health").getInt("maxHp"));
-            eff.put("data", effData);
-            effects.add(eff);
+            effects.add(Skill.nestedHpEffect(results[e].entity, damages[e]));
         }
-        evt.put("effects", effects);
 
         // Animation: beam spanning the slot column, then per-target impact/shake/damage_number
         var animation = engine.newList();
@@ -98,8 +79,7 @@ engine.on("combat.unit_action", 80, function(event) {
             animation.add(dmgAnim);
         }
 
-        evt.put("animation", animation);
-        combat.getComponent("CombatEvents").get("queue").add(evt);
+        Skill.emitCombatQueueEvent(ctx.combatId, segments, effects, animation);
     }
 
     // 技能动画入队后,再触发死亡级联(死亡事件排在 beam 之后)——HP 已在上面 applyDamage 扣过。

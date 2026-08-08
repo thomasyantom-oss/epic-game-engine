@@ -1,8 +1,13 @@
 package com.epic.engine.core;
 
 import java.util.Collections;
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.LinkedHashMap;
+import java.util.LinkedHashSet;
+import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 public class Component {
 
@@ -36,7 +41,28 @@ public class Component {
 
     public Component copy() {
         Component copy = new Component(type);
-        copy.data.putAll(this.data);
+        this.data.forEach((k, v) -> copy.data.put(k, deepCopyValue(v)));
         return copy;
+    }
+
+    @SuppressWarnings("unchecked")
+    private static Object deepCopyValue(Object value) {
+        if (value instanceof Component component) return component.copy();
+        if (value instanceof Map<?, ?> map) {
+            Map<Object, Object> copy = new LinkedHashMap<>();
+            map.forEach((k, v) -> copy.put(k, deepCopyValue(v)));
+            return copy;
+        }
+        if (value instanceof List<?> list) {
+            List<Object> copy = new ArrayList<>(list.size());
+            for (Object item : list) copy.add(deepCopyValue(item));
+            return copy;
+        }
+        if (value instanceof Set<?> set) {
+            Set<Object> copy = new LinkedHashSet<>();
+            for (Object item : set) copy.add(deepCopyValue(item));
+            return copy;
+        }
+        return value;
     }
 }

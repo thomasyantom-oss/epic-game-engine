@@ -31,7 +31,7 @@ class SimCoreTest {
         runtime.bindService("buffs", new BuffService(bus, store));
         runtime.setModuleContext(Path.of("../mods/base-rules"));
         Path combat = Path.of("../mods/base-rules/handlers/combat");
-        for (String file : List.of("initiative.js", "damage_calc.js", "death_check.js", "combat_flow.js")) {
+        for (String file : List.of("initiative.js", "death_check.js", "combat_flow.js")) {
             runtime.execute(Files.readString(combat.resolve(file)), file);
         }
         Path skill = Path.of("../mods/base-rules/handlers/skill");
@@ -194,7 +194,7 @@ class SimCoreTest {
     private void loadCombatScripts() {
         try {
             Path combat = Path.of("../mods/base-rules/handlers/combat");
-            for (String file : List.of("initiative.js", "damage_calc.js", "death_check.js", "combat_flow.js")) {
+            for (String file : List.of("initiative.js", "death_check.js", "combat_flow.js")) {
                 runtime.execute(Files.readString(combat.resolve(file)), file);
             }
             Path skill = Path.of("../mods/base-rules/handlers/skill");

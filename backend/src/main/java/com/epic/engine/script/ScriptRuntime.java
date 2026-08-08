@@ -173,14 +173,21 @@ public class ScriptRuntime implements AutoCloseable {
         public WorldSnapshot.SkillEntry newSkillEntry(String base, String name, String description,
                                                       String icon, boolean equipped, String node,
                                                       int level, String kind) {
-            return new WorldSnapshot.SkillEntry(base, name, description, icon, equipped, node, level, kind, null);
+            return new WorldSnapshot.SkillEntry(base, name, description, icon, equipped, node, level, kind, null, null);
         }
 
         @HostAccess.Export
         public WorldSnapshot.SkillEntry newSkillEntryWithSource(String base, String name, String description,
                                                                 String icon, boolean equipped, String node,
                                                                 int level, String kind, String source) {
-            return new WorldSnapshot.SkillEntry(base, name, description, icon, equipped, node, level, kind, source);
+            return new WorldSnapshot.SkillEntry(base, name, description, icon, equipped, node, level, kind, source, null);
+        }
+
+        @HostAccess.Export
+        public WorldSnapshot.SkillEntry newSkillEntryWithTooltip(String base, String name, String description,
+                                                                 String icon, boolean equipped, String node,
+                                                                 int level, String kind, Map<String, Object> tooltip) {
+            return new WorldSnapshot.SkillEntry(base, name, description, icon, equipped, node, level, kind, null, tooltip);
         }
 
         @HostAccess.Export
@@ -336,16 +343,21 @@ public class ScriptRuntime implements AutoCloseable {
         }
 
         @HostAccess.Export
+        @Deprecated
         public void setBaseSelective(String entityId, Value componentTypes) {
+            replaceBaseComponents(entityId, componentTypes);
+        }
+
+        @HostAccess.Export
+        public void replaceBaseComponents(String entityId, Value componentTypes) {
             if (modifierChainService == null) return;
-            // DANGER: this replaces the entire base snapshot with only the listed
-            // components. To persist a single structural component change, use
-            // updateBase(entityId, componentType) instead.
+            // DANGER: this replaces the base snapshot with only the listed components.
+            // To persist one component change, use updateBase(entityId, componentType).
             List<String> types = new ArrayList<>();
             for (int i = 0; i < componentTypes.getArraySize(); i++) {
                 types.add(componentTypes.getArrayElement(i).asString());
             }
-            modifierChainService.setBaseSelective(entityId, types);
+            modifierChainService.replaceBaseComponents(entityId, types);
         }
 
         @HostAccess.Export

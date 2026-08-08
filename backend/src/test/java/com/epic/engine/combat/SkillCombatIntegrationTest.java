@@ -21,7 +21,7 @@ import static org.assertj.core.api.Assertions.assertThat;
  *   • A skill whose YAML has an `effect:` field is fully handled by the dispatcher +
  *     effect executor with no bespoke handler — end-to-end in a real combat round.
  *   • fireball (damage_with_debuff) deals attack+10 damage and applies Buff_burning.
- *   • goblin's basic_attack (damage_only via_damage_calc) hits the mage.
+ *   • goblin's basic_attack (damage_only + Skill.mitigate) hits the mage.
  *   • Combat phase advances after the round (not stuck in RESOLVE).
  *
  * Burning ticks (burning.js) are intentionally NOT loaded so the exact goblin hp after
@@ -44,7 +44,6 @@ class SkillCombatIntegrationTest {
         // Full combat stack
         Path combatDir = Path.of("../mods/base-rules/handlers/combat");
         runtime.execute(Files.readString(combatDir.resolve("initiative.js")),    "initiative.js");
-        runtime.execute(Files.readString(combatDir.resolve("damage_calc.js")),   "damage_calc.js");
         runtime.execute(Files.readString(combatDir.resolve("death_check.js")),   "death_check.js");
         runtime.execute(Files.readString(combatDir.resolve("combat_flow.js")),   "combat_flow.js");
         runtime.execute(Files.readString(combatDir.resolve("combat_events.js")), "combat_events.js");
@@ -79,7 +78,7 @@ class SkillCombatIntegrationTest {
         mageCmd.put("type", "fireball");
         mageCmd.put("targetId", "goblin1");
 
-        // goblin uses basic_attack (data-driven: effect=damage_only via_damage_calc in YAML)
+        // goblin uses basic_attack (data-driven: effect=damage_only)
         Map<String, Object> goblinCmd = new HashMap<>();
         goblinCmd.put("type", "basic_attack");
         goblinCmd.put("targetId", "mage");
@@ -112,9 +111,9 @@ class SkillCombatIntegrationTest {
                 .isTrue();
 
         // ── Goblin basic_attack assertion ─────────────────────────────────────
-        // basic_attack.yaml: via_damage_calc → goblin attack(6) - mage defense(5) = 1 (min 1)
+        // basic_attack.yaml: 普攻护甲曲线 → goblin attack(6), mage defense(5)
         // mage starts at 100 hp → mage hp <= 99 (speed 6 > goblin speed 3, mage goes first,
-        // goblin still alive, so basic_attack fires; mage should take 1 damage)
+        // goblin still alive, so basic_attack fires)
         assertThat(mage.getComponent("Health").getInt("hp"))
                 .as("mage hp after goblin basic_attack")
                 .isLessThanOrEqualTo(99);

@@ -69,20 +69,20 @@
       </TabPanel>
     </div>
 
-    <div class="panel-nav">
+    <FantasyPanel class="panel-nav" content-class="panel-nav-inner">
       <div class="menu-bar">
-        <button class="menu-btn" disabled title="待后续开放">背包</button>
-        <button class="menu-btn" @click="openSkillbook">技能</button>
-        <button
+        <FantasyButton class="menu-btn" disabled title="待后续开放">背包</FantasyButton>
+        <FantasyButton class="menu-btn" @click="openSkillbook">技能</FantasyButton>
+        <FantasyButton
           class="menu-btn"
           :title="talentEntryTitle"
           @click="openTalent"
         >
           天赋
-        </button>
+        </FantasyButton>
       </div>
-      <button v-if="isDev" class="menu-btn menu-exit" @click="$emit('action', { type: 'logout', params: {} })">退出角色</button>
-    </div>
+      <FantasyButton v-if="isDev" class="menu-btn menu-exit" danger @click="$emit('action', { type: 'logout', params: {} })">退出角色</FantasyButton>
+    </FantasyPanel>
 
     <!-- 全局 Tooltip -->
     <ItemTooltip />
@@ -127,6 +127,8 @@ import SkillbookPanel from './SkillbookPanel.vue'
 import SpecializationPanel from './SpecializationPanel.vue'
 import TalentTreePanel from './TalentTreePanel.vue'
 import BattleGrid from './combat/BattleGrid.vue'
+import FantasyButton from './ui/FantasyButton.vue'
+import FantasyPanel from './ui/FantasyPanel.vue'
 import { useSettings } from '../composables/useSettings.js'
 import { useTooltip } from '../composables/useTooltip.js'
 import { useModal } from '../composables/useModal.js'
@@ -238,6 +240,7 @@ const historyRounds = computed(() => {
 const isAnimating = ref(false)
 const battleGridRef = ref(null)
 const playedCount = ref(0)
+const finishingCombatId = ref(null)
 
 // Visible current round entries — show all completed (not animated anymore)
 const visibleLogCount = ref(0)
@@ -245,6 +248,7 @@ const visibleLogCount = ref(0)
 watch(() => props.snapshot?.combat?.events, async (events) => {
   if (!events || events.length === 0) {
     isAnimating.value = false
+    maybeFinishCombat()
     return
   }
 
@@ -257,6 +261,7 @@ watch(() => props.snapshot?.combat?.events, async (events) => {
     isAnimating.value = false
     playedCount.value = events.length
     visibleLogCount.value = 999
+    maybeFinishCombat()
     return
   }
   battleGridRef.value.updateCellPositions()
@@ -270,7 +275,21 @@ watch(() => props.snapshot?.combat?.events, async (events) => {
   playedCount.value = events.length
   visibleLogCount.value = 999
   isAnimating.value = false
+  maybeFinishCombat()
 }, { immediate: true })
+
+watch(() => props.snapshot?.combat?.combatId, (combatId) => {
+  if (!combatId) finishingCombatId.value = null
+})
+
+function maybeFinishCombat() {
+  const combat = props.snapshot?.combat
+  if (!combat) return
+  if (combat.phase !== 'VICTORY' && combat.phase !== 'DEFEAT') return
+  if (finishingCombatId.value === combat.combatId) return
+  finishingCombatId.value = combat.combatId
+  emit('action', { type: 'combat_finish', params: {} })
+}
 
 
 const visibleCurrentEntries = computed(() => {
@@ -336,8 +355,10 @@ function onPoiAction(poi) {
   grid-column: 2;
   grid-row: 2;
   min-height: 0;
+}
+.panel-nav :deep(.panel-nav-inner) {
+  min-height: 100%;
   padding: 0.5rem;
-  border: 2px solid var(--panel-border-color);
   display: flex;
   flex-direction: column;
   gap: 0.5rem;
@@ -349,27 +370,13 @@ function onPoiAction(poi) {
 }
 .menu-btn {
   min-height: 2rem;
-  padding: 0.25rem 0.45rem;
-  background: transparent;
-  border: 2px solid var(--color-border);
-  border-radius: 3px;
-  color: var(--color-text);
-  cursor: pointer;
-  font-family: inherit;
-  font-weight: 700;
-}
-.menu-btn:hover:not(:disabled) {
-  border-color: var(--color-highlight);
-  color: var(--color-highlight);
+  width: 100%;
 }
 .menu-btn:disabled {
   opacity: 0.35;
-  cursor: not-allowed;
 }
 .menu-exit {
   width: 100%;
-  border-color: color-mix(in srgb, var(--color-enemy) 50%, transparent);
-  color: var(--color-enemy);
 }
 .combat-info { line-height: 1.8; padding: 0.5rem; }
 .combatant-row { margin-left: 1rem; }

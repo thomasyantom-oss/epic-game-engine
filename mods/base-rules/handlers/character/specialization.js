@@ -188,6 +188,7 @@ var Specialization = {
         var entity = store.get(entityId);
         if (entity === null) return;
         this.ensureComponent(entity);
+        if (typeof engine.updateBase === "function") engine.updateBase(entityId, "Specialization");
         this.registerSpecModifier(entityId);
         var exp = entity.getComponent("Experience");
         var level = exp !== null ? exp.getInt("level") : 1;

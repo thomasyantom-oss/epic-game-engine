@@ -48,19 +48,18 @@ function emitCombatCommand(entityId, actions, skillId, categoryOverride, node) {
         if (prompt !== null) params.put("prompt", prompt);
     }
 
-    if (description !== null) params.put("description", description);
-
     var mpCost = skillDef.get("mp_cost");
     if (mpCost !== null) params.put("mpCost", mpCost);
 
     var aoeOffsets = targeting !== null ? targeting.get("aoe_offsets") : null;
-    // 进化(node)可能改 targeting(如炎爆→一排 AOE)。用 resolveSpec 后的 targeting 算范围预览:
-    // 优先 aoe_offsets,否则取多格 pattern。仅对进化技能启用,不动普通技能的现有路径。
-    if (node !== null && node !== undefined && typeof Skill !== "undefined" && Skill !== null && typeof Skill.resolveSpec === "function") {
+    // resolveSpec 会合并等级、天赋、被动、专精 patch；范围预览也跟随最终 spec。
+    // 优先 aoe_offsets,否则取多格 pattern。
+    var resolvedSpec = null;
+    if (typeof Skill !== "undefined" && Skill !== null && typeof Skill.resolveSpec === "function") {
         var caster = store.get(entityId);
         if (caster !== null) {
-            var resolved = Skill.resolveSpec({ caster: caster }, skillId, Skill._toJs(skillDef));
-            var rt = resolved !== null && resolved !== undefined ? resolved.targeting : null;
+            resolvedSpec = Skill.resolveSpec({ caster: caster }, skillId, Skill._toJs(skillDef));
+            var rt = resolvedSpec !== null && resolvedSpec !== undefined ? resolvedSpec.targeting : null;
             var off = null;
             var swap = false;
             if (rt !== null && rt !== undefined) {
@@ -70,6 +69,12 @@ function emitCombatCommand(entityId, actions, skillId, categoryOverride, node) {
             if (off !== null) aoeOffsets = pairsToJavaList(off, swap);
         }
     }
+    if (description !== null) params.put("description", description);
+    if (typeof Skill !== "undefined" && Skill !== null && typeof Skill.buildTooltip === "function") {
+        var tooltip = Skill.buildTooltip(entityId, description, resolvedSpec);
+        if (tooltip !== null) params.put("tooltip", tooltip);
+    }
+
     if (aoeOffsets !== null) {
         params.put("aoeOffsets", aoeOffsets);
     }

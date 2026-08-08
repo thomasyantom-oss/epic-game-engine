@@ -235,7 +235,6 @@ class MitigationTest {
     void loadCombatScriptsForRound() throws Exception {
         loadScripts(
                 "../mods/base-rules/handlers/combat/initiative.js",
-                "../mods/base-rules/handlers/combat/damage_calc.js",
                 "../mods/base-rules/handlers/combat/death_check.js",
                 "../mods/base-rules/handlers/combat/combat_flow.js",
                 "../mods/base-rules/handlers/combat/combat_events.js",

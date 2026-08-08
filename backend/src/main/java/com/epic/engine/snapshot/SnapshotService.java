@@ -69,6 +69,15 @@ public class SnapshotService {
             return buildCharacterSelectSnapshot(token);
         }
 
+        GameEvent timeoutEvent = new GameEvent("combat.check_timeouts");
+        timeoutEvent.set("playerId", playerId);
+        eventBus.fire("combat.check_timeouts", timeoutEvent);
+        player = entityStore.get(playerId);
+        if (player == null) {
+            sessionService.clearActiveCharacter(token);
+            return buildCharacterSelectSnapshot(token);
+        }
+
         GameEvent uiEvent = new GameEvent("ui.render_status");
         uiEvent.set("entityId", playerId);
         uiEvent.set("bars", new ArrayList<WorldSnapshot.StatusBar>());

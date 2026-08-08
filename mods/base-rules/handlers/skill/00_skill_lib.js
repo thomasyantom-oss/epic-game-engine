@@ -49,13 +49,6 @@ var Skill = {
 
   computeDamage: function(caster, target, dmgSpec) {
     if (dmgSpec == null) return 0;
-    if (dmgSpec.via_damage_calc) {
-      var ev = engine.newEvent("combat.damage_calc");
-      ev.set("attackerId", caster.getId());
-      ev.set("targetId", target.getId());
-      engine.fire("combat.damage_calc", ev);
-      return ev.get("damage");
-    }
     // 伤害 = base 属性(若声明)+ add + Σ⌈属性 × 系数⌉。
     // scaling 两级查找:先 DerivedStats(三强度)再 PrimaryStats(裸基础属性),见 lookupStat。
     var statName = dmgSpec.base;
@@ -301,7 +294,7 @@ var Skill = {
     return cur;
   },
 
-  // 唯一减伤收口。delivery: "普攻" -> 护甲(flat,逐位对齐现行 damage_calc);
+  // 唯一减伤收口。delivery: "普攻" -> 护甲;
   // "技能" -> 类型抗% + 元素乘区。本期元素仅建框架,默认空跑。
   // opts = { delivery, type, element, elementAmp, ignoreDefend }
   mitigate: function(target, raw, opts) {
@@ -383,6 +376,100 @@ var Skill = {
     ev.set("type", type);
     ev.set("delivery", delivery || "技能");
     engine.fire("combat.mitigation", ev);
+  },
+
+  tooltipRow: function(label, value, color) {
+    var row = engine.newMap();
+    row.put("label", label);
+    row.put("value", value);
+    if (color !== null && color !== undefined) row.put("valueColor", color);
+    return row;
+  },
+
+  numberText: function(value) {
+    var n = Number(value || 0);
+    return (Math.round(n * 100) / 100).toString();
+  },
+
+  damageFormulaText: function(caster, damage) {
+    if (damage === null || damage === undefined) return null;
+    var parts = [];
+    if (damage.base !== undefined && damage.base !== null) {
+      parts.push(String(damage.base) + " " + this.numberText(this.lookupStat(caster, String(damage.base))));
+    }
+    if (damage.add !== undefined && damage.add !== null && Number(damage.add) !== 0) {
+      parts.push(this.numberText(damage.add));
+    }
+    if (damage.scaling !== undefined && damage.scaling !== null) {
+      var keys = Object.keys(damage.scaling);
+      for (var i = 0; i < keys.length; i++) {
+        var stat = keys[i];
+        parts.push("⌈" + stat + " " + this.numberText(this.lookupStat(caster, stat)) + " × " + this.numberText(damage.scaling[stat]) + "⌉");
+      }
+    }
+    return parts.length > 0 ? parts.join(" + ") : null;
+  },
+
+  scaledBuffValue: function(caster, buffSpec, key) {
+    if (buffSpec === null || buffSpec === undefined || buffSpec.data === undefined || buffSpec.data === null) return null;
+    var value = Number(buffSpec.data[key] || 0);
+    if (buffSpec.scaling !== undefined && buffSpec.scaling !== null && buffSpec.scaling[key] !== undefined && buffSpec.scaling[key] !== null) {
+      var scaling = buffSpec.scaling[key];
+      var stats = Object.keys(scaling);
+      for (var i = 0; i < stats.length; i++) {
+        value += Math.ceil(this.lookupStat(caster, stats[i]) * Number(scaling[stats[i]]));
+      }
+    }
+    return value;
+  },
+
+  buildTooltip: function(entityId, description, resolvedSpec) {
+    var rows = engine.newList();
+    var caster = store.get(entityId);
+
+    if (resolvedSpec !== null && resolvedSpec !== undefined && caster !== null) {
+      if (resolvedSpec.damage !== undefined && resolvedSpec.damage !== null) {
+        var raw = this.computeDamage(caster, null, resolvedSpec.damage);
+        var dtype = resolvedSpec.damage.type !== undefined && resolvedSpec.damage.type !== null
+            ? " " + String(resolvedSpec.damage.type)
+            : "";
+        rows.add(this.tooltipRow("预期伤害", String(raw) + dtype, "var(--color-damage)"));
+
+        var formula = this.damageFormulaText(caster, resolvedSpec.damage);
+        if (formula !== null) rows.add(this.tooltipRow("公式", formula + " = " + raw, null));
+      }
+
+      var debuff = resolvedSpec.debuff !== undefined ? resolvedSpec.debuff : null;
+      if (debuff !== null && debuff !== undefined) {
+        var dlabel = debuff.id !== undefined && debuff.id !== null ? String(debuff.id) : "debuff";
+        if (debuff.data !== undefined && debuff.data !== null && debuff.data.remaining !== undefined && debuff.data.remaining !== null) {
+          dlabel += " · " + debuff.data.remaining + "回合";
+        }
+        rows.add(this.tooltipRow("附加状态", dlabel, null));
+        if (debuff.data !== undefined && debuff.data !== null && debuff.data.damage !== undefined) {
+          rows.add(this.tooltipRow("状态伤害", String(this.scaledBuffValue(caster, debuff, "damage")) + "/回合", "var(--color-damage)"));
+        }
+      }
+
+      var buff = resolvedSpec.buff !== undefined ? resolvedSpec.buff : null;
+      if (buff !== null && buff !== undefined) {
+        var blabel = buff.id !== undefined && buff.id !== null ? String(buff.id) : "buff";
+        if (buff.data !== undefined && buff.data !== null && buff.data.remaining !== undefined && buff.data.remaining !== null) {
+          blabel += " · " + buff.data.remaining + "回合";
+        }
+        rows.add(this.tooltipRow("增益状态", blabel, null));
+      }
+    }
+
+    if (description !== null && description !== undefined && String(description).length > 0) {
+      if (rows.size() > 0) rows.add(this.tooltipRow("──────", "", null));
+      rows.add(this.tooltipRow(String(description), "", null));
+    }
+
+    if (rows.size() === 0) return null;
+    var tooltip = engine.newMap();
+    tooltip.put("rows", rows);
+    return tooltip;
   },
 
   // Mutate target HP only — does NOT fire any event (so no death cascade yet).

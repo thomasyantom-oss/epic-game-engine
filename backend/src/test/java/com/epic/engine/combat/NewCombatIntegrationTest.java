@@ -29,7 +29,6 @@ class NewCombatIntegrationTest {
 
         Path baseDir = Path.of("../mods/base-rules/handlers/combat");
         runtime.execute(Files.readString(baseDir.resolve("initiative.js")), "initiative.js");
-        runtime.execute(Files.readString(baseDir.resolve("damage_calc.js")), "damage_calc.js");
         runtime.execute(Files.readString(baseDir.resolve("death_check.js")), "death_check.js");
         runtime.execute(Files.readString(baseDir.resolve("combat_flow.js")), "combat_flow.js");
 

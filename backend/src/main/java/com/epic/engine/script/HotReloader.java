@@ -1,5 +1,7 @@
 package com.epic.engine.script;
 
+import com.epic.engine.core.Entity;
+import com.epic.engine.core.EntityStore;
 import com.epic.engine.core.EventBus;
 import com.epic.engine.core.GameEvent;
 import org.slf4j.Logger;
@@ -17,14 +19,20 @@ public class HotReloader {
 
     private final ScriptRuntime runtime;
     private final EventBus bus;
+    private final EntityStore store;
     private final Map<String, String> loadedScripts = new ConcurrentHashMap<>();
     private volatile boolean running = false;
     private Thread watchThread;
     private Path modsPath;
 
     public HotReloader(ScriptRuntime runtime, EventBus bus) {
+        this(runtime, bus, null);
+    }
+
+    public HotReloader(ScriptRuntime runtime, EventBus bus, EntityStore store) {
         this.runtime = runtime;
         this.bus = bus;
+        this.store = store;
     }
 
     public void reload(String sourceName, String newScript) {
@@ -46,6 +54,7 @@ public class HotReloader {
             }
             runtime.execute(entry.getValue(), entry.getKey());
         }
+        rebindExistingEntities();
     }
 
     public void trackScript(String sourceName, String script) {
@@ -125,6 +134,20 @@ public class HotReloader {
         }
         log.info("JS handlers 重新加载完成，共 {} 个脚本", loadedScripts.size());
         bus.fire("world.init", new GameEvent("world.init"));
+        rebindExistingEntities();
+    }
+
+    private void rebindExistingEntities() {
+        if (store == null) return;
+        for (Entity entity : store.all()) {
+            GameEvent scriptsReloaded = new GameEvent("entity.scripts_reloaded");
+            scriptsReloaded.set("entity", entity);
+            bus.fire("entity.scripts_reloaded", scriptsReloaded);
+
+            GameEvent loaded = new GameEvent("entity.loaded");
+            loaded.set("entity", entity);
+            bus.fire("entity.loaded", loaded);
+        }
     }
 
     private void registerRecursive(Path root, WatchService watcher) throws IOException {

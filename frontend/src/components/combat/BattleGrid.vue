@@ -108,33 +108,33 @@
           </template>
         </div>
         <div class="cmd-col cmd-actions" v-if="currentActor && phase === 'COMMAND' && !animating" :class="{ locked: showSkills || step === 'target' }">
-          <button class="cmd-btn" :disabled="!attackAction" @click="selectCommand(attackAction)">攻击</button>
-          <button class="cmd-btn" :disabled="!defendAction" @click="selectCommand(defendAction)">防御</button>
-          <button class="cmd-btn"
-                  :class="{ active: showSkills }"
-                  :disabled="skillActions.length === 0"
-                  @click="showSkills = true">技能</button>
-          <button class="cmd-btn disabled" disabled title="暂未开放">移动</button>
-          <button class="cmd-btn disabled" disabled title="暂未开放">道具</button>
-          <button class="cmd-btn" :disabled="!fleeAction" @click="selectCommand(fleeAction)">逃跑</button>
+          <FantasyButton class="cmd-btn" :disabled="!attackAction" @click="selectCommand(attackAction)">攻击</FantasyButton>
+          <FantasyButton class="cmd-btn" :disabled="!defendAction" @click="selectCommand(defendAction)">防御</FantasyButton>
+          <FantasyButton class="cmd-btn"
+                         :active="showSkills"
+                         :disabled="skillActions.length === 0"
+                         @click="showSkills = true">技能</FantasyButton>
+          <FantasyButton class="cmd-btn" disabled title="暂未开放">移动</FantasyButton>
+          <FantasyButton class="cmd-btn" disabled title="暂未开放">道具</FantasyButton>
+          <FantasyButton class="cmd-btn" :disabled="!fleeAction" danger @click="selectCommand(fleeAction)">逃跑</FantasyButton>
         </div>
         <div class="cmd-col cmd-sub" v-if="currentActor && phase === 'COMMAND' && !animating">
           <template v-if="step === 'target'">
             <span class="target-hint">{{ targetPrompt }}</span>
-            <button class="cmd-btn cancel-btn" @click="cancelSelect">取消</button>
+            <FantasyButton class="cmd-btn cancel-btn" danger @click="cancelSelect">取消</FantasyButton>
           </template>
           <template v-else-if="showSkills">
             <div class="skill-sub-grid">
-              <button v-for="cmd in skillActions" :key="cmd.params?.command"
-                      class="cmd-btn skill-cmd-btn"
-                      :class="{ disabled: cmd.style === 'disabled' }"
-                      @mouseenter="onSkillHover(cmd, $event)"
-                      @mousemove="moveTooltip"
-                      @mouseleave="hideTooltip"
-                      @click="selectCommand(cmd)">
+              <FantasyButton v-for="cmd in skillActions" :key="cmd.params?.command"
+                             class="cmd-btn skill-cmd-btn"
+                             :disabled="cmd.style === 'disabled'"
+                             @mouseenter="onSkillHover(cmd, $event)"
+                             @mousemove="moveTooltip"
+                             @mouseleave="hideTooltip"
+                             @click="selectCommand(cmd)">
                 {{ cmd.label }}
-              </button>
-              <button class="cmd-btn cancel-btn cancel-tall" @click="cancelSub">取消</button>
+              </FantasyButton>
+              <FantasyButton class="cmd-btn cancel-btn cancel-tall" danger @click="cancelSub">取消</FantasyButton>
             </div>
           </template>
         </div>
@@ -201,6 +201,7 @@
 <script setup>
 import { computed, ref, watch, onMounted, onUnmounted } from 'vue'
 import AnimationLayer from './AnimationLayer.vue'
+import FantasyButton from '../ui/FantasyButton.vue'
 import { useAnimationPlayer } from '../../composables/useAnimationPlayer.js'
 import { useTooltip } from '../../composables/useTooltip.js'
 
@@ -217,14 +218,15 @@ const emit = defineEmits(['command'])
 const { showTooltip, moveTooltip, hideTooltip } = useTooltip()
 
 function onSkillHover(cmd, event) {
-  if (!cmd.params?.description) return
+  const tooltipRows = cmd.params?.tooltip?.rows
+  if (!tooltipRows?.length && !cmd.params?.description) return
   showTooltip({
     title: cmd.label,
     titleColor: 'var(--color-highlight)',
     rows: [
       { label: '消耗', value: cmd.params?.mpCost ? cmd.params.mpCost + ' MP' : '无', valueColor: 'var(--color-mp)' },
       { label: '──────', value: '', valueColor: null },
-      { label: cmd.params.description, value: '', valueColor: null }
+      ...(tooltipRows?.length ? tooltipRows : [{ label: cmd.params.description, value: '', valueColor: null }])
     ]
   }, event)
 }
@@ -1074,41 +1076,15 @@ onUnmounted(() => stopTimer())
 }
 
 .cmd-btn {
-  font-family: inherit;
   font-size: 0.82rem;
-  font-weight: 600;
-  padding: 0.3rem 0.6rem;
-  background: color-mix(in srgb, var(--color-text) 4%, transparent);
-  border: 2px solid var(--color-border);
-  border-radius: 3px;
-  color: var(--color-text);
-  cursor: pointer;
-  text-align: center;
-  box-shadow: inset 0 2px 6px rgba(0,0,0,0.5), inset 0 -1px 0 rgba(255,255,255,0.04);
-  transition: border-color 0.15s, background 0.15s, color 0.15s;
+  width: 100%;
   white-space: nowrap;
-  user-select: none;
-}
-.cmd-btn:hover {
-  border-color: var(--color-highlight);
-  background: color-mix(in srgb, var(--color-highlight) 12%, transparent);
-  color: var(--color-highlight);
-}
-.cmd-btn.active {
-  border-color: var(--color-highlight);
-  background: color-mix(in srgb, var(--color-highlight) 18%, transparent);
-  color: var(--color-highlight);
-}
-.cmd-btn.disabled {
-  opacity: 0.35;
-  pointer-events: none;
 }
 .cmd-btn:disabled {
   opacity: 0.35;
   cursor: not-allowed;
 }
 .cancel-btn {
-  border-color: color-mix(in srgb, var(--color-enemy) 50%, transparent);
   color: var(--color-enemy);
 }
 .cancel-tall {
@@ -1117,11 +1093,6 @@ onUnmounted(() => stopTimer())
   aspect-ratio: 1;
   min-width: 3rem;
   align-self: stretch;
-}
-.cancel-btn:hover {
-  border-color: var(--color-enemy);
-  background: color-mix(in srgb, var(--color-enemy) 12%, transparent);
-  color: var(--color-enemy);
 }
 .target-hint {
   font-size: 0.82rem;

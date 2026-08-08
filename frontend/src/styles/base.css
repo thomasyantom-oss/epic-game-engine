@@ -6,6 +6,15 @@
     box-sizing: border-box;
 }
 
+img,
+canvas,
+button,
+.fantasy-button,
+.fantasy-panel {
+    image-rendering: pixelated;
+    image-rendering: crisp-edges;
+}
+
 body {
     background-color: var(--bg-color);
     color: var(--text-color);

@@ -1,7 +1,7 @@
 package com.epic.engine.core;
 
 import org.junit.jupiter.api.Test;
-import java.util.List;
+import java.util.*;
 import static org.assertj.core.api.Assertions.assertThat;
 
 class ModifierChainTest {
@@ -201,5 +201,24 @@ class ModifierChainTest {
         assertThat(entity.hasComponent("EquipmentSlots")).isTrue();
         assertThat(entity.getComponent("EquipmentSlots").getString("weapon")).isEqualTo("iron_sword");
         assertThat(entity.getComponent("CombatStats").getInt("attack")).isEqualTo(15);
+    }
+
+    @Test
+    @SuppressWarnings("unchecked")
+    void componentCopy_deepCopiesNestedCollections() {
+        Component inventory = new Component("Inventory");
+        List<Object> items = new ArrayList<>();
+        Map<String, Object> item = new LinkedHashMap<>();
+        item.put("id", "iron_sword");
+        item.put("tags", new ArrayList<>(List.of("sharp")));
+        items.add(item);
+        inventory.set("items", items);
+
+        Component copy = inventory.copy();
+        ((List<String>) ((Map<String, Object>) ((List<Object>) copy.get("items")).get(0)).get("tags")).add("mutated");
+
+        List<String> originalTags =
+                (List<String>) ((Map<String, Object>) ((List<Object>) inventory.get("items")).get(0)).get("tags");
+        assertThat(originalTags).containsExactly("sharp");
     }
 }

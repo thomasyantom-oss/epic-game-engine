@@ -1,5 +1,5 @@
 <template>
-  <div class="tab-panel">
+  <FantasyPanel class="tab-panel" content-class="tab-panel-inner">
     <div class="tab-bar">
       <span
         v-for="tab in tabs"
@@ -19,11 +19,12 @@
         <slot :name="activeTab"></slot>
       </template>
     </div>
-  </div>
+  </FantasyPanel>
 </template>
 
 <script setup>
 import { ref, watch } from 'vue'
+import FantasyPanel from './ui/FantasyPanel.vue'
 
 const props = defineProps({
   tabs: {
@@ -49,14 +50,17 @@ watch(() => props.defaultTab, (newTab) => {
 
 <style scoped>
 .tab-panel {
+  height: 100%;
+  min-height: 0;
+  overflow: hidden;
+}
+
+.tab-panel :deep(.tab-panel-inner) {
   display: flex;
   flex-direction: column;
   height: 100%;
   min-height: 0;
-  background-color: var(--panel-bg);
-  border: var(--panel-border-width) var(--panel-border-style) var(--panel-border-color);
-  border-radius: 4px;
-  overflow: hidden;
+  padding: 0.45rem;
 }
 
 .tab-bar {

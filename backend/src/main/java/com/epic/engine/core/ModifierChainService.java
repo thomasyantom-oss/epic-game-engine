@@ -36,6 +36,10 @@ public class ModifierChainService {
     }
 
     public void setBaseSelective(String entityId, List<String> componentTypes) {
+        replaceBaseComponents(entityId, componentTypes);
+    }
+
+    public void replaceBaseComponents(String entityId, List<String> componentTypes) {
         Entity entity = store.get(entityId);
         if (entity == null) return;
         getOrCreate(entityId).setBaseSelective(componentTypes);

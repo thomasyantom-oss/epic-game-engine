@@ -66,4 +66,16 @@ class BaseSnapshotIntegrityTest {
         assertThat(str("w")).as("setBaseSelective wipes PrimaryStats from base → class re-adds → inflation")
             .isEqualTo(25);
     }
+
+    @Test
+    void replaceBaseComponents_isExplicitAliasForDangerousSelectiveReplace() {
+        warriorish("w");
+        assertThat(str("w")).isEqualTo(14);
+
+        js("var l=engine.newList(); l.add('Position'); engine.replaceBaseComponents('w', l);");
+        js("engine.recalculate('w');");
+
+        assertThat(str("w")).as("explicit alias preserves legacy selective replace behavior")
+            .isEqualTo(25);
+    }
 }

@@ -49,7 +49,6 @@ class CombatBugfixTest {
 
         Path combatDir = Path.of("../mods/base-rules/handlers/combat");
         runtime.execute(Files.readString(combatDir.resolve("initiative.js")),    "initiative.js");
-        runtime.execute(Files.readString(combatDir.resolve("damage_calc.js")),   "damage_calc.js");
         runtime.execute(Files.readString(combatDir.resolve("death_check.js")),   "death_check.js");
         runtime.execute(Files.readString(combatDir.resolve("combat_flow.js")),   "combat_flow.js");
         runtime.execute(Files.readString(combatDir.resolve("combat_events.js")), "combat_events.js");

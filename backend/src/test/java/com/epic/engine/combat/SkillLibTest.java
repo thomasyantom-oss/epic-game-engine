@@ -22,7 +22,6 @@ class SkillLibTest {
         rt = new ScriptRuntime(bus, store);
         rt.setModuleContext(Path.of("../mods/base-rules"));
         rt.bindService("buffs", new BuffService(bus, store));
-        rt.execute(Files.readString(Path.of("../mods/base-rules/handlers/combat/damage_calc.js")), "damage_calc.js");
         rt.execute(Files.readString(Path.of("../mods/base-rules/handlers/skill/00_skill_lib.js")), "00_skill_lib.js");
     }
 
@@ -100,14 +99,6 @@ class SkillLibTest {
         js("Skill.computeDamage(store.get('mage'), store.get('goblin'), {base:'attack', add:8});");
         // pure: calling computeDamage must NOT mutate target hp
         org.assertj.core.api.Assertions.assertThat(g.getComponent("Health").getInt("hp")).isEqualTo(100);
-    }
-
-    @Test
-    void computeDamage_viaDamageCalc_usesPoeArmor() {
-        mkUnit("mage","法师",true);
-        mkUnit("goblin","哥布林",false);   // defense 5 in mkUnit
-        js("var dmg = Skill.computeDamage(store.get('mage'), store.get('goblin'), {via_damage_calc:true});" +
-           "if (dmg !== 7) throw 'dmg='+dmg;");   // ceil(10^2/(5+10))
     }
 
     @Test

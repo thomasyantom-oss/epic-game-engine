@@ -65,7 +65,8 @@ public record WorldSnapshot(
                            Map<String, Integer> stats) {}
     public record EquipmentData(Map<String, ItemInfo> slots, List<ItemInfo> inventory) {}
     public record SkillEntry(String base, String name, String description, String icon,
-                             boolean equipped, String node, int level, String kind, String source) {}
+                             boolean equipped, String node, int level, String kind, String source,
+                             Map<String, Object> tooltip) {}
     public record Skillbook(int slots, int equippedCount, List<SkillEntry> known) {}
     public record SpecOption(String id, String label, String description, SpecEffects effects) {}
     public record SpecEffects(String mainAttr, Map<String, Object> growth, List<String> grantPassives) {}

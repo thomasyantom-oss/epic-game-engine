@@ -33,6 +33,7 @@ class SkillbookActionsTest {
         runtime = new ScriptRuntime(bus, store);
         runtime.setModuleContext(Path.of("../mods/base-rules"));
 
+        runtime.execute(Files.readString(Path.of("../mods/base-rules/handlers/skill/00_skill_lib.js")), "00_skill_lib.js");
         runtime.execute(Files.readString(Path.of("../mods/base-rules/handlers/skill/03_skillbook.js")), "03_skillbook.js");
         runtime.execute(Files.readString(Path.of("../mods/base-rules/handlers/ui/actions.js")), "actions.js");
 
@@ -40,12 +41,15 @@ class SkillbookActionsTest {
         Component skillbook = new Component("Skillbook");
         skillbook.set("slots", 2);
         skillbook.set("known", new ArrayList<>(List.of(
-                skill("fireball", true),
+                skill("fireball", true, 3),
                 skill("light_field", true),
                 skill("ice_beam", false),
                 skill("iron_skin", false)
         )));
         player.addComponent(skillbook);
+        Component primary = new Component("PrimaryStats");
+        primary.set("智力", 25);
+        player.addComponent(primary);
         store.add(player);
     }
 
@@ -118,6 +122,41 @@ class SkillbookActionsTest {
                 .doesNotContain("iron_skin");
     }
 
+    @Test
+    void combatActions_includeComputedSkillTooltip() {
+        store.get("player1").addTag("combat:c1");
+
+        GameEvent event = new GameEvent("ui.render_actions");
+        event.set("entityId", "player1");
+        event.set("actions", new ArrayList<WorldSnapshot.ActionOption>());
+        bus.fire("ui.render_actions", event);
+
+        @SuppressWarnings("unchecked")
+        List<WorldSnapshot.ActionOption> actions = event.get("actions");
+        WorldSnapshot.ActionOption fireball = actions.stream()
+                .filter(a -> "fireball".equals(a.params().get("command")))
+                .findFirst()
+                .orElseThrow();
+
+        @SuppressWarnings("unchecked")
+        Map<String, Object> tooltip = (Map<String, Object>) fireball.params().get("tooltip");
+        @SuppressWarnings("unchecked")
+        List<Map<String, Object>> rows = (List<Map<String, Object>>) tooltip.get("rows");
+
+        assertThat(rows).anySatisfy(row -> {
+            assertThat(row.get("label")).isEqualTo("预期伤害");
+            assertThat(row.get("value")).isEqualTo("25 法术");
+        });
+        assertThat(rows).anySatisfy(row -> {
+            assertThat(row.get("label")).isEqualTo("公式");
+            assertThat(row.get("value")).isEqualTo("20 + ⌈智力 25 × 0.2⌉ = 25");
+        });
+        assertThat(rows).anySatisfy(row -> {
+            assertThat(row.get("label")).isEqualTo("状态伤害");
+            assertThat(row.get("value")).isEqualTo("6/回合");
+        });
+    }
+
     private void fireSkillbook(String type, String base) {
         GameEvent event = new GameEvent("action." + type);
         event.set("playerId", "player1");
@@ -135,10 +174,14 @@ class SkillbookActionsTest {
     }
 
     private Map<String, Object> skill(String base, boolean equipped) {
+        return skill(base, equipped, 1);
+    }
+
+    private Map<String, Object> skill(String base, boolean equipped, int level) {
         Map<String, Object> skill = new HashMap<>();
         skill.put("base", base);
         skill.put("node", null);
-        skill.put("level", 1);
+        skill.put("level", level);
         skill.put("equipped", equipped);
         return skill;
     }

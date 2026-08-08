@@ -33,7 +33,13 @@ engine.on("ui.render_skillbook", 100, function(event) {
         }
         var equipped = skill.get("equipped") === true;
         var level = skill.containsKey && skill.containsKey("level") ? parseInt(skill.get("level")) : 1;
-        out.add(engine.newSkillEntry(base, name, description, icon, equipped, node, level, kind));
+        var tooltip = null;
+        if (kind === "active" && typeof Skill !== "undefined" && Skill !== null && typeof Skill.resolveSpec === "function" && typeof Skill.buildTooltip === "function") {
+            var resolved = Skill.resolveSpec({ caster: entity }, base, Skill._toJs(def));
+            tooltip = Skill.buildTooltip(entityId, description, resolved);
+        }
+        if (tooltip !== null) out.add(engine.newSkillEntryWithTooltip(base, name, description, icon, equipped, node, level, kind, tooltip));
+        else out.add(engine.newSkillEntry(base, name, description, icon, equipped, node, level, kind));
     }
 
     if (typeof Talent !== "undefined" && Talent !== null && typeof Talent.derivedPassives === "function") {

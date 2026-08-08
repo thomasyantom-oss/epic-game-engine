@@ -113,8 +113,17 @@ var Talent = {
     if (entity !== null && typeof persistence !== "undefined" && persistence !== null) persistence.save(entity);
   },
 
+  syncBase: function(entity) {
+    if (entity === null || entity === undefined || typeof engine.updateBase !== "function") return;
+    if (entity.hasComponent("TalentTree")) engine.updateBase(entity.getId(), "TalentTree");
+    if (entity.hasComponent("Skillbook")) engine.updateBase(entity.getId(), "Skillbook");
+    if (entity.hasComponent("OrbPouch")) engine.updateBase(entity.getId(), "OrbPouch");
+    if (entity.hasComponent("Specialization")) engine.updateBase(entity.getId(), "Specialization");
+  },
+
   _reapply: function(entity) {
     if (entity === null || entity === undefined) return;
+    this.syncBase(entity);
     if (typeof applySpec !== "undefined") applySpec(entity.getId());
     else if (typeof Specialization !== "undefined" && Specialization !== null) Specialization.applySpec(entity.getId());
     else if (typeof Passive !== "undefined" && Passive !== null) {
@@ -339,6 +348,7 @@ var Talent = {
       if (!this._listContains(evolved, values[i])) evolved.add(String(values[i]));
     }
     entity.getComponent("TalentTree").set("evolved", evolved);
+    this.syncBase(entity);
   },
 
   restoreUnlocked: function(entity, values) {
@@ -348,6 +358,7 @@ var Talent = {
       if (!this._listContains(unlocked, values[i])) unlocked.add(String(values[i]));
     }
     entity.getComponent("TalentTree").set("unlocked", unlocked);
+    this.syncBase(entity);
   },
 
   clearActiveSlotEvolutions: function(entity) {
@@ -363,6 +374,7 @@ var Talent = {
       var known = this.knownSkill(entity, node.skill_slot.skill);
       if (known !== null) known.put("node", null);
     }
+    this.syncBase(entity);
   },
 
   nodeState: function(entity, node) {
@@ -440,6 +452,7 @@ engine.on("action.talent_unlock", 100, function(event) {
     var known = Talent.knownSkill(entity, node.skill_slot.skill);
     if (known !== null) known.put("node", String(node.skill_slot.evolution));
   }
+  Talent.syncBase(entity);
   Talent._save(entity);
   Talent._accept(event, "已学习");
 });
@@ -447,8 +460,6 @@ engine.on("action.talent_unlock", 100, function(event) {
 engine.on("action.talent_respec", 100, function(event) {
   var entity = Talent.prepareAction(event);
   if (entity === null) return;
-  // 就地清空(而非替换引用):recalculate 会把"替换掉的引用"还原回基线捕获的旧列表,
-  // 但就地修改对基线同一对象可见 —— 与 talent_unlock 的 unlocked.add() 同款模式。
   var evolvedBefore = Talent.listValues(Talent.evolvedList(entity));
   var unlocked = entity.getComponent("TalentTree").get("unlocked");
   if (unlocked !== null && typeof unlocked.clear === "function") unlocked.clear();
@@ -458,6 +469,7 @@ engine.on("action.talent_respec", 100, function(event) {
   Talent.restoreUnlocked(entity, []);
   Talent.restoreEvolved(entity, evolvedBefore);
   Talent.clearActiveSlotEvolutions(entity);
+  Talent.syncBase(entity);
   Talent._save(entity);
   Talent._accept(event, "已重置");
 });
@@ -502,6 +514,7 @@ engine.on("action.talent_place_orb", 100, function(event) {
   pouch.set(type, have - count);
   Talent.addEvolved(entity, slot.evolution);
   known.put("node", String(slot.evolution));
+  Talent.syncBase(entity);
   Talent._save(entity);
   Talent._accept(event, "已进化");
 });
@@ -519,5 +532,6 @@ engine.on("debug.grant_orb", 100, function(event) {
   var current = pouch.has(type) ? pouch.getInt(type) : 0;
   pouch.set(type, current + count);
   event.set("ok", true);
+  Talent.syncBase(entity);
   Talent._save(entity);
 });

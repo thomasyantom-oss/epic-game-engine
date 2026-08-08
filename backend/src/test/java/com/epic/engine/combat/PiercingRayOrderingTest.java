@@ -26,7 +26,7 @@ class PiercingRayOrderingTest {
         rt.bindService("buffs", new BuffService(bus, store));
         rt.bindService("persistence", new StubPersistence());
         Path combat = Path.of("../mods/base-rules/handlers/combat");
-        for (String f : new String[]{"initiative.js","damage_calc.js","death_check.js",
+        for (String f : new String[]{"initiative.js","death_check.js",
                 "combat_flow.js","combat_events.js","combat_log.js","start_combat.js"}) {
             rt.execute(Files.readString(combat.resolve(f)), f);
         }
